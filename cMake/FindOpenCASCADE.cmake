@@ -44,7 +44,7 @@ if(NOT OpenCASCADE_FOUND)
 
 endif(NOT OpenCASCADE_FOUND)
 
-# OpenCASCADE_INCLUDE_DIR is wrong
+# OpenCASCADE_INCLUDE_DIR is wrong, manually override
 set(OpenCASCADE_INCLUDE_DIR "/usr/include/opencascade")
 
 #message(STATUS ${OpenCASCADE_INCLUDE_DIR})

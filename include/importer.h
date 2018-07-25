@@ -4,6 +4,10 @@
 #include <IGESControl_Reader.hxx>
 #include <STEPControl_Reader.hxx>
 
+#include <Standard_CString.hxx>
+#include <TopTools_HSequenceOfShape.hxx>
+#include <TopTools_ListOfShape.hxx>
+
 class Importer {
 public:
   Importer();
