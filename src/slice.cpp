@@ -1,11 +1,5 @@
-#include <BOPAlgo_Section.hxx>
-#include <BOPAlgo_Tools.hxx>
-#include <BRepAlgo.hxx>
-#include <BRepAlgoAPI_Splitter.hxx>
-#include <BRepBuilderAPI_MakeFace.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Iterator.hxx>
-#include <gp_Pln.hxx>
 
 #include <IFSelect.hxx>
 #include <STEPCAFControl_Reader.hxx>
@@ -18,13 +12,29 @@
 #include <TopExp_Explorer.hxx>
 #include <TopTools.hxx>
 
-#include <BRepTools_WireExplorer.hxx>
-
 #include <Geom_CylindricalSurface.hxx>
+#include <GeomFill_Pipe.hxx>
+
+#include <gp_Pln.hxx>
 #include <gp_Lin2d.hxx>
 #include <gp_Pnt2d.hxx>
+#include <Geom2d_Line.hxx>
 #include <GCE2d_MakeSegment.hxx>
+
+
+#include <BOPAlgo_Section.hxx>
+#include <BOPAlgo_Tools.hxx>
+#include <BRepAlgo.hxx>
+#include <BRepAlgoAPI_Splitter.hxx>
+
+#include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI.hxx>
+#include <BRepBuilderAPI_MakeEdge.hxx>
+#include <BRepBuilderAPI_MakeWire.hxx>
+
+#include <BRepOffsetAPI_MakePipe.hxx>
+
+#include <BRepTools_WireExplorer.hxx>
 
 #include <filesystem>
 #include <fstream>
@@ -33,9 +43,8 @@
 #include <string>
 
 #include "importer.h"
-#include "main.h"
-
-#include <gflags/gflags.h>
+#include "slice.h"
+#include "version.h"
 
 namespace fs = std::filesystem;
 
@@ -89,9 +98,10 @@ int main(int argc, char **argv) {
 
   // move the shapes from HSequenceOfShape to ListofShape
   // TODO: is this necessary?
+  /*
   for (auto &body : s.value()) {
     bodies.Append(body);
-  }
+  }*/
 
   if (bodies.Size() < 1) {
     cerr << "No shapes to slice" << endl;
@@ -157,16 +167,21 @@ TopTools_ListOfShape makeTools(const double layerHeight,
  * @param radius
  * @return
  */
-TopoDS_Face makeSpiralFace(const double height, const double radius) {
-    // make
-    auto cylinder = Geom_CylindricalSurface(gp::XOY(), 1.0);
-    auto line = gp_Lin2d(gp_Pnt2d(0.0,0.0), gp_Dir2d(1.0, 1.0));
-    auto segment = GCE2d_MakeSegment(line, 0.0, M_PI * 2.0);
-
+TopoDS_Face makeSpiralFace(const double height, const double layerheight) {
+    // make a unit cylinder, vertical axis, center @ (0,0), radius of 1
+    Handle_Geom_CylindricalSurface cylinder = new Geom_CylindricalSurface(gp::XOY(), 1.0);
+    auto line = gp_Lin2d(gp_Pnt2d(0.0, 0.0), gp_Dir2d(layerheight, 1.0));
+    Handle_Geom2d_TrimmedCurve segment = GCE2d_MakeSegment(line, 0.0, M_PI * 2.0);
+    // make the helixcal edge
     auto helixEdge = BRepBuilderAPI_MakeEdge(segment, cylinder, 0.0, 6.0 * M_PI).Edge();
+    auto wire = BRepBuilderAPI_MakeWire(helixEdge);
+    // make infinite line to sweep
+    auto profile = NULL;;
+    // sweep line to create face
+    auto face = GeomFill_Pipe();
+    auto a = BRepOffsetAPI_MakePipe();
 
-
-    return NULL;
+    return face;
 }
 
 /**

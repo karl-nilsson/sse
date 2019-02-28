@@ -1,5 +1,5 @@
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef SLICE_H
+#define SLICE_H
 
 #include <TopTools.hxx>
 #include <TopTools_ListOfShape.hxx>
@@ -10,4 +10,4 @@ TopTools_ListOfShape makeTools(const double layerHeight, const double objectHeig
 void debug_results(const TopoDS_Shape &result);
 std::optional<TopoDS_Shape> splitter(const TopTools_ListOfShape &objects, const TopTools_ListOfShape &tools);
 
-#endif // MAIN_H
+#endif // SLICE_H

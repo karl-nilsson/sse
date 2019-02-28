@@ -28,6 +28,7 @@ configure_file(
 add_library(libsse
     src/importer.cpp include/importer.h
     src/pathgenerator.cpp include/pathgenerator.h
+    src/slice.cpp include/slice.h
 )
 
 target_include_directories(libsse
