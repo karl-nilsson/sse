@@ -1,50 +1,48 @@
+#include <iostream>
+
 #include "importer.h"
 
 #include <IFSelect.hxx>
 #include <IFSelect_PrintCount.hxx>
+#include <STEPControl_Reader.hxx>
 #include <Standard.hxx>
 
-#include <iostream>
-
+/**
+ * @brief Importer::Importer
+ */
 Importer::Importer() {}
 
-IFSelect_ReturnStatus Importer::importSTEP(const Standard_CString &filename,
-                                           Handle(TopTools_HSequenceOfShape) &
-                                               shapes) {
+std::optional<TopoDS_Shape> Importer::importSTEP(const Standard_CString &filename) {
 
-  STEPControl_Reader reader;
+  auto reader = STEPControl_Reader{};
   auto status = reader.ReadFile(filename);
   if (status != IFSelect_RetDone) {
-    return status;
+    return std::nullopt;
   }
 
-  //reader.WS()->MapReader()->SetTraceLevel(2); // increase default trace
-  // level
+  // increase default trace level
+  // reader.WS()->MapReader()->SetTraceLevel(2);
 
-  reader.PrintCheckLoad(Standard_False, IFSelect_ItemsByEntity);
+  // check the file
+  reader.PrintCheckLoad(false, IFSelect_ItemsByEntity);
 
   // Root transfers
   auto nbr = reader.NbRootsForTransfer();
   reader.PrintCheckTransfer(Standard_False, IFSelect_ItemsByEntity);
 
-  for (int n = 1; n <= nbr; n++) {
-    auto ok = reader.TransferRoot(n);
-  }
+  reader.TransferRoots();
+  std::optional<TopoDS_Shape> shapes = reader.OneShape();
 
-  // Collecting resulting entities
-  auto nbs = reader.NbShapes();
-  cout << "Number of shapes: " << nbs << endl;
-  if (nbs == 0) {
-    return IFSelect_RetVoid;
-  }
-  for (Standard_Integer i = 1; i <= nbs; i++) {
-    shapes->Append(reader.Shape(i));
-  }
-
-  return status;
+  return shapes;
 }
 
 IFSelect_ReturnStatus Importer::importIGES(const Standard_CString &filename,
+                                           Handle(TopTools_HSequenceOfShape) &
+                                               shapes) {
+  return IFSelect_RetVoid;
+}
+
+IFSelect_ReturnStatus Importer::importMesh(const std::string &filename,
                                            Handle(TopTools_HSequenceOfShape) &
                                                shapes) {
   return IFSelect_RetVoid;

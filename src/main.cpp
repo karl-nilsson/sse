@@ -1,10 +1,10 @@
+#include <BOPAlgo_Section.hxx>
 #include <BOPAlgo_Tools.hxx>
 #include <BRepAlgo.hxx>
 #include <BRepAlgoAPI_Splitter.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Iterator.hxx>
-//#include <TopoDS_Shape.hxx>
 #include <gp_Pln.hxx>
 
 #include <IFSelect.hxx>
@@ -20,114 +20,235 @@
 
 #include <BRepTools_WireExplorer.hxx>
 
-#include <iostream>
-#include <string>
+#include <Geom_CylindricalSurface.hxx>
+#include <gp_Lin2d.hxx>
+#include <gp_Pnt2d.hxx>
+#include <GCE2d_MakeSegment.hxx>
+#include <BRepBuilderAPI.hxx>
 
-#include <boost/program_options.hpp>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <string>
 
 #include "importer.h"
 #include "main.h"
 
 #include <gflags/gflags.h>
 
-using namespace std;
+namespace fs = std::filesystem;
 
-namespace po = boost::program_options;
-
+/**
+ * @brief main
+ * @param argc
+ * @param argv
+ * @return
+ */
 int main(int argc, char **argv) {
   cout << "StepSlicerEngine V0.01A" << endl;
 
-  Importer imp;
-  IFSelect_ReturnStatus s;
+  if (argc < 2) {
+    cerr << "Usage: " << argv[0] << "file1.step" << endl;
+    return 1;
+  }
 
-  Handle(TopTools_HSequenceOfShape) shapes = new TopTools_HSequenceOfShape();
-  shapes->Clear();
+  auto imp = Importer{};
+
+  //Handle(TopTools_HSequenceOfShape) shapes = new TopTools_HSequenceOfShape();
+  //shapes->Clear();
+  auto shapes = TopTools_HSequenceOfShape{};
+  shapes.Clear();
 
   for (int i = 1; i < argc; i++) {
     cout << "Loading file: " << argv[i] << endl;
 
-    s = imp.importSTEP(argv[i], shapes);
+    // check if file exists
+    if (!fs::exists(argv[i])) {
+      cerr << "file " << argv[i] << " does not exist" << endl;
+      continue;
+    }
 
+    auto s = imp.importSTEP(argv[i]);
+
+    if (s == std::nullopt) {
+
+    }
+/*
     if (s == IFSelect_RetVoid) {
-      cout << "No file to transfer" << endl;
+      cerr << "No file to transfer" << endl;
     }
 
     if (s == IFSelect_RetError || s == IFSelect_RetFail) {
       cerr << "Error encountered loading " << argv[i] << endl;
     }
+    */
   }
 
-  TopTools_ListOfShape bodies;
+  auto bodies = TopTools_ListOfShape{};
 
-  for (auto itr = shapes->begin(); itr != shapes->end(); ++itr) {
-    bodies.Append(*itr);
+  // move the shapes from HSequenceOfShape to ListofShape
+  // TODO: is this necessary?
+  for (auto &body : s.value()) {
+    bodies.Append(body);
   }
 
-  slice(bodies);
+  if (bodies.Size() < 1) {
+    cerr << "No shapes to slice" << endl;
+    return 1;
+  }
+
+  // slice the body into layers
+  auto a = splitter(bodies, makeTools(1, 10));
+  // if failure, exit
+  if (!a) {
+    return 1;
+  }
+  // convert each layer into GCode
 
   return 0;
 }
 
-void slice(const TopTools_ListOfShape &objects) {
-  //
-  BRepAlgoAPI_Splitter splitter;
-  // tools
-  TopTools_ListOfShape aLSTools;
+void layFlat(const TopoDS_Face &face) {
+    // create a face on the XY plane
+    auto basePlane  = BRepBuilderAPI_MakeFace(gp_Pln(gp_Pnt(0,0,0),gp_Dir(0,0,1)));
+    // measure the angle between the face and the XY plane
 
-  for (int i = 0; i < 100; i++) {
-    // make an unbounded splitting plane, parallel to the xy plane
-    TopoDS_Face face = BRepBuilderAPI_MakeFace(
-        gp_Pln(gp_Pnt(0, 0, i / 10.0), gp_Dir(0, 0, 1)));
-    aLSTools.Append(face);
+    auto transform = gp_Trsf{};
+}
+
+/**
+ * @brief runTests
+ */
+void runTests() {
+  auto testsDir = fs::path("res/tests/");
+  if (!fs::exists(testsDir)) {
+    std::cerr << "Error, directory " << testsDir << " does not exist" << endl;
+    return;
   }
 
+  for (auto &path : fs::recursive_directory_iterator(testsDir)) {
+    std::cout << "slicing file: " << path << endl;
+  }
+}
+
+/**
+ * @brief makeTools
+ * @param layerHeight
+ * @param objectHeight
+ * @return A list of tools (planar faces) to slice an object
+ */
+TopTools_ListOfShape makeTools(const double layerHeight,
+                               const double objectHeight) {
+  auto result = TopTools_ListOfShape{};
+
+  for (auto i = 0; i < objectHeight / layerHeight; ++i) {
+    // create an unbounded plane, parallel to the xy plane, then convert it to a
+    // face
+    result.Append(BRepBuilderAPI_MakeFace(
+        gp_Pln(gp_Pnt(0, 0, i * layerHeight), gp_Dir(0, 0, 1))));
+  }
+  return result;
+}
+
+/**
+ * @brief makeSpiralFace
+ * @param height
+ * @param radius
+ * @return
+ */
+TopoDS_Face makeSpiralFace(const double height, const double radius) {
+    // make
+    auto cylinder = Geom_CylindricalSurface(gp::XOY(), 1.0);
+    auto line = gp_Lin2d(gp_Pnt2d(0.0,0.0), gp_Dir2d(1.0, 1.0));
+    auto segment = GCE2d_MakeSegment(line, 0.0, M_PI * 2.0);
+
+    auto helixEdge = BRepBuilderAPI_MakeEdge(segment, cylinder, 0.0, 6.0 * M_PI).Edge();
+
+
+    return NULL;
+}
+
+/**
+ * @brief debug_results
+ * @param result
+ */
+void debug_results(const TopoDS_Shape &result) {
+  std::cout << TopAbs::ShapeTypeToString(result.ShapeType()) << endl;
+
+  auto it = TopoDS_Iterator(result);
+  for (; it.More(); it.Next()) {
+    std::cout << TopAbs::ShapeTypeToString(it.Value().ShapeType()) << endl;
+    it.Value().Location();
+  }
+}
+
+/**
+ * @brief splitter Use the splitter algorithm to split a solid into slices
+ * @param objects
+ * @param tools
+ * @return the list of shapes, or std::nullopt if failure
+ */
+std::optional<TopoDS_Shape> splitter(const TopTools_ListOfShape &objects,
+                                     const TopTools_ListOfShape &tools) {
+  auto splitter = BRepAlgoAPI_Splitter{};
   // set the argument
   splitter.SetArguments(objects);
-  splitter.SetTools(aLSTools);
+  splitter.SetTools(tools);
   // run in parallel
   splitter.SetRunParallel(true);
-
+  splitter.SetFuzzyValue(0.0);
   // run the algorithm
   splitter.Build();
   // check error status
   if (splitter.HasErrors()) {
-    cout << "Error while splitting shape" << endl;
-    return;
+    cerr << "Error while splitting shape" << endl;
+    splitter.DumpErrors(cerr);
+    return std::nullopt;
   }
+
   // result of the operation result
-  const TopoDS_Shape &result = splitter.Shape();
+  auto &result = splitter.Shape();
+  debug_results(result);
+  return result;
+}
 
-  // TopTools_MapOfShape map;
+/**
+ * @brief section use the section algorithm to obtain a list of edges from an
+ * intersection
+ * @param objects
+ * @param tools
+ */
+void section(const TopTools_ListOfShape &objects,
+             const TopTools_ListOfShape &tools) {
+  BOPAlgo_Section section;
+  // get first object
+  TopoDS_Shape object = objects.First();
 
-  map<TopAbs_ShapeEnum, string> shapetype;
-  shapetype[TopAbs_COMPOUND] = "compound";
-  shapetype[TopAbs_COMPSOLID] = "compsolid";
-  shapetype[TopAbs_SOLID] = "solid";
-  shapetype[TopAbs_SHELL] = "shell";
-  shapetype[TopAbs_FACE] = "face";
-  shapetype[TopAbs_WIRE] = "wire";
-  shapetype[TopAbs_EDGE] = "edge";
-  shapetype[TopAbs_VERTEX] = "vertex";
-  shapetype[TopAbs_SHAPE] = "shape";
+  TopTools_ListOfShape result;
 
-  //cout << shapetype[result.ShapeType()] << endl;
-
-  // iterate over result
-  TopoDS_Iterator it;
-  for (it.Initialize(result); it.More(); it.Next()) {
-    it.Value();
-    //cout << shapetype[it.Value().ShapeType()] << endl;
+  for (auto face : tools) {
+    // section object
+    section.AddArgument(object);
+    section.AddArgument(face);
+    //section.BuildSection();
+    result = section.Generated(object);
   }
 }
 
-void wires(const TopoDS_Shape &s) {
+/**
+ * @brief wires
+ * @param s
+ * @param f
+ */
+void wires(const TopoDS_Shape &s, const TopoDS_Face &f) {
   // TopoDS_Wire w;
   // BRepTools_WireExplorer e;
   // find all faces in solid
-  TopExp_Explorer explore_faces;
+  auto explore_faces = TopExp_Explorer{};
 
-  for(explore_faces.Init(s, TopAbs_FACE); explore_faces.More(); explore_faces.Next())
-  {
+  // find faces coincident with slicing plane
+  for (explore_faces.Init(s, TopAbs_FACE); explore_faces.More();
+       explore_faces.Next()) {
   }
-
 }
