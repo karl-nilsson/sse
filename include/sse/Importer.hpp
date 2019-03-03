@@ -1,5 +1,4 @@
-#ifndef IMPORTER_H
-#define IMPORTER_H
+#pragma once
 
 #include <IGESControl_Reader.hxx>
 #include <STEPControl_Reader.hxx>
@@ -13,12 +12,10 @@ class Importer {
 public:
   Importer();
 
-  std::optional<TopoDS_Shape> importSTEP(const Standard_CString &filename);
-  IFSelect_ReturnStatus importIGES(const Standard_CString &filename,
+  const std::optional<TopoDS_Shape> importSTEP(const Standard_CString &filename);
+  const IFSelect_ReturnStatus importIGES(const std::string &filename,
                                    Handle(TopTools_HSequenceOfShape) & shapes);
 
-  IFSelect_ReturnStatus importMesh(const std::string &filename,
+  const IFSelect_ReturnStatus importMesh(const std::string &filename,
                                    Handle(TopTools_HSequenceOfShape) &shapes);
 };
-
-#endif // IMPORTER_H

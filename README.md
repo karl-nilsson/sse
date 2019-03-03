@@ -18,8 +18,8 @@ STEP Slicer Engine is an experimental 3D model slicer engine, built on top of a 
 * [OpenCasCade](https://www.opencascade.com/)
 
 ## Supported CNC software:
-* [LinuxCNC](https://linuxcnc.org/)
-* [Machinekit](http://www.machinekit.io/)
+* [LinuxCNC](http://linuxcnc.org/)
+* [Machinekit](https://www.machinekit.io/)
 * [Redeem](http://wiki.thing-printer.com/index.php?title=Redeem)
 
 ## Build Instructions

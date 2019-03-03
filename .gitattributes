@@ -1,0 +1,3 @@
+*       text=auto
+*.cxx   eol=lf
+*.txt   text

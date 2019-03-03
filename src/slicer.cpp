@@ -1,131 +1,11 @@
-#include <TopoDS.hxx>
-#include <TopoDS_Iterator.hxx>
+#include <sse/slicer.hpp>
 
-#include <IFSelect.hxx>
-#include <STEPCAFControl_Reader.hxx>
-#include <STEPControl_Reader.hxx>
-#include <Standard.hxx>
-#include <TDF.hxx>
-#include <TDF_Attribute.hxx>
-#include <TopAbs.hxx>
-#include <TopExp.hxx>
-#include <TopExp_Explorer.hxx>
-#include <TopTools.hxx>
-
-#include <Geom_CylindricalSurface.hxx>
-#include <GeomFill_Pipe.hxx>
-
-#include <gp_Pln.hxx>
-#include <gp_Lin2d.hxx>
-#include <gp_Pnt2d.hxx>
-#include <Geom2d_Line.hxx>
-#include <GCE2d_MakeSegment.hxx>
-
-
-#include <BOPAlgo_Section.hxx>
-#include <BOPAlgo_Tools.hxx>
-#include <BRepAlgo.hxx>
-#include <BRepAlgoAPI_Splitter.hxx>
-
-#include <BRepBuilderAPI_MakeFace.hxx>
-#include <BRepBuilderAPI.hxx>
-#include <BRepBuilderAPI_MakeEdge.hxx>
-#include <BRepBuilderAPI_MakeWire.hxx>
-
-#include <BRepOffsetAPI_MakePipe.hxx>
-
-#include <BRepTools_WireExplorer.hxx>
-
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <map>
-#include <string>
-
-#include "importer.h"
-#include "slice.h"
-#include "version.h"
 
 namespace fs = std::filesystem;
 
-/**
- * @brief main
- * @param argc
- * @param argv
- * @return
- */
-int main(int argc, char **argv) {
-  cout << "StepSlicerEngine V0.01A" << endl;
 
-  if (argc < 2) {
-    cerr << "Usage: " << argv[0] << "file1.step" << endl;
-    return 1;
-  }
 
-  auto imp = Importer{};
 
-  //Handle(TopTools_HSequenceOfShape) shapes = new TopTools_HSequenceOfShape();
-  //shapes->Clear();
-  auto shapes = TopTools_HSequenceOfShape{};
-  shapes.Clear();
-
-  for (int i = 1; i < argc; i++) {
-    cout << "Loading file: " << argv[i] << endl;
-
-    // check if file exists
-    if (!fs::exists(argv[i])) {
-      cerr << "file " << argv[i] << " does not exist" << endl;
-      continue;
-    }
-
-    auto s = imp.importSTEP(argv[i]);
-
-    if (s == std::nullopt) {
-
-    }
-/*
-    if (s == IFSelect_RetVoid) {
-      cerr << "No file to transfer" << endl;
-    }
-
-    if (s == IFSelect_RetError || s == IFSelect_RetFail) {
-      cerr << "Error encountered loading " << argv[i] << endl;
-    }
-    */
-  }
-
-  auto bodies = TopTools_ListOfShape{};
-
-  // move the shapes from HSequenceOfShape to ListofShape
-  // TODO: is this necessary?
-  /*
-  for (auto &body : s.value()) {
-    bodies.Append(body);
-  }*/
-
-  if (bodies.Size() < 1) {
-    cerr << "No shapes to slice" << endl;
-    return 1;
-  }
-
-  // slice the body into layers
-  auto a = splitter(bodies, makeTools(1, 10));
-  // if failure, exit
-  if (!a) {
-    return 1;
-  }
-  // convert each layer into GCode
-
-  return 0;
-}
-
-void layFlat(const TopoDS_Face &face) {
-    // create a face on the XY plane
-    auto basePlane  = BRepBuilderAPI_MakeFace(gp_Pln(gp_Pnt(0,0,0),gp_Dir(0,0,1)));
-    // measure the angle between the face and the XY plane
-
-    auto transform = gp_Trsf{};
-}
 
 /**
  * @brief runTests
@@ -176,10 +56,11 @@ TopoDS_Face makeSpiralFace(const double height, const double layerheight) {
     auto helixEdge = BRepBuilderAPI_MakeEdge(segment, cylinder, 0.0, 6.0 * M_PI).Edge();
     auto wire = BRepBuilderAPI_MakeWire(helixEdge);
     // make infinite line to sweep
-    auto profile = NULL;;
+    auto profile = NULL;
     // sweep line to create face
-    auto face = GeomFill_Pipe();
-    auto a = BRepOffsetAPI_MakePipe();
+    //auto face = GeomFill_Pipe();
+    //auto a = BRepOffsetAPI_MakePipe();
+    auto face = TopoDS_Face();
 
     return face;
 }
@@ -251,19 +132,16 @@ void section(const TopTools_ListOfShape &objects,
   }
 }
 
-/**
- * @brief wires
- * @param s
- * @param f
- */
-void wires(const TopoDS_Shape &s, const TopoDS_Face &f) {
-  // TopoDS_Wire w;
-  // BRepTools_WireExplorer e;
-  // find all faces in solid
-  auto explore_faces = TopExp_Explorer{};
+// center and arrange models on the buildplate
+void arrange_objects(std::vector<Object> objects) {
+    // first, get all the 2D bounding boxes of the objects
+    for(auto o: objects) {
+        o.getFootprint();
+    }
+    // insert fancy packing algo
 
-  // find faces coincident with slicing plane
-  for (explore_faces.Init(s, TopAbs_FACE); explore_faces.More();
-       explore_faces.Next()) {
-  }
+    // move all objects to their new location
+    for(auto o: objects) {
+        o.translate(0,0,0);
+    }
 }

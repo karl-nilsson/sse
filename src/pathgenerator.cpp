@@ -1,4 +1,4 @@
-#include "pathgenerator.h"
+#include <sse/pathgenerator.hpp>
 
 PathGenerator::PathGenerator()
 {

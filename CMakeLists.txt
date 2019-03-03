@@ -1,12 +1,19 @@
-cmake_minimum_required(VERSION 3.8...3.13)
+cmake_minimum_required(VERSION 3.8...3.15)
 
 if(${CMAKE_VERSION} VERSION_LESS 3.12)
     cmake_policy(VERSION ${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR})
 endif()
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wextra")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+
 # project name
 project(stepslicerengine
-    VERSION 0.1
+    VERSION 0.0.0
     DESCRIPTION "Slicer Engine"
     LANGUAGES CXX)
 
@@ -15,48 +22,69 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
+enable_testing()
 
-
+# generate version info
 configure_file(
-    "${PROJECT_SOURCE_DIR}/include/version.h.in"
-    "${PROJECT_SOURCE_DIR}/include/version.h"
+    "${PROJECT_SOURCE_DIR}/src/version.hpp.in"
+    "${PROJECT_BINARY_DIR}/src/version.hpp"
+    @ONLY
 )
 
-# library
+# main library
 add_library(libsse
-    src/importer.cpp include/importer.h
-    src/pathgenerator.cpp include/pathgenerator.h
-    src/slice.cpp include/slice.h
+    src/Importer.cpp include/sse/Importer.hpp
+    src/pathgenerator.cpp include/sse/pathgenerator.hpp
+    src/slicer.cpp include/sse/slicer.hpp
+#    src/Slice.cpp include/sse/Slice.hpp
+    src/Object.cpp include/sse/Object.hpp
 )
 
+# use binary dir for private includes, because of generated files
 target_include_directories(libsse
     PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_BINARY_DIR}/src
 )
 
-target_compile_features(libsse PUBLIC cxx_std_17)
 # link filesystem TS
-target_link_libraries(libsse stdc++fs)
+# target_link_libraries(libsse stdc++fs)
+
+# include executable
+# add_subdirectory(apps)
 
 # add tests subdirectory
-add_subdirectory(test)
-set(CATCH_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extern/catch)
-add_library(Catch2::Catch IMPORTED INTERFACE)
-#set_property(Catch2::Catch PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${CATCH_INCLUDE_DIR}")
+add_subdirectory(extern)
+add_subdirectory(tests)
+
+include_directories($CMAKE_CURRENT_BINARY_DIR} extern/clipper)
+add_library(clipper STATIC extern/clipper/clipper.cpp)
+
+
 
 
 # search for OpenCASCADE
-find_package(OpenCASCADE 7.3.0 REQUIRED)
+find_package(OpenCASCADE REQUIRED)
 message(STATUS "OpenCASCADE v${OpenCASCADE_VERSION} found")
 include_directories(${OpenCASCADE_INCLUDE_DIR})
 # link OpenCASCADE libs
-target_link_libraries(libsse ${OpenCASCADE_USED_LIBS})
-message(STATUS "${OpenCASCADE_USED_LIBS}")
+# FIXME variable empty
+# target_link_libraries(libsse ${OpenCASCADE_USED_LIBS})
+# message(STATUS "OCCT libs: ${OpenCASCADE_USED_LIBS}")
+
+
+# now link all the libraries
+target_link_libraries(libsse
+    PUBLIC
+        stdc++fs
+        ${OpenCASCADE_USED_LIBS}
+        clipper
+)
+
 
 include(GNUInstallDirs)
 set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/)
@@ -67,7 +95,8 @@ install(TARGETS libsse
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-set_target_properties(libsse PROPERTIES EXPORT_NAME "")
+# FIXME possibly redundant
+set_target_properties(libsse PROPERTIES EXPORT_NAME libsse)
 
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
@@ -77,21 +106,34 @@ install(EXPORT libsse-targets
     NAMESPACE
         libsse::
     DESTINATION
-        ${INSTALL_CONFIGDIR}
+        ${CMAKE_INSTALL_LIBDIR}/cmake/libsse
 )
 
 # Create ConfigVersion.cmake
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
-    ${CMAKE_CURRENT_BINARY_DIR}/StepSlicerEngineConfigVersion.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/sseConfigVersion.cmake
     VERSION ${PACKAGE_VERSION}
     COMPATIBILITY AnyNewerVersion
 )
 
-configure_package_config_file(${CMAKE_CURRENT_LIST_DIR}/cmake/StepSlicerEngineConfig.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/StepSlicerEngineConfig.cmake
+configure_package_config_file(${CMAKE_CURRENT_LIST_DIR}/cmake/sseConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/sseConfig.cmake
     INSTALL_DESTINATION ${INSTALL_CONFIGDIR}
 )
 
-export(PACKAGE StepSlicerEngine)
+# install config, configversion, and find modules
+install(FILES
+    ${CMAKE_CURRENT_LIST_DIR}/cmake/Findsse.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/sseConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/sseConfigVersion.cmake
+    DESTINATION ${INSTALL_CONFIGDIR}
+)
 
+configure_file(${CMAKE_CURRENT_LIST_DIR}/cmake/Findsse.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/Findsse.cmake
+    COPYONLY)
+
+export(EXPORT libsse-targets FILE ${CMAKE_CURRENT_BINARY_DIR}/libsseTargets.cmake NAMESPACE sse::)
+
+export(PACKAGE StepSlicerEngine)
