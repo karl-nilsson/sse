@@ -61,10 +61,7 @@ target_include_directories(libsse
 add_subdirectory(extern)
 add_subdirectory(tests)
 
-include_directories($CMAKE_CURRENT_BINARY_DIR} extern/clipper)
-add_library(clipper STATIC extern/clipper/clipper.cpp)
-
-
+#add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/extern/clipper)
 
 
 # search for OpenCASCADE
@@ -82,7 +79,7 @@ target_link_libraries(libsse
     PUBLIC
         stdc++fs
         ${OpenCASCADE_USED_LIBS}
-        clipper
+#        clipper
 )
 
 
