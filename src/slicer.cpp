@@ -1,11 +1,6 @@
 #include <sse/slicer.hpp>
 
-
 namespace fs = std::filesystem;
-
-
-
-
 
 /**
  * @brief runTests
@@ -13,12 +8,13 @@ namespace fs = std::filesystem;
 void runTests() {
   auto testsDir = fs::path("res/tests/");
   if (!fs::exists(testsDir)) {
-    std::cerr << "Error, directory " << testsDir << " does not exist" << endl;
+    std::cerr << "Error, directory " << testsDir << " does not exist"
+              << std::endl;
     return;
   }
 
   for (auto &path : fs::recursive_directory_iterator(testsDir)) {
-    std::cout << "slicing file: " << path << endl;
+    std::cout << "slicing file: " << path << std::endl;
   }
 }
 
@@ -48,21 +44,23 @@ TopTools_ListOfShape makeTools(const double layerHeight,
  * @return
  */
 TopoDS_Face makeSpiralFace(const double height, const double layerheight) {
-    // make a unit cylinder, vertical axis, center @ (0,0), radius of 1
-    Handle_Geom_CylindricalSurface cylinder = new Geom_CylindricalSurface(gp::XOY(), 1.0);
-    auto line = gp_Lin2d(gp_Pnt2d(0.0, 0.0), gp_Dir2d(layerheight, 1.0));
-    Handle_Geom2d_TrimmedCurve segment = GCE2d_MakeSegment(line, 0.0, M_PI * 2.0);
-    // make the helixcal edge
-    auto helixEdge = BRepBuilderAPI_MakeEdge(segment, cylinder, 0.0, 6.0 * M_PI).Edge();
-    auto wire = BRepBuilderAPI_MakeWire(helixEdge);
-    // make infinite line to sweep
-    auto profile = NULL;
-    // sweep line to create face
-    //auto face = GeomFill_Pipe();
-    //auto a = BRepOffsetAPI_MakePipe();
-    auto face = TopoDS_Face();
+  // make a unit cylinder, vertical axis, center @ (0,0), radius of 1
+  Handle_Geom_CylindricalSurface cylinder =
+      new Geom_CylindricalSurface(gp::XOY(), 1.0);
+  auto line = gp_Lin2d(gp_Pnt2d(0.0, 0.0), gp_Dir2d(layerheight, 1.0));
+  Handle_Geom2d_TrimmedCurve segment = GCE2d_MakeSegment(line, 0.0, M_PI * 2.0);
+  // make the helixcal edge
+  auto helixEdge =
+      BRepBuilderAPI_MakeEdge(segment, cylinder, 0.0, 6.0 * M_PI).Edge();
+  auto wire = BRepBuilderAPI_MakeWire(helixEdge);
+  // make infinite line to sweep
+  auto profile = NULL;
+  // sweep line to create face
+  // auto face = GeomFill_Pipe();
+  // auto a = BRepOffsetAPI_MakePipe();
+  auto face = TopoDS_Face();
 
-    return face;
+  return face;
 }
 
 /**
@@ -70,11 +68,11 @@ TopoDS_Face makeSpiralFace(const double height, const double layerheight) {
  * @param result
  */
 void debug_results(const TopoDS_Shape &result) {
-  std::cout << TopAbs::ShapeTypeToString(result.ShapeType()) << endl;
+  std::cout << TopAbs::ShapeTypeToString(result.ShapeType()) << std::endl;
 
   auto it = TopoDS_Iterator(result);
   for (; it.More(); it.Next()) {
-    std::cout << TopAbs::ShapeTypeToString(it.Value().ShapeType()) << endl;
+    std::cout << TopAbs::ShapeTypeToString(it.Value().ShapeType()) << std::endl;
     it.Value().Location();
   }
 }
@@ -98,8 +96,8 @@ std::optional<TopoDS_Shape> splitter(const TopTools_ListOfShape &objects,
   splitter.Build();
   // check error status
   if (splitter.HasErrors()) {
-    cerr << "Error while splitting shape" << endl;
-    splitter.DumpErrors(cerr);
+    std::cerr << "Error while splitting shape" << std::endl;
+    splitter.DumpErrors(std::cerr);
     return std::nullopt;
   }
 
@@ -127,21 +125,16 @@ void section(const TopTools_ListOfShape &objects,
     // section object
     section.AddArgument(object);
     section.AddArgument(face);
-    //section.BuildSection();
+    // section.BuildSection();
     result = section.Generated(object);
   }
 }
 
 // center and arrange models on the buildplate
 void arrange_objects(std::vector<Object> objects) {
-    // first, get all the 2D bounding boxes of the objects
-    for(auto o: objects) {
-        o.getFootprint();
-    }
-    // insert fancy packing algo
-
-    // move all objects to their new location
-    for(auto o: objects) {
-        o.translate(0,0,0);
-    }
+  // TODO: use rectangle packing algo
+  // move all objects to their new location
+  for (auto o : objects) {
+    o.translate(0, 0, 0);
+  }
 }

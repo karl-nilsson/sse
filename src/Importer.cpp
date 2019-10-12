@@ -1,18 +1,14 @@
-#include <iostream>
+
 
 #include <sse/Importer.hpp>
-
-#include <IFSelect.hxx>
-#include <IFSelect_PrintCount.hxx>
-#include <STEPControl_Reader.hxx>
-#include <Standard.hxx>
 
 /**
  * @brief Importer::Importer
  */
 Importer::Importer() {}
 
-const std::optional<TopoDS_Shape> Importer::importSTEP(const Standard_CString &filename) {
+const std::optional<TopoDS_Shape>
+Importer::importSTEP(const Standard_CString &filename) {
 
   auto reader = STEPControl_Reader{};
   auto status = reader.ReadFile(filename);
@@ -37,14 +33,14 @@ const std::optional<TopoDS_Shape> Importer::importSTEP(const Standard_CString &f
   return shapes;
 }
 
-const IFSelect_ReturnStatus Importer::importIGES(const std::string &filename,
-                                           Handle(TopTools_HSequenceOfShape) &
-                                               shapes) {
+const IFSelect_ReturnStatus
+Importer::importIGES(const std::string &filename,
+                     Handle(TopTools_HSequenceOfShape) & shapes) {
   return IFSelect_RetVoid;
 }
 
-const IFSelect_ReturnStatus Importer::importMesh(const std::string &filename,
-                                           Handle(TopTools_HSequenceOfShape) &
-                                               shapes) {
+const IFSelect_ReturnStatus
+Importer::importMesh(const std::string &filename,
+                     Handle(TopTools_HSequenceOfShape) & shapes) {
   return IFSelect_RetVoid;
 }
