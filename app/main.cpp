@@ -6,6 +6,7 @@
 // #include <sse/version.hpp>
 #include <sse/Importer.hpp>
 #include <sse/Object.hpp>
+#include <sse/version.hpp>
 
 namespace fs = std::filesystem;
 using namespace std;
@@ -17,10 +18,11 @@ using namespace std;
  * @return
  */
 int main(int argc, char **argv) {
-    //  cout << "StepSlicerEngine " + VERSION + " build: " + GIT_SHA<< endl;
+
+    cout << "StepSlicerEngine " << VERSION << " build: " << endl;
 
     if (argc < 2) {
-        cerr << "Usage: " << argv[0] << "file1.step" << endl;
+        cerr << "Usage: " << argv[0] << " file1.step" << endl;
         return 1;
     }
 

@@ -19,13 +19,24 @@ project(stepslicerengine
     DESCRIPTION "Slicer Engine"
     LANGUAGES CXX)
 
+# settings
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
+# add custom cmake modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
+
+# search for OpenCASCADE
+# TODO: specify OCCT version
+find_package(OpenCASCADE REQUIRED)
+message(STATUS "OpenCASCADE v${OpenCASCADE_VERSION} found")
+# TODO: trim to only used libraries
+set(OpenCASCADE_USED_LIBS ${OpenCASCADE_LIBRARIES})
+
+# tests switch
 if(ENABLE_DOCTESTS)
     enable_testing()
     add_subdirectory(tests)
@@ -38,36 +49,32 @@ configure_file(
     @ONLY
 )
 
+# set source files
 set(SOURCES
-    src/Importer.cpp include/sse/Importer.hpp
-    src/pathgenerator.cpp include/sse/pathgenerator.hpp
-    src/slicer.cpp include/sse/slicer.hpp
-    src/Slice.cpp include/sse/Slice.hpp
-    src/Object.cpp include/sse/Object.hpp
-    include/sse/version.hpp
+    src/Importer.cpp
+    src/pathgenerator.cpp
+    src/slicer.cpp
+    src/Slice.cpp
+    src/Object.cpp
 )
 
 # main library
-add_library(libsse OBJECT ${SOURCES})
+add_library(libsse SHARED ${SOURCES})
+# alias
+add_library(libsse::libsse ALIAS libsse)
 
-# use binary dir for private includes, because of generated files
+# use binary dir for includes, because of generated files
 target_include_directories(libsse
     PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+        ${OpenCASCADE_INCLUDE_DIR}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# search for OpenCASCADE
-# TODO: specify OCCT version
-find_package(OpenCASCADE REQUIRED)
-message(STATUS "OpenCASCADE v${OpenCASCADE_VERSION} found")
-include_directories(${OpenCASCADE_INCLUDE_DIR})
 
-# TODO: trim to only used libraries
-set(OpenCASCADE_USED_LIBS ${OpenCASCADE_LIBRARIES})
 
 # link library dependencies
 target_link_libraries(libsse
@@ -78,14 +85,14 @@ target_link_libraries(libsse
     PRIVATE
 )
 
-# Set up executable
-add_executable(sse app/main.cpp)
-target_compile_features(sse PUBLIC cxx_std_17)
-target_link_libraries(sse PRIVATE libsse)
+# add executable
+add_subdirectory(app/)
+
 
 include(GNUInstallDirs)
 set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/)
 
+# targets
 install(TARGETS libsse
     EXPORT libsse-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -116,6 +123,7 @@ configure_package_config_file(${CMAKE_CURRENT_LIST_DIR}/cmake/sseConfig.cmake.in
     INSTALL_DESTINATION ${INSTALL_CONFIGDIR}
 )
 
+
 configure_file(${CMAKE_CURRENT_LIST_DIR}/cmake/Findsse.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/Findsse.cmake
     COPYONLY)
@@ -127,7 +135,5 @@ install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/sseConfigVersion.cmake
     DESTINATION ${INSTALL_CONFIGDIR}
 )
-
-
 
 export(PACKAGE StepSlicerEngine)
