@@ -1,9 +1,11 @@
-cmake_minimum_required(VERSION 3.8...3.15)
+cmake_minimum_required(VERSION 3.12)
 
-if(${CMAKE_VERSION} VERSION_LESS 3.12)
-    cmake_policy(VERSION ${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR})
-endif()
+# List of commandline options
+option(ENABLE_LTO "Enable link time optimization" ON)
+option(ENABLE_DOCTESTS "Include tests in the library" ON)
+option(ENABLE_DOCUMENTATION "Build documentation" ON)
 
+# require c++17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -18,70 +20,68 @@ project(stepslicerengine
     LANGUAGES CXX)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
-
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
-enable_testing()
+if(ENABLE_DOCTESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
 
 # generate version info
 configure_file(
-    "${PROJECT_SOURCE_DIR}/src/version.hpp.in"
-    "${PROJECT_BINARY_DIR}/src/version.hpp"
+    "${PROJECT_SOURCE_DIR}/include/sse/version.hpp.in"
+    "${PROJECT_BINARY_DIR}/include/sse/version.hpp"
     @ONLY
 )
 
-# main library
-add_library(libsse
+set(SOURCES
     src/Importer.cpp include/sse/Importer.hpp
     src/pathgenerator.cpp include/sse/pathgenerator.hpp
     src/slicer.cpp include/sse/slicer.hpp
-#    src/Slice.cpp include/sse/Slice.hpp
+    src/Slice.cpp include/sse/Slice.hpp
     src/Object.cpp include/sse/Object.hpp
+    include/sse/version.hpp
 )
+
+# main library
+add_library(libsse OBJECT ${SOURCES})
 
 # use binary dir for private includes, because of generated files
 target_include_directories(libsse
     PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     PRIVATE
-        ${CMAKE_CURRENT_BINARY_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# link filesystem TS
-# target_link_libraries(libsse stdc++fs)
-
-# include executable
-# add_subdirectory(apps)
-
-# add tests subdirectory
-add_subdirectory(extern)
-add_subdirectory(tests)
-
-#add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/extern/clipper)
-
-
 # search for OpenCASCADE
+# TODO: specify OCCT version
 find_package(OpenCASCADE REQUIRED)
 message(STATUS "OpenCASCADE v${OpenCASCADE_VERSION} found")
 include_directories(${OpenCASCADE_INCLUDE_DIR})
-# link OpenCASCADE libs
-# FIXME variable empty
-# target_link_libraries(libsse ${OpenCASCADE_USED_LIBS})
-# message(STATUS "OCCT libs: ${OpenCASCADE_USED_LIBS}")
 
+# TODO: trim to only used libraries
+set(OpenCASCADE_USED_LIBS ${OpenCASCADE_LIBRARIES})
 
-# now link all the libraries
+# link library dependencies
 target_link_libraries(libsse
     PUBLIC
         stdc++fs
-        ${OpenCASCADE_USED_LIBS}
+        ${OpenCASCADE_LIBRARIES}
 #        clipper
+    PRIVATE
 )
 
+# Set up executable
+add_executable(sse app/main.cpp)
+target_compile_features(sse PUBLIC cxx_std_17)
+target_link_libraries(sse PRIVATE libsse)
 
 include(GNUInstallDirs)
 set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/)
@@ -91,9 +91,6 @@ install(TARGETS libsse
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
-
-# FIXME possibly redundant
-set_target_properties(libsse PROPERTIES EXPORT_NAME libsse)
 
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
@@ -119,6 +116,10 @@ configure_package_config_file(${CMAKE_CURRENT_LIST_DIR}/cmake/sseConfig.cmake.in
     INSTALL_DESTINATION ${INSTALL_CONFIGDIR}
 )
 
+configure_file(${CMAKE_CURRENT_LIST_DIR}/cmake/Findsse.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/Findsse.cmake
+    COPYONLY)
+
 # install config, configversion, and find modules
 install(FILES
     ${CMAKE_CURRENT_LIST_DIR}/cmake/Findsse.cmake
@@ -127,10 +128,6 @@ install(FILES
     DESTINATION ${INSTALL_CONFIGDIR}
 )
 
-configure_file(${CMAKE_CURRENT_LIST_DIR}/cmake/Findsse.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/Findsse.cmake
-    COPYONLY)
 
-export(EXPORT libsse-targets FILE ${CMAKE_CURRENT_BINARY_DIR}/libsseTargets.cmake NAMESPACE sse::)
 
 export(PACKAGE StepSlicerEngine)

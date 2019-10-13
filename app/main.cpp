@@ -1,11 +1,9 @@
 #include <iostream>
-
 #include <filesystem>
 #include <vector>
 #include <algorithm>
 
-
-//#include <sse/version.hpp>
+// #include <sse/version.hpp>
 #include <sse/Importer.hpp>
 #include <sse/Object.hpp>
 
@@ -28,7 +26,7 @@ int main(int argc, char **argv) {
 
     auto imp = Importer{};
 
-    auto objects = vector<int>();
+    auto objects = vector<TopoDS_Shape>();
     //vector<sse::Object>();
 
     for (int i = 1; i < argc; i++) {
@@ -40,11 +38,11 @@ int main(int argc, char **argv) {
             continue;
         }
         // import the object, then add it to the list
-        auto return = imp.importSTEP(argv[i]));
-        if(return == std::nullopt){
+        auto v = imp.importSTEP(argv[i]);
+        if(v == std::nullopt){
             cerr << "Error processing file " << argv[i] << endl;
         } else {
-            objects.push_back(imp.importSTEP(argv[i]));
+            objects.push_back(v.value());
         }
     }
 

@@ -20,7 +20,6 @@ public:
   const std::optional<TopoDS_Shape>
   importSTEP(const Standard_CString &filename);
 
-
   const IFSelect_ReturnStatus importIGES(const std::string &filename,
                                          Handle(TopTools_HSequenceOfShape) &
                                              shapes);

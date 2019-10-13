@@ -10,7 +10,7 @@ Importer::Importer() {}
 const std::optional<TopoDS_Shape>
 Importer::importSTEP(const Standard_CString &filename) {
 
-  auto reader = STEPControl_Reader{};
+  auto reader = STEPControl_Reader();
   auto status = reader.ReadFile(filename);
   // return error
   if (status != IFSelect_RetDone) {

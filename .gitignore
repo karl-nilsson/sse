@@ -39,6 +39,19 @@ Thumbs.db
 # qtcreator generated files
 *.pro.user*
 
+# Qt unit tests
+target_wrapper.*
+
+# QtCreator
+*.autosave
+
+# QtCreator Qml
+*.qmlproject.user
+*.qmlproject.user.*
+
+# QtCreator CMake
+CMakeLists.txt.user*
+
 # xemacs temporary files
 *.flc
 

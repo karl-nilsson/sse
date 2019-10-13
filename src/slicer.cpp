@@ -32,7 +32,7 @@ TopTools_ListOfShape makeTools(const double layerHeight,
     // create an unbounded plane, parallel to the xy plane, then convert it to a
     // face
     result.Append(BRepBuilderAPI_MakeFace(
-        gp_Pln(gp_Pnt(0, 0, i * layerHeight), gp_Dir(0, 0, 1))));
+        gp_Pln(gp_Pnt(0, 0, i * layerHeight), gp::DZ())));
   }
   return result;
 }
