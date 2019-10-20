@@ -1,21 +1,43 @@
 #include <sse/slicer.hpp>
 
-namespace fs = std::filesystem;
+void init() {
+  int debug = 3;
+  spdlog::level_t loglevel;
 
-/**
- * @brief runTests
- */
-void runTests() {
-  auto testsDir = fs::path("res/tests/");
-  if (!fs::exists(testsDir)) {
-    std::cerr << "Error, directory " << testsDir << " does not exist"
-              << std::endl;
-    return;
+  auto console = spdlog::stderr_color_mt("console");
+  auto error_logger = spdlog::stderr_color_mt("stderr");
+  spdlog::set_default_logger(console);
+
+  switch (debug) {
+  case 0:
+    loglevel = spdlog::level::off;
+    break;
+  case 1:
+    loglevel = spdlog::level::critical;
+    break;
+  case 2:
+    loglevel = spdlog::level::err;
+    break;
+  case 3:
+    loglevel = spdlog::level::warn;
+    break;
+  case 4:
+    loglevel = spdlog::level::info;
+    break;
+  case 5:
+    loglevel = spdlog::level::debug;
+    break;
+  default:
+    loglevel = spdlog::level::info;
+    break;
   }
 
-  for (auto &path : fs::recursive_directory_iterator(testsDir)) {
-    std::cout << "slicing file: " << path << std::endl;
-  }
+  spdlog::set_level(spdlog::level::debug);
+
+  console->info("info");
+  console->warn("warning");
+  console->error("error");
+  spdlog::info("test");
 }
 
 /**
@@ -61,6 +83,19 @@ TopoDS_Face makeSpiralFace(const double height, const double layerheight) {
   auto face = TopoDS_Face();
 
   return face;
+}
+
+void makeSlices(TopoDS_Shape slices) {
+  // slices is a TopoDS compound, so we have to iterate over it
+  auto it = TopoDS_Iterator(slices);
+  for (; it.More(); it.Next()) {
+    const auto child = it.Value();
+  }
+}
+
+void precessSlice(TopoDS_Shape s) {
+  // figure out which faces are coincident and parallel to the slicing plane,
+  // then add to the slice compare normals, then check if point intersects
 }
 
 /**

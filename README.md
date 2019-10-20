@@ -1,10 +1,8 @@
 # STEP Slicer Engine
-
-## Introduction
-STEP Slicer Engine is an experimental 3D model slicer engine, built on top of a fully-featured CAD kernel
+An experimental 3D model slicer engine, built on top of a CAD kernel
 
 ## Why?
-* No more loss of precision from CAD → STL conversion
+* No loss of precision from CAD → STL conversion
 * Retain model metadata (units, precision, color)
 * Non-planar slicing
 * Support for more advanced Gcode words and macros
@@ -16,6 +14,7 @@ STEP Slicer Engine is an experimental 3D model slicer engine, built on top of a 
 
 ## Dependencies
 * [OpenCasCade](https://www.opencascade.com/)
+* [spdlog](https://github.com/gabime/spdlog)
 
 ## Supported CNC software:
 * [LinuxCNC](http://linuxcnc.org/)

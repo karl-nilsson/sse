@@ -1,8 +1,0 @@
-get_filename_component(libsse_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
-include(CMakeFindDependencyMacro)
-
-list(APPEND CMAKE_MODULE_PATH ${libsse_CMAKE_DIR})
-
-
-
-set(libsse_LIBRARIES libsse:libsse)

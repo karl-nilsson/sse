@@ -12,6 +12,8 @@ Importer::importSTEP(const Standard_CString &filename) {
 
   auto reader = STEPControl_Reader();
   auto status = reader.ReadFile(filename);
+  // debug info
+  reader.PrintCheckLoad(false, IFSelect_ListByItem);
   // return error
   if (status != IFSelect_RetDone) {
     return std::nullopt;

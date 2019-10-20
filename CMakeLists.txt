@@ -36,12 +36,6 @@ message(STATUS "OpenCASCADE v${OpenCASCADE_VERSION} found")
 # TODO: trim to only used libraries
 set(OpenCASCADE_USED_LIBS ${OpenCASCADE_LIBRARIES})
 
-# tests switch
-if(ENABLE_DOCTESTS)
-    enable_testing()
-    add_subdirectory(tests)
-endif()
-
 # generate version info
 configure_file(
     "${PROJECT_SOURCE_DIR}/include/sse/version.hpp.in"
@@ -62,16 +56,20 @@ set(SOURCES
 add_library(libsse SHARED ${SOURCES})
 # alias
 add_library(libsse::libsse ALIAS libsse)
+# prevent liblibsse.so
+set_target_properties(libsse PROPERTIES OUTPUT_NAME "sse")
 
 # use binary dir for includes, because of generated files
 target_include_directories(libsse
     PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        # TODO: fix this
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
         ${OpenCASCADE_INCLUDE_DIR}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/extern/spdlog
 )
 
 
@@ -85,55 +83,74 @@ target_link_libraries(libsse
     PRIVATE
 )
 
-# add executable
-add_subdirectory(app/)
 
 
 include(GNUInstallDirs)
-set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/)
+set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/libsse)
 
 # targets
-install(TARGETS libsse
+install(
+    TARGETS libsse
     EXPORT libsse-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-
-install(EXPORT libsse-targets
-    FILE
-        libsseTargets.cmake
-    NAMESPACE
-        libsse::
-    DESTINATION
-        ${CMAKE_INSTALL_LIBDIR}/cmake/libsse
+# install headers
+install(
+    DIRECTORY include/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-# Create ConfigVersion.cmake
+# export targets to a script
+install(
+    EXPORT libsse-targets
+    FILE libsseTargets.cmake
+    NAMESPACE libsse::
+    DESTINATION ${INSTALL_CONFIGDIR}
+)
+
+# Create libsseConfigVersion.cmake
 include(CMakePackageConfigHelpers)
+
 write_basic_package_version_file(
-    ${CMAKE_CURRENT_BINARY_DIR}/sseConfigVersion.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/libsseConfigVersion.cmake
     VERSION ${PACKAGE_VERSION}
     COMPATIBILITY AnyNewerVersion
 )
 
-configure_package_config_file(${CMAKE_CURRENT_LIST_DIR}/cmake/sseConfig.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/sseConfig.cmake
+# generate libsseConfig.cmake
+configure_package_config_file(
+    ${CMAKE_CURRENT_LIST_DIR}/cmake/libsseConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/libsseConfig.cmake
     INSTALL_DESTINATION ${INSTALL_CONFIGDIR}
 )
 
-
-configure_file(${CMAKE_CURRENT_LIST_DIR}/cmake/Findsse.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/Findsse.cmake
-    COPYONLY)
-
-# install config, configversion, and find modules
-install(FILES
-    ${CMAKE_CURRENT_LIST_DIR}/cmake/Findsse.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/sseConfig.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/sseConfigVersion.cmake
-    DESTINATION ${INSTALL_CONFIGDIR}
+# install config and configversion
+install(
+    FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/libsseConfig.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/libsseConfigVersion.cmake
+    DESTINATION
+        ${INSTALL_CONFIGDIR}
 )
 
-export(PACKAGE StepSlicerEngine)
+# exporting from build tree
+export(
+    EXPORT libsse-targets
+    FILE ${CMAKE_CURRENT_BINARY_DIR}/libsseTargets.cmake
+    NAMESPACE libsse::
+)
+
+export(PACKAGE libsse)
+
+
+# tests switch
+if(ENABLE_DOCTESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
+
+# add executable
+add_subdirectory(app/)

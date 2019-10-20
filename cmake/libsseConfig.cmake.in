@@ -1,0 +1,12 @@
+@PACKAGE_INIT@
+
+get_filename_component(libsse_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" DIRECTORY)
+include(CMakeFindDependencyMacro)
+
+find_dependency(OpenCASCADE REQUIRED)
+
+if(NOT TARGET libsse::libsse)
+    include("${libsse_CMAKE_DIR}/libsseTargets.cmake")
+endif()
+
+set(libsse_LIBRARIES libsse::libsse)

@@ -37,7 +37,6 @@
 #include <BRepOffsetAPI_MakePipe.hxx>
 #include <BRepTools_WireExplorer.hxx>
 
-#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -50,7 +49,11 @@
 #include <sse/version.hpp>
 #include <sse/Object.hpp>
 
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
 
+
+void init();
 
 void slice(const TopTools_ListOfShape &objects);
 TopTools_ListOfShape makeTools(const double layerHeight,
