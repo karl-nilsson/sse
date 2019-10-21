@@ -36,6 +36,9 @@ message(STATUS "OpenCASCADE v${OpenCASCADE_VERSION} found")
 # TODO: trim to only used libraries
 set(OpenCASCADE_USED_LIBS ${OpenCASCADE_LIBRARIES})
 
+# search for OpenMP
+find_package(OpenMP)
+
 # generate version info
 configure_file(
     "${PROJECT_SOURCE_DIR}/include/sse/version.hpp.in"
@@ -50,6 +53,7 @@ set(SOURCES
     src/slicer.cpp
     src/Slice.cpp
     src/Object.cpp
+    src/Settings.cpp
 )
 
 # main library
@@ -70,6 +74,7 @@ target_include_directories(libsse
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${PROJECT_SOURCE_DIR}/extern/spdlog
+        ${PROJECT_SOURCE_DIR}/extern/cpptoml
 )
 
 
@@ -79,8 +84,12 @@ target_link_libraries(libsse
     PUBLIC
         stdc++fs
         ${OpenCASCADE_LIBRARIES}
+        OpenMP::OpenMP_CXX
 #        clipper
     PRIVATE
+#        spdlog::spdlog_header_only
+        spdlog
+        cpptoml
 )
 
 

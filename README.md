@@ -13,8 +13,8 @@ An experimental 3D model slicer engine, built on top of a CAD kernel
 * FEM simulation
 
 ## Dependencies
-* [OpenCasCade](https://www.opencascade.com/)
-* [spdlog](https://github.com/gabime/spdlog)
+* [OpenCasCade](https://www.opencascade.com/) > 7.3.0
+* [OpenMP](https://www.openmp.org/)
 
 ## Supported CNC software:
 * [LinuxCNC](http://linuxcnc.org/)

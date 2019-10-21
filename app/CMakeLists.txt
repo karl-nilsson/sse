@@ -9,8 +9,6 @@ target_include_directories(sse
         ${PROJECT_SOURCE_DIR}/extern/cxxopts
 )
 
-message(STATUS "dir ${PROJECT_SOURCE_DIR}")
-
 # link to engine library
 target_link_libraries(sse
     PRIVATE

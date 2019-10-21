@@ -1,6 +1,6 @@
 #include <sse/slicer.hpp>
 
-void init() {
+void init_log() {
   int debug = 3;
   spdlog::level_t loglevel;
 
@@ -46,7 +46,7 @@ void init() {
  * @param objectHeight
  * @return A list of tools (planar faces) to slice an object
  */
-TopTools_ListOfShape makeTools(const double layerHeight,
+TopTools_ListOfShape make_tools(const double layerHeight,
                                const double objectHeight) {
   auto result = TopTools_ListOfShape{};
 
@@ -65,7 +65,7 @@ TopTools_ListOfShape makeTools(const double layerHeight,
  * @param radius
  * @return
  */
-TopoDS_Face makeSpiralFace(const double height, const double layerheight) {
+TopoDS_Face make_spiral_face(const double height, const double layerheight) {
   // make a unit cylinder, vertical axis, center @ (0,0), radius of 1
   Handle_Geom_CylindricalSurface cylinder =
       new Geom_CylindricalSurface(gp::XOY(), 1.0);
@@ -85,7 +85,7 @@ TopoDS_Face makeSpiralFace(const double height, const double layerheight) {
   return face;
 }
 
-void makeSlices(TopoDS_Shape slices) {
+void make_slices(TopoDS_Shape slices) {
   // slices is a TopoDS compound, so we have to iterate over it
   auto it = TopoDS_Iterator(slices);
   for (; it.More(); it.Next()) {
@@ -93,9 +93,30 @@ void makeSlices(TopoDS_Shape slices) {
   }
 }
 
-void precessSlice(TopoDS_Shape s) {
-  // figure out which faces are coincident and parallel to the slicing plane,
-  // then add to the slice compare normals, then check if point intersects
+/**
+ * @brief process_slice
+ * @param s
+ * @return all faces parallel and coincident with the slicing plane
+ */
+std::vector<TopoDS_Face> process_slice(TopoDS_Shape s, double z) {
+  auto faces = std::vector<TopoDS_Face>();
+
+  // search the slice for faces parallel and coincident with slicing plane
+  for (TopExp_Explorer exp(s, TopAbs_FACE); exp.More(); exp.Next()) {
+    auto f = TopoDS::Face(exp.Value());
+    Standard_Real umin, umax, vmin, vmax;
+    BRepTools::UVBounds(f, umin, umax, vmin, vmax);
+    // TODO: choose better U,V values
+    auto props = GeomLProp_SLProps(BRep_Tool::Surface(f), (umin+umax)/2, (vmin+vmax)/2, 1, 0.1);
+
+    // if normal isn't the same as slicing plane, short-circuit
+    if (gp::DZ().IsEqual(props.Normal(), 0.01) && fabs(props.Value().Z() - z) < pow(10, -6) ) {
+      // add face to the list of faces for the slice
+      faces.push_back(f);
+    }
+  }
+
+  return faces;
 }
 
 /**

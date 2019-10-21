@@ -9,5 +9,5 @@ Features:
 
 Refinement:
 - Performance analysis: OSD_PerfMeter
-- GCode patterns
-
+- GCode pattern words
+- Eval/use OCCT OCAF

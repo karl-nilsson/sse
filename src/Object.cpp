@@ -30,20 +30,20 @@ void Object::generate_bounds() {
 }
 
 /**
- * @brief Object::layFlat
+ * @brief Object::layFlat rotate and translate object so that one face is flat on the buildplate
  * @param face
  */
-void Object::layFlat(const TopoDS_Face &face) {
+void Object::lay_flat(const TopoDS_Face &face) {
   // get the u,v bounds of selected surface
   Standard_Real umin, umax, vmin, vmax;
   BRepTools::UVBounds(face, umin, umax, vmin, vmax);
   // get the normal of the selected face at (u,v)
-  // TODO: select the correct parameters (u,v), currently chooses the "average"
-  // parameters
+  // TODO: select the correct parameters (u,v)
+  // currently chooses the "average" parameters
   auto props = GeomLProp_SLProps(BRep_Tool::Surface(face), (umin + umax) / 2,
                                  (vmin + vmax) / 2, 1, 0.1);
   auto normal = props.Normal();
-  // get the coordinate
+  // get the coordinate of the face at (u,v)
   auto point = props.Value();
   // if the face was reversed, reverse the normal
   // TODO: this may be unnecessary
@@ -55,9 +55,15 @@ void Object::layFlat(const TopoDS_Face &face) {
   if (!normal.IsEqual(gp::DZ(), 0.0001)) {
     // the axis of rotation is the cross product of the two vectors
     auto axis = normal.Crossed(gp::DZ());
-    // TODO: verify angle calc correctness
-    // TODO: don't use origin
-    rotate(gp_Ax1(gp::Origin(), axis), normal.Angle(gp::DZ()));
+
+    auto min = bounding_box.CornerMin();
+    auto max = bounding_box.CornerMax();
+    // TODO: verify center point is correct/good idea
+    rotate(gp_Ax1(gp_Pnt((min.X() + max.X()) / 2, (min.Y() + max.Y()) / 2,
+                         (min.Z() + max.Z()) / 2),
+                  axis),
+     // TODO: verify angle calc correctness
+           normal.Angle(gp::DZ()));
 
     // if rotation happened, recalculate coordinate
     // TODO: make more elegant

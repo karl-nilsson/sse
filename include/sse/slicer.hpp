@@ -36,6 +36,8 @@
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepOffsetAPI_MakePipe.hxx>
 #include <BRepTools_WireExplorer.hxx>
+#include <BRepTools.hxx>
+#include <BRep_Tool.hxx>
 
 #include <fstream>
 #include <iostream>
@@ -53,11 +55,20 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 
 
-void init();
+void init_log();
+
+TopTools_ListOfShape make_tools(const double layerHeight, const double objectHeight);
+
+std::vector<TopoDS_Face> process_slice(TopoDS_Shape s, double z);
+
+std::optional<TopoDS_Shape> splitter(const TopTools_ListOfShape &objects,
+                                     const TopTools_ListOfShape &tools);
 
 void slice(const TopTools_ListOfShape &objects);
 TopTools_ListOfShape makeTools(const double layerHeight,
                                const double objectHeight);
+
+
 void debug_results(const TopoDS_Shape &result);
 std::optional<TopoDS_Shape> splitter(const TopTools_ListOfShape &objects,
                                      const TopTools_ListOfShape &tools);
