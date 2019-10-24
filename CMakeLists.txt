@@ -44,7 +44,7 @@ configure_file(
     "${PROJECT_SOURCE_DIR}/include/sse/version.hpp.in"
     "${PROJECT_BINARY_DIR}/include/sse/version.hpp"
     @ONLY
-)
+    )
 
 # set source files
 set(SOURCES
@@ -54,6 +54,7 @@ set(SOURCES
     src/Slice.cpp
     src/Object.cpp
     src/Settings.cpp
+#    src/SVGWriter.cpp
 )
 
 # main library
@@ -73,8 +74,10 @@ target_include_directories(libsse
         ${OpenCASCADE_INCLUDE_DIR}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+
         ${PROJECT_SOURCE_DIR}/extern/spdlog
-        ${PROJECT_SOURCE_DIR}/extern/cpptoml
+        ${PROJECT_SOURCE_DIR}/extern/toml11
+        ${PROJECT_SOURCE_DIR}/extern/simple-svg
 )
 
 
@@ -87,9 +90,6 @@ target_link_libraries(libsse
         OpenMP::OpenMP_CXX
 #        clipper
     PRIVATE
-#        spdlog::spdlog_header_only
-        spdlog
-        cpptoml
 )
 
 

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <BRepBndLib.hxx>
 #include <BRepBuilderAPI.hxx>
 #include <BRepBuilderAPI_GTransform.hxx>
@@ -20,6 +22,8 @@
 #include <StdFail_NotDone.hxx>
 
 #include <math.h>
+
+#include <spdlog/spdlog.h>
 
 class Object {
 

@@ -1,10 +1,13 @@
-#ifndef SETTINGS_HPP
-#define SETTINGS_HPP
+#pragma once
 
-#include "cpptoml.h"
+#include <toml.hpp>
 
 #include <filesystem>
 #include <iostream>
+#include <vector>
+#include <map>
+
+#include <spdlog/spdlog.h>
 
 namespace fs = std::filesystem;
 
@@ -17,4 +20,3 @@ public:
 private:
 };
 
-#endif // SETTINGS_HPP

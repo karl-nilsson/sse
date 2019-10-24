@@ -1,0 +1,25 @@
+[printer]
+name = "Example printer"
+num_axes = 3
+num_extruders = 1
+
+
+[printer.build_plate]
+shape = "Rectangle"
+size = 100
+height = 100
+
+[printer.axis_1]
+rapid_speed = 120
+max_travel = 100
+
+[printer.extruder_1]
+nozzle_diameter = 0.4
+extrusion_speed = 60
+extrusion_multiplier = 1
+
+retraction_distance = 0.0
+retraction_speed = 0.0
+
+
+

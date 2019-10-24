@@ -3,10 +3,11 @@
 
 Settings::Settings(fs::path file) {
   if(! fs::exists(file)) {
-      std::cerr << "Error, config file " << file << " does not exist" << std::endl;
+      spdlog::error("Error, config file " + file.string() + " does not exist");
       return;
     }
 
-  // auto config = cpptoml::parse_file(file);
+  spdlog::debug("Reading config file: " + file.string());
+  auto config = toml::parse(file);
 
 }

@@ -2,7 +2,7 @@
 
 void init_log() {
   int debug = 3;
-  spdlog::level_t loglevel;
+  auto loglevel = spdlog::level::info;
 
   auto console = spdlog::stderr_color_mt("console");
   auto error_logger = spdlog::stderr_color_mt("stderr");
@@ -32,11 +32,8 @@ void init_log() {
     break;
   }
 
-  spdlog::set_level(spdlog::level::debug);
+  spdlog::set_level(loglevel);
 
-  console->info("info");
-  console->warn("warning");
-  console->error("error");
   spdlog::info("test");
 }
 

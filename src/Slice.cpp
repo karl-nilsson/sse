@@ -5,6 +5,7 @@
  * @param _faces
  */
 Slice::Slice(std::vector<TopoDS_Face> faces) {
+  spdlog::debug("Initializing slice");
 
   wires_map = std::map<TopoDS_Face, std::vector<TopoDS_Wire>>();
 

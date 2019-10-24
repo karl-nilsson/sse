@@ -5,6 +5,7 @@
  * @param s
  */
 Object::Object(TopoDS_Shape s) {
+  spdlog::info("Initializing object with shape");
   this->shape = s;
   // calculate the bounding box
   this->bounding_box = Bnd_Box();
@@ -16,10 +17,13 @@ Object::Object(TopoDS_Shape s) {
  * @brief Object::generate_bounds
  */
 void Object::generate_bounds() {
+  spdlog::info("generating bounding box");
   // clear bounding box
   this->bounding_box.SetVoid();
   // create bounding box
   BRepBndLib::Add(this->shape, this->bounding_box);
+
+  spdlog::info("generating footprint");
   // clear footprint
   this->footprint.SetVoid();
   // TODO: simplify
@@ -34,6 +38,7 @@ void Object::generate_bounds() {
  * @param face
  */
 void Object::lay_flat(const TopoDS_Face &face) {
+  spdlog::info("laying object flat");
   // get the u,v bounds of selected surface
   Standard_Real umin, umax, vmin, vmax;
   BRepTools::UVBounds(face, umin, umax, vmin, vmax);
@@ -43,6 +48,7 @@ void Object::lay_flat(const TopoDS_Face &face) {
   auto props = GeomLProp_SLProps(BRep_Tool::Surface(face), (umin + umax) / 2,
                                  (vmin + vmax) / 2, 1, 0.1);
   auto normal = props.Normal();
+  spdlog::debug("Face normal: ");
   // get the coordinate of the face at (u,v)
   auto point = props.Value();
   // if the face was reversed, reverse the normal
@@ -58,11 +64,13 @@ void Object::lay_flat(const TopoDS_Face &face) {
 
     auto min = bounding_box.CornerMin();
     auto max = bounding_box.CornerMax();
+    spdlog::debug("Axis: ");
+    spdlog::debug("Angle: ");
     // TODO: verify center point is correct/good idea
+    // TODO: verify angle calc correctness
     rotate(gp_Ax1(gp_Pnt((min.X() + max.X()) / 2, (min.Y() + max.Y()) / 2,
                          (min.Z() + max.Z()) / 2),
                   axis),
-     // TODO: verify angle calc correctness
            normal.Angle(gp::DZ()));
 
     // if rotation happened, recalculate coordinate
@@ -77,6 +85,7 @@ void Object::lay_flat(const TopoDS_Face &face) {
 }
 
 void Object::mirror() {
+  spdlog::debug("Mirror: ");
   auto transform = gp_Trsf();
   // TODO: choose mirror point other that origin
   transform.SetMirror(gp::Origin());
@@ -90,6 +99,7 @@ void Object::mirror() {
  * @param angle angle of rotation, in degrees
  */
 void Object::rotate(const gp_Ax1 axis, const double angle) {
+  spdlog::debug("Rotating object");
   auto transform = gp_Trsf();
   transform.SetRotation(axis, angle * M_PI / 180);
   try {
@@ -113,6 +123,7 @@ void Object::rotateZ(const double angle) { this->rotate(gp::OZ(), angle); }
  * @param z
  */
 void Object::translate(const double x, const double y, const double z) {
+  spdlog::debug("Translating: ");
   auto transform = gp_Trsf();
   transform.SetTranslation(gp_Vec(x, y, z));
   try {
@@ -129,6 +140,7 @@ void Object::translate(const double x, const double y, const double z) {
  * @param z
  */
 void Object::scale(const double x, const double y, const double z) {
+  spdlog::debug("Scaling: ");
   // TODO: get working
   auto v = gp_Vec(x, y, z);
   auto scale = gp_Trsf();
