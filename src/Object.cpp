@@ -84,13 +84,27 @@ void Object::lay_flat(const TopoDS_Face &face) {
   translate(0, 0, -1 * point.Z());
 }
 
-void Object::mirror() {
+/**
+ * @brief Object::center_point
+ * @return
+ */
+const gp_Pnt Object::center_point() {
+  auto min = bounding_box.CornerMin();
+  auto max = bounding_box.CornerMax();
+  return gp_Pnt((min.X() + max.X()) / 2, (min.Y() + max.Y()) /2, (min.Z() + max.Z())/2);
+}
+
+/**
+ * @brief Object::mirror
+ * @param mirror_plane
+ * TODO: double-check result
+ */
+void Object::mirror(gp_Ax2 mirror_plane) {
   spdlog::debug("Mirror: ");
   auto transform = gp_Trsf();
-  // TODO: choose mirror point other that origin
-  transform.SetMirror(gp::Origin());
+  transform.SetMirror(mirror_plane);
   auto s = BRepBuilderAPI_Transform(this->shape, transform);
-  s.Shape();
+  this->shape = s.Shape();
 }
 
 /**
@@ -144,7 +158,7 @@ void Object::scale(const double x, const double y, const double z) {
   // TODO: get working
   auto v = gp_Vec(x, y, z);
   auto scale = gp_Trsf();
-  scale.SetScale(gp::Origin(), x);
+  scale.SetScale(center_point(), x);
   auto s = BRepBuilderAPI_Transform(this->shape, scale);
   s.Shape();
 }

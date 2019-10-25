@@ -50,12 +50,15 @@
 #include <sse/Slice.hpp>
 #include <sse/version.hpp>
 #include <sse/Object.hpp>
+#include <sse/Settings.hpp>
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 
 void init_log();
+
+void init_settings(fs::path configfile);
 
 TopTools_ListOfShape make_tools(const double layerHeight, const double objectHeight);
 

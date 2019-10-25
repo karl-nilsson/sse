@@ -7,6 +7,8 @@
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Wire.hxx>
+#include <TCollection.hxx>
+#include <TCollection_AsciiString.hxx>
 
 #include <BRepTools.hxx>
 #include <BRepTools_WireExplorer.hxx>
@@ -16,6 +18,9 @@
 #include <unordered_map>
 
 #include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_sinks.h>
+#include <spdlog/fmt/ostr.h>
+
 
 class Slice {
 
@@ -30,3 +35,14 @@ private:
   std::map<TopoDS_Face,std::vector<TopoDS_Wire>> wires_map;
   TopTools_IndexedMapOfShape wires;
 };
+
+/**
+ * @brief operator <<
+ * @param os
+ * @param c
+ * @return
+ *
+std::ostream& operator<<(std::ostream& os, const Slice& c) {
+  return os << "testing";
+}
+*/

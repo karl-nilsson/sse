@@ -5,7 +5,7 @@ num_extruders = 1
 
 
 [printer.build_plate]
-shape = "Rectangle"
+is_circle = false
 size = 100
 height = 100
 

@@ -6,6 +6,7 @@
 #include <sse/Importer.hpp>
 #include <sse/slicer.hpp>
 #include <sse/version.hpp>
+#include <sse/Object.hpp>
 
 #include <cxxopts.hpp>
 
@@ -106,7 +107,7 @@ int main(int argc, char **argv) {
 
   auto imp = Importer{};
 
-  auto objects = vector<TopoDS_Shape>();
+  auto objects = vector<Object>();
 
   for (const auto &f : files) {
     cout << "Loading file: " << f << endl;
@@ -120,7 +121,7 @@ int main(int argc, char **argv) {
     if (v == std::nullopt) {
       cerr << "Error processing file " << f << endl;
     } else {
-      objects.push_back(v.value());
+      objects.push_back(Object(v.value()));
     }
   }
 

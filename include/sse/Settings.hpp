@@ -1,22 +1,33 @@
 #pragma once
 
-#include <toml.hpp>
-
 #include <filesystem>
 #include <iostream>
 #include <vector>
 #include <map>
 
+// #include <toml.hpp>
+
 #include <spdlog/spdlog.h>
 
 namespace fs = std::filesystem;
 
+/**
+ * @brief The Settings class
+ * Singleton
+ */
 class Settings {
 
 public:
-    Settings();
-    Settings(fs::path file);
-    void export_settings();
+    void read_file(fs::path file);
+
+    static Settings& getInstance() {
+      static Settings instance;
+      return instance;
+    }
+
+    Settings(Settings const&) = delete;
+    void operator=(Settings const&) = delete;
 private:
+    Settings() {}
 };
 

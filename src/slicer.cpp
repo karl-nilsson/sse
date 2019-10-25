@@ -34,7 +34,13 @@ void init_log() {
 
   spdlog::set_level(loglevel);
 
-  spdlog::info("test");
+  spdlog::info("Logger initialized");
+}
+
+void init_settings(fs::path configfile) {
+  auto &s = Settings::getInstance();
+  s.read_file(configfile);
+
 }
 
 /**
@@ -45,6 +51,7 @@ void init_log() {
  */
 TopTools_ListOfShape make_tools(const double layerHeight,
                                const double objectHeight) {
+  spdlog::info("Creating splitter tools");
   auto result = TopTools_ListOfShape{};
 
   for (auto i = 0; i < objectHeight / layerHeight; ++i) {
@@ -81,6 +88,37 @@ TopoDS_Face make_spiral_face(const double height, const double layerheight) {
 
   return face;
 }
+
+/**
+ * @brief splitter Use the splitter algorithm to split a solid into slices
+ * @param objects
+ * @param tools
+ * @return the list of shapes, or std::nullopt if failure
+ */
+std::optional<TopoDS_Shape> splitter(const TopTools_ListOfShape &objects,
+                                     const TopTools_ListOfShape &tools) {
+  auto splitter = BRepAlgoAPI_Splitter{};
+  // set the argument
+  splitter.SetArguments(objects);
+  splitter.SetTools(tools);
+  // run in parallel
+  splitter.SetRunParallel(true);
+  splitter.SetFuzzyValue(0.0);
+  // run the algorithm
+  splitter.Build();
+  // check error status
+  if (splitter.HasErrors()) {
+    std::cerr << "Error while splitting shape" << std::endl;
+    splitter.DumpErrors(std::cerr);
+    return std::nullopt;
+  }
+
+  // result of the operation result
+  auto &result = splitter.Shape();
+  debug_results(result);
+  return result;
+}
+
 
 void make_slices(TopoDS_Shape slices) {
   // slices is a TopoDS compound, so we have to iterate over it
@@ -130,35 +168,7 @@ void debug_results(const TopoDS_Shape &result) {
   }
 }
 
-/**
- * @brief splitter Use the splitter algorithm to split a solid into slices
- * @param objects
- * @param tools
- * @return the list of shapes, or std::nullopt if failure
- */
-std::optional<TopoDS_Shape> splitter(const TopTools_ListOfShape &objects,
-                                     const TopTools_ListOfShape &tools) {
-  auto splitter = BRepAlgoAPI_Splitter{};
-  // set the argument
-  splitter.SetArguments(objects);
-  splitter.SetTools(tools);
-  // run in parallel
-  splitter.SetRunParallel(true);
-  splitter.SetFuzzyValue(0.0);
-  // run the algorithm
-  splitter.Build();
-  // check error status
-  if (splitter.HasErrors()) {
-    std::cerr << "Error while splitting shape" << std::endl;
-    splitter.DumpErrors(std::cerr);
-    return std::nullopt;
-  }
 
-  // result of the operation result
-  auto &result = splitter.Shape();
-  debug_results(result);
-  return result;
-}
 
 /**
  * @brief section use the section algorithm to obtain a list of edges from an
