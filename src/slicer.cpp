@@ -1,14 +1,15 @@
 #include <sse/slicer.hpp>
 
-void init_log() {
-  int debug = 3;
+namespace sse {
+
+void init_log(int _loglevel = 3) {
   auto loglevel = spdlog::level::info;
 
   auto console = spdlog::stderr_color_mt("console");
   auto error_logger = spdlog::stderr_color_mt("stderr");
   spdlog::set_default_logger(console);
 
-  switch (debug) {
+  switch (_loglevel) {
   case 0:
     loglevel = spdlog::level::off;
     break;
@@ -40,7 +41,6 @@ void init_log() {
 void init_settings(fs::path configfile) {
   auto &s = Settings::getInstance();
   s.read_file(configfile);
-
 }
 
 /**
@@ -50,13 +50,12 @@ void init_settings(fs::path configfile) {
  * @return A list of tools (planar faces) to slice an object
  */
 TopTools_ListOfShape make_tools(const double layerHeight,
-                               const double objectHeight) {
+                                const double objectHeight) {
   spdlog::info("Creating splitter tools");
   auto result = TopTools_ListOfShape{};
-
-  for (auto i = 0; i < objectHeight / layerHeight; ++i) {
-    // create an unbounded plane, parallel to the xy plane, then convert it to a
-    // face
+  // create an unbounded plane, parallel to the xy plane,
+  // then convert it to a face
+  for (int i = 0; i < objectHeight / layerHeight + 1; ++i) {
     result.Append(BRepBuilderAPI_MakeFace(
         gp_Pln(gp_Pnt(0, 0, i * layerHeight), gp::DZ())));
   }
@@ -69,11 +68,12 @@ TopTools_ListOfShape make_tools(const double layerHeight,
  * @param radius
  * @return
  */
-TopoDS_Face make_spiral_face(const double height, const double layerheight) {
+TopoDS_Face make_spiral_face(const double height, const double layer_height) {
   // make a unit cylinder, vertical axis, center @ (0,0), radius of 1
   Handle_Geom_CylindricalSurface cylinder =
       new Geom_CylindricalSurface(gp::XOY(), 1.0);
-  auto line = gp_Lin2d(gp_Pnt2d(0.0, 0.0), gp_Dir2d(layerheight, 1.0));
+  // TODO: center helix axis should be the central print axis
+  auto line = gp_Lin2d(gp::Origin2d(), gp_Dir2d(layer_height, 1.0));
   Handle_Geom2d_TrimmedCurve segment = GCE2d_MakeSegment(line, 0.0, M_PI * 2.0);
   // make the helixcal edge
   auto helixEdge =
@@ -95,11 +95,20 @@ TopoDS_Face make_spiral_face(const double height, const double layerheight) {
  * @param tools
  * @return the list of shapes, or std::nullopt if failure
  */
-std::optional<TopoDS_Shape> splitter(const TopTools_ListOfShape &objects,
-                                     const TopTools_ListOfShape &tools) {
+std::optional<TopoDS_Shape> splitter(const std::vector<Object> objects) {
+  // find the highest z point of all objects
+  double z = 0;
+  auto obj = TopTools_ListOfShape();
+  for (auto o : objects) {
+    z = std::max(z, o.get_bound_box().CornerMax().Z());
+    obj.Append(o.get_shape());
+  }
+
+  auto tools = make_tools(z, z);
+
   auto splitter = BRepAlgoAPI_Splitter{};
   // set the argument
-  splitter.SetArguments(objects);
+  splitter.SetArguments(obj);
   splitter.SetTools(tools);
   // run in parallel
   splitter.SetRunParallel(true);
@@ -118,7 +127,6 @@ std::optional<TopoDS_Shape> splitter(const TopTools_ListOfShape &objects,
   debug_results(result);
   return result;
 }
-
 
 void make_slices(TopoDS_Shape slices) {
   // slices is a TopoDS compound, so we have to iterate over it
@@ -142,10 +150,12 @@ std::vector<TopoDS_Face> process_slice(TopoDS_Shape s, double z) {
     Standard_Real umin, umax, vmin, vmax;
     BRepTools::UVBounds(f, umin, umax, vmin, vmax);
     // TODO: choose better U,V values
-    auto props = GeomLProp_SLProps(BRep_Tool::Surface(f), (umin+umax)/2, (vmin+vmax)/2, 1, 0.1);
-
+    auto props = GeomLProp_SLProps(BRep_Tool::Surface(f), (umin + umax) / 2,
+                                   (vmin + vmax) / 2, 1, 1e-6);
     // if normal isn't the same as slicing plane, short-circuit
-    if (gp::DZ().IsEqual(props.Normal(), 0.01) && fabs(props.Value().Z() - z) < pow(10, -6) ) {
+    // TODO: verify floating point equality, low epsilon
+    if (gp::DZ().IsOpposite(props.Normal(), 0.01) &&
+        fabs(props.Value().Z() - z) < pow(10, -6)) {
       // add face to the list of faces for the slice
       faces.push_back(f);
     }
@@ -167,8 +177,6 @@ void debug_results(const TopoDS_Shape &result) {
     it.Value().Location();
   }
 }
-
-
 
 /**
  * @brief section use the section algorithm to obtain a list of edges from an
@@ -201,3 +209,5 @@ void arrange_objects(std::vector<Object> objects) {
     o.translate(0, 0, 0);
   }
 }
+
+} // namespace sse

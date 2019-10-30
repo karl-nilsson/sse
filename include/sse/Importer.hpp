@@ -15,6 +15,8 @@
 #include <iostream>
 #include <optional>
 
+namespace sse {
+
 class Importer {
 public:
   Importer();
@@ -30,3 +32,6 @@ public:
                                          Handle(TopTools_HSequenceOfShape) &
                                              shapes);
 };
+
+
+} // namespace sse

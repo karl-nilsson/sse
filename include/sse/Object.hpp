@@ -7,6 +7,9 @@
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepTools.hxx>
 #include <BRep_Tool.hxx>
+#include <BRepGProp.hxx>
+#include <GProp_GProps.hxx>
+
 #include <BndLib.hxx>
 #include <Bnd_Box.hxx>
 #include <Bnd_Box2d.hxx>
@@ -29,6 +32,8 @@
 #include <spdlog/fmt/ostr.h>
 #include <spdlog/sinks/stdout_sinks.h>
 #include <spdlog/spdlog.h>
+
+namespace sse {
 
 class Object {
 
@@ -60,6 +65,10 @@ public:
   const double maxZ() { return bounding_box.CornerMax().Z(); }
   const gp_Pnt center_point();
 
+  const double get_volume();
+
+  const TopoDS_Shape get_shape() { return shape;}
+
 private:
   TopoDS_Shape shape;
   Bnd_Box bounding_box;
@@ -76,3 +85,6 @@ std::ostream &operator<<(std::ostream &os, const Object &c) {
   return os << "testing";
 }
 */
+
+} // namespace sse
+

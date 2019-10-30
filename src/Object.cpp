@@ -1,5 +1,8 @@
 #include <sse/Object.hpp>
 
+
+namespace sse {
+
 /**
  * @brief Object::Object
  * @param s
@@ -46,7 +49,13 @@ void Object::lay_flat(const TopoDS_Face &face) {
   // TODO: select the correct parameters (u,v)
   // currently chooses the "average" parameters
   auto props = GeomLProp_SLProps(BRep_Tool::Surface(face), (umin + umax) / 2,
-                                 (vmin + vmax) / 2, 1, 0.1);
+                                 (vmin + vmax) / 2, 1, 1e-6);
+  // normal undefined, error
+  // TODO: raise error?
+  if(! props.IsNormalDefined()) {
+      return;
+  }
+
   auto normal = props.Normal();
   spdlog::debug("Face normal: ");
   // get the coordinate of the face at (u,v)
@@ -61,7 +70,7 @@ void Object::lay_flat(const TopoDS_Face &face) {
   if (!normal.IsEqual(gp::DZ(), 0.0001)) {
     // the axis of rotation is the cross product of the two vectors
     auto axis = normal.Crossed(gp::DZ());
-
+    // use midpoint of bounding box as the center of rotation
     auto min = bounding_box.CornerMin();
     auto max = bounding_box.CornerMax();
     spdlog::debug("Axis: ");
@@ -76,7 +85,7 @@ void Object::lay_flat(const TopoDS_Face &face) {
     // if rotation happened, recalculate coordinate
     // TODO: make more elegant
     point = GeomLProp_SLProps(BRep_Tool::Surface(face), (umin + umax) / 2,
-                              (vmin + vmax) / 2, 1, 0.1)
+                              (vmin + vmax) / 2, 1, 1e-6)
                 .Value();
   }
 
@@ -119,7 +128,8 @@ void Object::rotate(const gp_Ax1 axis, const double angle) {
   try {
     auto s = BRepBuilderAPI_Transform(this->shape, transform).Shape();
     this->shape = s;
-  } catch (StdFail_NotDone e) {
+  } catch (StdFail_NotDone& e) {
+    e.Print(std::cerr);
   }
 }
 
@@ -143,7 +153,8 @@ void Object::translate(const double x, const double y, const double z) {
   try {
     auto s = BRepBuilderAPI_Transform(this->shape, transform).Shape();
     this->shape = s;
-  } catch (StdFail_NotDone e) {
+  } catch (StdFail_NotDone& e) {
+    e.Print(std::cerr);
   }
 }
 
@@ -155,6 +166,7 @@ void Object::translate(const double x, const double y, const double z) {
  */
 void Object::scale(const double x, const double y, const double z) {
   spdlog::debug("Scaling: ");
+
   // TODO: get working
   auto v = gp_Vec(x, y, z);
   auto scale = gp_Trsf();
@@ -162,3 +174,11 @@ void Object::scale(const double x, const double y, const double z) {
   auto s = BRepBuilderAPI_Transform(this->shape, scale);
   s.Shape();
 }
+
+const double Object::get_volume() {
+  GProp_GProps volume;
+  BRepGProp::VolumeProperties(this->shape, volume);
+  return volume.Mass();
+}
+
+} // namespace sse

@@ -2,6 +2,8 @@
 
 #include <sse/Importer.hpp>
 
+namespace sse {
+
 /**
  * @brief Importer::Importer
  */
@@ -46,3 +48,5 @@ Importer::importMesh(const std::string &filename,
                      Handle(TopTools_HSequenceOfShape) & shapes) {
   return IFSelect_RetVoid;
 }
+
+} // namespace sse

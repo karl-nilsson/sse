@@ -36,6 +36,8 @@ message(STATUS "OpenCASCADE v${OpenCASCADE_VERSION} found")
 # TODO: trim to only used libraries
 set(OpenCASCADE_USED_LIBS ${OpenCASCADE_LIBRARIES})
 
+find_package(fmt)
+
 # search for OpenMP
 find_package(OpenMP)
 
@@ -49,12 +51,12 @@ configure_file(
 # set source files
 set(SOURCES
     src/Importer.cpp
-    src/pathgenerator.cpp
     src/slicer.cpp
     src/Slice.cpp
     src/Object.cpp
     src/Settings.cpp
-#    src/SVGWriter.cpp
+    src/Support.cpp
+    src/SVGWriter.cpp
 )
 
 # main library
@@ -77,6 +79,7 @@ target_include_directories(libsse
 
         ${PROJECT_SOURCE_DIR}/extern/spdlog
         ${PROJECT_SOURCE_DIR}/extern/toml11
+        ${PROJECT_SOURCE_DIR}/extern/toml11/toml
         ${PROJECT_SOURCE_DIR}/extern/simple-svg
 )
 
@@ -90,6 +93,7 @@ target_link_libraries(libsse
         OpenMP::OpenMP_CXX
 #        clipper
     PRIVATE
+        fmt
 )
 
 

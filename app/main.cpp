@@ -1,12 +1,13 @@
 #include <algorithm>
 #include <filesystem>
 #include <iostream>
+#include <string>
 #include <vector>
 
 #include <sse/Importer.hpp>
+#include <sse/Object.hpp>
 #include <sse/slicer.hpp>
 #include <sse/version.hpp>
-#include <sse/Object.hpp>
 
 #include <cxxopts.hpp>
 
@@ -21,14 +22,11 @@ using namespace std;
  */
 int main(int argc, char **argv) {
 
-  init_log();
-
   // verbosity level
   int verbose = 0;
   double layerheight, linewidth = 0.0;
   string profile_filename;
   vector<string> files;
-
 
   cxxopts::Options opts(argv[0], " - Slice CAD files for 3D printing");
   opts.positional_help("[optional args]").show_positional_help();
@@ -36,25 +34,25 @@ int main(int argc, char **argv) {
   opts.allow_unrecognised_options().add_options()
       // basic global settings
       ("v,verbose", "Verbosity", cxxopts::value<int>())
-      ("version", "Program Version")
-
+      ("version", "Program Version")("o,output", "Output File")
       ("p,profile", "Settings profile", cxxopts::value<string>(), "FILE")
       // supports group
-      ("s,supports", "Generate Supports", cxxopts::value<bool>())
-      ("o,overhang", "Support", cxxopts::value<bool>())
+      ("supports", "Generate Supports",
+       cxxopts::value<bool>())("overhang", "Support", cxxopts::value<bool>())
       // fan speed group
 
       // speeds/feed group
-      ("m,extrusion_multiplier", "Extrusion Multiplien",cxxopts::value<double>())
-      ("speed", "Print speed, mm/s", cxxopts::value<double>())
-      ("rapid", "Move speed, mm/s", cxxopts::value<double>())
+      ("m,extrusion_multiplier", "Extrusion Multiplien",
+       cxxopts::value<double>())("speed", "Print speed, mm/s",
+                                 cxxopts::value<double>())(
+          "rapid", "Move speed, mm/s", cxxopts::value<double>())
 
       // placement group
       ("a,autoplace", "Automatically center/touch buildplate")
 
       // extrusion group
-      ("l,layer_height", "Layer Height", cxxopts::value(layerheight))
-      ("w,line_width", "Extrusion Width", cxxopts::value(linewidth))
+      ("l,layer_height", "Layer Height", cxxopts::value(layerheight))(
+          "w,line_width", "Extrusion Width", cxxopts::value(linewidth))
 
       // positional, i.e. files to slice
       ("positional", "Positional arguments", cxxopts::value<vector<string>>());
@@ -82,13 +80,7 @@ int main(int argc, char **argv) {
     // load profile
     if (result.count("p")) {
       auto profile = fs::path(result["profile"].as<string>());
-
-      if (fs::exists(profile)) {
-        // load json profile
-      } else {
-        cerr << "profile file " << profile << " does not exist, skipping"
-             << endl;
-      }
+      sse::init_settings(profile);
     }
 
     // positional args, i.e. files to slice
@@ -105,9 +97,11 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  auto imp = Importer{};
+  sse::init_log(verbose);
 
-  auto objects = vector<Object>();
+  auto imp = sse::Importer{};
+
+  auto objects = vector<sse::Object>();
 
   for (const auto &f : files) {
     cout << "Loading file: " << f << endl;
@@ -121,10 +115,13 @@ int main(int argc, char **argv) {
     if (v == std::nullopt) {
       cerr << "Error processing file " << f << endl;
     } else {
-      objects.push_back(Object(v.value()));
+      objects.push_back(sse::Object(v.value()));
     }
   }
 
+  cout << "Max string len: " << string().max_size() << endl;
+
+  sse::splitter(objects);
 
   return 0;
 }

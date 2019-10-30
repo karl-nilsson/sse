@@ -55,8 +55,10 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
+namespace sse {
 
-void init_log();
+
+void init_log(int _loglevel);
 
 void init_settings(fs::path configfile);
 
@@ -64,8 +66,7 @@ TopTools_ListOfShape make_tools(const double layerHeight, const double objectHei
 
 std::vector<TopoDS_Face> process_slice(TopoDS_Shape s, double z);
 
-std::optional<TopoDS_Shape> splitter(const TopTools_ListOfShape &objects,
-                                     const TopTools_ListOfShape &tools);
+std::optional<TopoDS_Shape> splitter(const std::vector<Object> objects);
 
 void slice(const TopTools_ListOfShape &objects);
 TopTools_ListOfShape makeTools(const double layerHeight,
@@ -77,3 +78,5 @@ std::optional<TopoDS_Shape> splitter(const TopTools_ListOfShape &objects,
                                      const TopTools_ListOfShape &tools);
 
 void arrange_objects(std::vector<Object> objects);
+
+}

@@ -2,14 +2,16 @@
 
 #include <filesystem>
 #include <iostream>
-#include <vector>
 #include <map>
+#include <vector>
 
 // #include <toml.hpp>
 
 #include <spdlog/spdlog.h>
 
 namespace fs = std::filesystem;
+
+namespace sse {
 
 /**
  * @brief The Settings class
@@ -18,16 +20,23 @@ namespace fs = std::filesystem;
 class Settings {
 
 public:
-    void read_file(fs::path file);
+  void read_file(fs::path file);
 
-    static Settings& getInstance() {
-      static Settings instance;
-      return instance;
-    }
+  template <typename T> T get_setting(std::string setting);
 
-    Settings(Settings const&) = delete;
-    void operator=(Settings const&) = delete;
+  // don't touch anything beneath here
+  static Settings &getInstance() {
+    static Settings instance;
+    return instance;
+  }
+
+  Settings(Settings const &) = delete;
+  void operator=(Settings const &) = delete;
+
 private:
-    Settings() {}
+  Settings() {}
+
+  //    toml_config config;
 };
 
+} // namespace sse
