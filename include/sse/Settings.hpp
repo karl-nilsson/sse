@@ -23,8 +23,9 @@ public:
   void read_file(fs::path file);
 
   template <typename T> T get_setting(std::string setting);
+  std::string dump();
 
-  // don't touch anything beneath here; required for singlenot
+  // don't touch anything beneath here; required for singleton
   static Settings &getInstance() {
     static Settings instance;
     return instance;

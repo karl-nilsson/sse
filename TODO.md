@@ -1,23 +1,26 @@
 TODO
 
-- Add fmt library
-- get toml lib working
-
 Features:
 - STEP assembly import
+ - Per-child print settings
 - generate support material
 - manual support material placement/removal
-- save/export support as a STEP child object
-- logging (verbosity levels)
+- save/export supports as a STEP child object
 - export GCode as structured data, in addition to raw text
 
 Refinement:
 - charconv output for gcode coordinates
-- Performance analysis: OSD_PerfMeter
-- TBB vs OpenMP
+
 - GCode pattern words
-- Allow build volume to be represented as a 3d shell/solid (allows for hangprinter)
+- represent build volume as 3d shell (hangprinter)
+- store effector as model for collision detection
 - Eval/use OCCT OCAF
-- Adapter pattern
- + OCCT - string representation/debugging
- + OCCT - GCODE
+- Performance
+  - analysis: OSD_PerfMeter
+  - Parallelization: TBB vs OpenMP
+
+Meta:
+- cmake
+ - clang-format
+ - clang-tidy (cppcoreguidelins)
+ - codespell

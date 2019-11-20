@@ -33,26 +33,29 @@ int main(int argc, char **argv) {
 
   opts.allow_unrecognised_options().add_options()
       // basic global settings
-      ("v,verbose", "Verbosity", cxxopts::value<int>())
-      ("version", "Program Version")("o,output", "Output File")
+      ("h,help", "Help")
+      ("v,verbose", "Verbosity")
+      ("version", "Program Version")
+      ("o,output", "Output File", cxxopts::value<string>())
       ("p,profile", "Settings profile", cxxopts::value<string>(), "FILE")
       // supports group
-      ("supports", "Generate Supports",
-       cxxopts::value<bool>())("overhang", "Support", cxxopts::value<bool>())
+      ("supports", "Generate Supports", cxxopts::value<bool>())
+      ("overhang", "Support", cxxopts::value<double>())
       // fan speed group
+      ("fan_speed", "part cooling fan speed", cxxopts::value<double>())
 
       // speeds/feed group
       ("m,extrusion_multiplier", "Extrusion Multiplien",
-       cxxopts::value<double>())("speed", "Print speed, mm/s",
-                                 cxxopts::value<double>())(
-          "rapid", "Move speed, mm/s", cxxopts::value<double>())
+       cxxopts::value<double>())("speed", "Print speed, mm/s", cxxopts::value<double>())
+      ("rapid", "Move speed, mm/s", cxxopts::value<double>())
 
       // placement group
       ("a,autoplace", "Automatically center/touch buildplate")
 
       // extrusion group
-      ("l,layer_height", "Layer Height", cxxopts::value(layerheight))(
-          "w,line_width", "Extrusion Width", cxxopts::value(linewidth))
+      ("l,layer_height", "Layer Height", cxxopts::value(layerheight))
+      ("w,line_width", "Extrusion Width", cxxopts::value(linewidth))
+      ("variable_layer", "Variable layer height", cxxopts::value<bool>())
 
       // positional, i.e. files to slice
       ("positional", "Positional arguments", cxxopts::value<vector<string>>());
@@ -67,18 +70,23 @@ int main(int argc, char **argv) {
       return 0;
     }
 
-    // adjust verbosity
-    if (result.count("verbose")) {
-      verbose = result["verbose"].as<int>();
-      cout << "verbosity level=" << verbose << endl;
+    // print version then quit
+    if (result.count("version")) {
+      cout << "sse version " << VERSION << "\ngit sha: " << "VERSION_SHA" << endl;
+      return 0;
     }
 
+    // adjust verbosity
+    sse::init_log(result.count("verbose"));
+
+    // automaticall position models on the build plate
     if (result.count("autoplace")) {
       cout << "autoplace" << endl;
     }
 
     // load profile
     if (result.count("p")) {
+      cout << "profile: " << result["profile"].as<string>() << endl;
       auto profile = fs::path(result["profile"].as<string>());
       sse::init_settings(profile);
     }
@@ -96,8 +104,6 @@ int main(int argc, char **argv) {
     cerr << "ERROR PARSING OPTIONS: " << e.what() << std::endl;
     exit(1);
   }
-
-  sse::init_log(verbose);
 
   auto imp = sse::Importer{};
 

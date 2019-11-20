@@ -2,13 +2,14 @@
 
 namespace sse {
 
-void init_log(int _loglevel = 3) {
+void init_log(unsigned int _loglevel = 3) {
   auto loglevel = spdlog::level::info;
 
   auto console = spdlog::stderr_color_mt("console");
   auto error_logger = spdlog::stderr_color_mt("stderr");
   spdlog::set_default_logger(console);
 
+  // FIXME: probably a more elegant way to do this
   switch (_loglevel) {
   case 0:
     loglevel = spdlog::level::off;
@@ -40,6 +41,7 @@ void init_log(int _loglevel = 3) {
 
 void init_settings(fs::path configfile) {
   auto &s = sse::Settings::getInstance();
+  spdlog::debug("Initializing settings");
   s.read_file(configfile);
 }
 
@@ -211,7 +213,6 @@ void arrange_objects(std::vector<Object> objects) {
 
 void make_build_volume() {
   // get build volume from settings
-
 }
 
 } // namespace sse

@@ -58,7 +58,7 @@
 namespace sse {
 
 
-void init_log(int _loglevel);
+void init_log(unsigned int _loglevel);
 
 void init_settings(fs::path configfile);
 
