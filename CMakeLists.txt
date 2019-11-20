@@ -29,6 +29,7 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 
+
 # search for OpenCASCADE
 # TODO: specify OCCT version
 find_package(OpenCASCADE REQUIRED)
@@ -36,10 +37,17 @@ message(STATUS "OpenCASCADE v${OpenCASCADE_VERSION} found")
 # TODO: trim to only used libraries
 set(OpenCASCADE_USED_LIBS ${OpenCASCADE_LIBRARIES})
 
+# TODO: remove when C++20 releases
 find_package(fmt)
 
 # search for OpenMP
 find_package(OpenMP)
+
+# add toml11, don't build tests
+set(toml11_BUILD_TEST OFF CACHE STRING "Don't build toml tests" FORCE)
+add_subdirectory(extern/toml11 EXCLUDE_FROM_ALL)
+
+add_subdirectory(extern/spdlog EXCLUDE_FROM_ALL)
 
 # generate version info
 configure_file(
@@ -57,32 +65,34 @@ set(SOURCES
     src/Settings.cpp
     src/Support.cpp
     src/SVGWriter.cpp
+    include/sse/Importer.hpp
+    include/sse/slicer.hpp
+    include/sse/Slice.hpp
+    include/sse/Object.hpp
+    include/sse/Settings.hpp
+    include/sse/Support.hpp
+    include/sse/SVGWriter.hpp
 )
 
 # main library
 add_library(libsse SHARED ${SOURCES})
 # alias
 add_library(libsse::libsse ALIAS libsse)
-# prevent liblibsse.so
+# prevent "liblibsse.so"
 set_target_properties(libsse PROPERTIES OUTPUT_NAME "sse")
 
-# use binary dir for includes, because of generated files
-target_include_directories(libsse
+
+target_include_directories(libsse BEFORE
     PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        # TODO: fix this
+        # generated headers found here
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
         ${OpenCASCADE_INCLUDE_DIR}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
-
-        ${PROJECT_SOURCE_DIR}/extern/spdlog
-        ${PROJECT_SOURCE_DIR}/extern/toml11
-        ${PROJECT_SOURCE_DIR}/extern/toml11/toml
         ${PROJECT_SOURCE_DIR}/extern/simple-svg
 )
-
 
 
 # link library dependencies
@@ -92,11 +102,14 @@ target_link_libraries(libsse
         ${OpenCASCADE_LIBRARIES}
         OpenMP::OpenMP_CXX
 #        clipper
+        toml11::toml11
+        spdlog::spdlog_header_only
     PRIVATE
         fmt
 )
 
-
+#FIXME
+if(FALSE)
 
 include(GNUInstallDirs)
 set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/libsse)
@@ -158,12 +171,18 @@ export(
 
 export(PACKAGE libsse)
 
+endif()
+#FIXME
 
 # tests switch
 if(ENABLE_DOCTESTS)
+    add_subdirectory(extern/doctest EXCLUDE_FROM_ALL)
     enable_testing()
     add_subdirectory(tests)
 endif()
 
+
+
+add_subdirectory(extern/cxxopts)
 # add executable
 add_subdirectory(app/)

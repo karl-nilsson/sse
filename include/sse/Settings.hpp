@@ -5,7 +5,7 @@
 #include <map>
 #include <vector>
 
-// #include <toml.hpp>
+#include <toml.hpp>
 
 #include <spdlog/spdlog.h>
 
@@ -24,7 +24,7 @@ public:
 
   template <typename T> T get_setting(std::string setting);
 
-  // don't touch anything beneath here
+  // don't touch anything beneath here; required for singlenot
   static Settings &getInstance() {
     static Settings instance;
     return instance;
@@ -35,8 +35,7 @@ public:
 
 private:
   Settings() {}
-
-  //    toml_config config;
+  toml::value config;
 };
 
 } // namespace sse

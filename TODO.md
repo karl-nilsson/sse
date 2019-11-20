@@ -14,7 +14,9 @@ Features:
 Refinement:
 - charconv output for gcode coordinates
 - Performance analysis: OSD_PerfMeter
+- TBB vs OpenMP
 - GCode pattern words
+- Allow build volume to be represented as a 3d shell/solid (allows for hangprinter)
 - Eval/use OCCT OCAF
 - Adapter pattern
  + OCCT - string representation/debugging

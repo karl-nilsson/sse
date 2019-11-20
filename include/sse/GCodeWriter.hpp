@@ -26,6 +26,9 @@
 #include <Geom_Ellipse.hxx>
 #include <Geom_Line.hxx>
 #include <Geom_TrimmedCurve.hxx>
+#include <GeomAdaptor.hxx>
+#include <GeomAdaptor_Curve.hxx>
+#include <GeomAdaptor_HCurve.hxx>
 
 #include <sse/Settings.hpp>
 
@@ -37,17 +40,20 @@ class GCodeWriter{
 public:
     GCodeWriter();
     void add_comment(std::string comment);
-    void add_rapid(int x, int y, int z);
-    void add_segment(int x, int y, int z, int e, int f);
-    void add_arc(int x, int y, int i, int j, int e, int f);
+    void add_rapid(double x, double y, double z);
+    void add_line(GeomAdaptor_Curve c);
+    void add_arc(GeomAdaptor_Curve c);
     void add_bezier(Geom_BezierCurve b);
     void add_bslpine(Geom_BSplineCurve b);
     void add_nurbs();
+    std::string add_segment(GeomAdaptor_Curve c);
     void add_wire(TopoDS_Wire w);
-    void retract();
+    void retract(double distance);
     void purge();
     std::string get_data() {return this->data;}
 private:
+    std::map<double,std::vector<std::string>> data_map;
     std::string data;
-    Settings &config;
+    sse::Settings &config;
+    void move_pre(GeomAdaptor_Curve c);
 };

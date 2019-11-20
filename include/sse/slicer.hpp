@@ -79,4 +79,6 @@ std::optional<TopoDS_Shape> splitter(const TopTools_ListOfShape &objects,
 
 void arrange_objects(std::vector<Object> objects);
 
+void make_build_volume();
+
 }

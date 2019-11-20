@@ -39,7 +39,7 @@ void init_log(int _loglevel = 3) {
 }
 
 void init_settings(fs::path configfile) {
-  auto &s = Settings::getInstance();
+  auto &s = sse::Settings::getInstance();
   s.read_file(configfile);
 }
 
@@ -130,8 +130,7 @@ std::optional<TopoDS_Shape> splitter(const std::vector<Object> objects) {
 
 void make_slices(TopoDS_Shape slices) {
   // slices is a TopoDS compound, so we have to iterate over it
-  auto it = TopoDS_Iterator(slices);
-  for (; it.More(); it.Next()) {
+  for (auto it = TopoDS_Iterator(slices); it.More(); it.Next()) {
     const auto child = it.Value();
   }
 }
@@ -208,6 +207,11 @@ void arrange_objects(std::vector<Object> objects) {
   for (auto o : objects) {
     o.translate(0, 0, 0);
   }
+}
+
+void make_build_volume() {
+  // get build volume from settings
+
 }
 
 } // namespace sse

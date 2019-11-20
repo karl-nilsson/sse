@@ -1,0 +1,16 @@
+[submodule "extern/cxxopts"]
+	path = extern/cxxopts
+    url = https://github.com/jarro2783/cxxopts.git
+    branch = v2.2.0
+[submodule "extern/spdlog"]
+	path = extern/spdlog
+	url = https://github.com/gabime/spdlog.git
+    branch = v1.4.2
+[submodule "extern/doctest"]
+	path = extern/doctest
+	url = https://github.com/onqtam/doctest.git
+    branch = v2.3.5
+[submodule "extern/toml11"]
+	path = extern/toml11
+	url = https://github.com/ToruNiina/toml11.git
+    branch = v3.1.0

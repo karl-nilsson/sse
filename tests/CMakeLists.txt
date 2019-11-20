@@ -25,6 +25,5 @@ add_executable(unittests EXCLUDE_FROM_ALL
 )
 
 target_compile_definitions(unittests PRIVATE UNIT_TESTS)
-target_include_directories(unittests PRIVATE ${PROJECT_SOURCE_DIR}/extern/doctest)
-target_link_libraries(unittests PRIVATE doctest)
+target_link_libraries(unittests PRIVATE doctest::doctest)
 
