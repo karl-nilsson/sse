@@ -10,7 +10,10 @@ Features:
 
 Refinement:
 - charconv output for gcode coordinates
-
+- define config TOML schema
+- refine clipper lib
+  - cmake library build
+  - separate repo
 - GCode pattern words
 - represent build volume as 3d shell (hangprinter)
 - store effector as model for collision detection
@@ -22,5 +25,5 @@ Refinement:
 Meta:
 - cmake
  - clang-format
- - clang-tidy (cppcoreguidelins)
+ - clang-tidy (cppcoreguidelines)
  - codespell

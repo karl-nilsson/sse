@@ -42,7 +42,7 @@ void init_log(unsigned int _loglevel = 3) {
 void init_settings(fs::path configfile) {
   auto &s = sse::Settings::getInstance();
   spdlog::debug("Initializing settings");
-  s.read_file(configfile);
+  s.parse(configfile);
 }
 
 /**
@@ -51,15 +51,15 @@ void init_settings(fs::path configfile) {
  * @param objectHeight
  * @return A list of tools (planar faces) to slice an object
  */
-TopTools_ListOfShape make_tools(const double layerHeight,
-                                const double objectHeight) {
+TopTools_ListOfShape make_tools(const double layer_height,
+                                const double object_height) {
   spdlog::info("Creating splitter tools");
   auto result = TopTools_ListOfShape{};
   // create an unbounded plane, parallel to the xy plane,
   // then convert it to a face
-  for (int i = 0; i < objectHeight / layerHeight + 1; ++i) {
+  for (int i = 0; i < object_height / layer_height + 1; ++i) {
     result.Append(BRepBuilderAPI_MakeFace(
-        gp_Pln(gp_Pnt(0, 0, i * layerHeight), gp::DZ())));
+        gp_Pln(gp_Pnt(0, 0, i * layer_height), gp::DZ())));
   }
   return result;
 }
@@ -106,7 +106,12 @@ std::optional<TopoDS_Shape> splitter(const std::vector<Object> objects) {
     obj.Append(o.get_shape());
   }
 
-  auto tools = make_tools(z, z);
+
+  Settings &s = Settings::getInstance();
+  // FIXME
+  auto layer_height = toml::find_or<double>(s.config, "layer_height", 0.02);
+
+  auto tools = make_tools(layer_height, z);
 
   auto splitter = BRepAlgoAPI_Splitter{};
   // set the argument

@@ -2,7 +2,10 @@
 
 namespace sse {
 
-void Settings::read_file(fs::path file) {
+void Settings::parse(fs::path _file) {
+  file = _file;
+
+  // check if file exists
   if (!fs::exists(file)) {
     spdlog::error("Error, config file " + file.string() + " does not exist");
     return;
@@ -10,7 +13,8 @@ void Settings::read_file(fs::path file) {
 
   spdlog::debug("Reading config file: " + file.string());
 
-  config = toml::parse(file);
+  // parse settings file
+  config = toml::parse<toml::preserve_comments>(file);
 
   auto printer = toml::find(config, "printer");
 
@@ -24,9 +28,16 @@ void Settings::read_file(fs::path file) {
   }
 }
 
-template <typename T> T Settings::get_setting(std::string setting) {
+/**
+ * @brief
+ * @return
+ */
+template <typename T> T Settings::get_setting_fallback(std::string setting, T _default) {
+  return toml::find_or<T>(config, setting, _default);
+}
 
-  return toml::find<T>(config, setting);
+template <typename T> T Settings::get_setting(std::string setting) {
+  return toml::find<double>(config, setting);
 }
 
 /**
@@ -34,7 +45,11 @@ template <typename T> T Settings::get_setting(std::string setting) {
  * @return A string representation of all current settings
  */
 std::string Settings::dump() {
+  return "";
+}
 
+void Settings::save() {
+  spdlog::info("Saving settings to " + file.string());
 }
 
 } // namespace sse

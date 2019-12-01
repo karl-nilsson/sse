@@ -20,10 +20,15 @@ namespace sse {
 class Settings {
 
 public:
-  void read_file(fs::path file);
+  toml::value config;
 
+  void parse(fs::path _file);
+
+  template <typename T> T get_setting_fallback(std::string setting, T _default);
   template <typename T> T get_setting(std::string setting);
+
   std::string dump();
+  void save();
 
   // don't touch anything beneath here; required for singleton
   static Settings &getInstance() {
@@ -36,7 +41,8 @@ public:
 
 private:
   Settings() {}
-  toml::value config;
+
+  fs::path file;
 };
 
 } // namespace sse

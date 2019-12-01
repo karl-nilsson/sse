@@ -2,6 +2,7 @@
 
 #include <spdlog/spdlog.h>
 #include <fmt/format.h>
+#include <chrono>
 
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
@@ -39,6 +40,7 @@ class GCodeWriter{
 
 public:
     GCodeWriter();
+    void create_header();
     void add_comment(std::string comment);
     void add_rapid(double x, double y, double z);
     void add_line(GeomAdaptor_Curve c);
