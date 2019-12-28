@@ -38,6 +38,7 @@ namespace sse {
 class Object {
 
 public:
+  Object(const Object& object);
   Object(TopoDS_Shape s);
   void generate_bounds();
   void lay_flat(const TopoDS_Face &face);

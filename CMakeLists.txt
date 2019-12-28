@@ -65,6 +65,7 @@ set(SOURCES
     src/Settings.cpp
     src/Support.cpp
     src/SVGWriter.cpp
+    src/Packer.cpp
     include/sse/Importer.hpp
     include/sse/slicer.hpp
     include/sse/Slice.hpp
@@ -72,6 +73,7 @@ set(SOURCES
     include/sse/Settings.hpp
     include/sse/Support.hpp
     include/sse/SVGWriter.hpp
+    include/sse/Packer.hpp
 )
 
 # main library
