@@ -1,77 +1,69 @@
 #pragma once
 
-#include <sse/Object.hpp>
-#include <sse/Settings.hpp>
-
-#include <Bnd_Box2d.hxx>
 #include <algorithm>
+#include <exception>
 #include <vector>
+
+#include <sse/Object.hpp>
+
+#include <spdlog/spdlog.h>
 
 /**
  * TODO:
- * allow for configurable buffer space between footprint rectangles
+ * allow for configurable OFFSET space between footprint rectangles
  * (i.e. expand all rectangles individually, based on brim, if applicable.
  * keep in mind, brim may not expand footprint, i.e. brim for a sphere)
  */
+// buffer space 10mm each direction
+#define OFFSET 10
 
 namespace sse {
 
 /**
- * @brief The footprint of 3D models, using a rectangular bounding box
- */
-class Footprint {
-
-public:
-  Footprint(Object &o);
-  // x,y coords, width = x, length = y
-  double x, y, length, width;
-  // overload operator to allow rough sorting, based on biggest edge length
-  // this greatly simplifies the packing algorithm
-  bool operator<(const Footprint &rhs) const {
-    return std::max(length, width) > std::max(rhs.length, rhs.width);
-  }
-  Object &object;
-
-private:
-};
-
-/**
- * @brief The Node class
+ * @brief Binary tree Node
+ * This class describes a binary tree Node that corresponds to a rectangle in the cartesian
+ * plane. For the purposes of this class, width is a dimension in the X axis, and length in the Y axis.
  */
 class Node {
-
+  using node_ptr = std::shared_ptr<Node>;
 public:
-  Node(double x, double y, double l, double w);
+  double x, y, width, length;
+  Node(double x, double y, double w, double l);
   // check to see if a rectangle will fit in this node
-  bool fits(Footprint f) { return f.length < length && f.width < width; }
-  bool full() { return this->footprint == nullptr; }
-  Node *insert(Footprint f);
-  void translate();
-  void add_footprint(Footprint *f);
-  void grow(double w, double l) {width += w; length += l;}
-
+  bool fits(std::shared_ptr<Object> o) {
+    return (o->length() + OFFSET < length) && (o->width() + OFFSET < width);
+  }
+  // check to see if there's an object in this node
+  bool full() { return bool(object); }
+  // check to see if this node is a leaf node or not
+  bool leaf() { return bool(up);}
+  Node *search(std::shared_ptr<Object> o);
+  void add_object(std::shared_ptr<Object> o);
+  void translate(double offset_x, double offset_y);
+  void add_children(node_ptr up, node_ptr right);
 private:
-  double x, y, length, width;
-  Node *child[2];
-  Footprint *footprint;
+  node_ptr up, right;
+  std::shared_ptr<Object> object;
 };
 
 /**
- * @brief Pack objects into the smallest 2D space, based on their bounding box
+ * @brief Pack objects into the smallest rectangular bin, based on their XY bounding
+ * box. Construct a binary tree of Nodes, growing the bin and tree to fit
+ * objects. A few heuristics are employed to minimize wasted space, ensuring the resulting bin has close to equal dimensions (i.e. roughly a
+ * square).
  *
  */
 class Packer {
 
 public:
-  Packer();
-  void add_object(Object &o);
-  void add_objects(std::vector<Object &> o);
-  void pack();
-
+  Packer(std::vector<std::shared_ptr<Object>> objects);
+  std::pair<double, double> pack();
+  void translate(double offset_x, double offset_y);
 private:
-  std::vector<Footprint> objects;
-  double max_x, max_y;
-  Settings &config;
+  void grow_up(double w, double l);
+  void grow_right(double w, double l);
+  std::vector<std::shared_ptr<Object>> objects;
+  std::shared_ptr<Node> root;
 };
 
 } // namespace sse
