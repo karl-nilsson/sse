@@ -1,3 +1,21 @@
+/**
+ * StepSlicerEngine
+ * Copyright (C) 2020 Karl Nilsson
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <sse/slicer.hpp>
 
 namespace sse {
@@ -97,24 +115,22 @@ TopoDS_Face make_spiral_face(const double height, const double layer_height) {
  * @param tools
  * @return the list of shapes, or std::nullopt if failure
  */
-std::optional<TopoDS_Shape> splitter(const std::vector<Object> objects) {
+std::optional<TopoDS_Shape> splitter(const std::vector<std::shared_ptr<Object>> &objects) {
   // find the highest z point of all objects
   double z = 0;
   auto obj = TopTools_ListOfShape();
   for (auto o : objects) {
-    z = std::max(z, o.get_bound_box().CornerMax().Z());
-    obj.Append(o.get_shape());
+    z = std::max(z, o->get_bound_box().CornerMax().Z());
+    obj.Append(o->get_shape());
   }
 
-
   Settings &s = Settings::getInstance();
-  // FIXME
+  // FIXME more sane layer height fallback mechanism
   auto layer_height = toml::find_or<double>(s.config, "layer_height", 0.02);
-
+  // create the slicing planes
   auto tools = make_tools(layer_height, z);
-
   auto splitter = BRepAlgoAPI_Splitter{};
-  // set the argument
+  // set the arguments
   splitter.SetArguments(obj);
   splitter.SetTools(tools);
   // run in parallel
@@ -125,11 +141,13 @@ std::optional<TopoDS_Shape> splitter(const std::vector<Object> objects) {
   // check error status
   if (splitter.HasErrors()) {
     std::cerr << "Error while splitting shape" << std::endl;
+    spdlog::error("Error while splitting shape: ");
     splitter.DumpErrors(std::cerr);
+    // TODO: dump error to spdlog
     return std::nullopt;
   }
 
-  // result of the operation result
+  // result of the operation
   auto &result = splitter.Shape();
   debug_results(result);
   return result;
@@ -208,12 +226,26 @@ void section(const TopTools_ListOfShape &objects,
 }
 
 // center and arrange models on the buildplate
-void arrange_objects(std::vector<Object> objects) {
-  // TODO: use rectangle packing algo
-  // move all objects to their new location
-  for (auto o : objects) {
-    o.translate(0, 0, 0);
+void arrange_objects(std::vector<std::shared_ptr<Object>> objects) {
+  auto packer = Packer(objects);
+  // pack the objects
+  auto bin = packer.pack();
+  auto width = bin.first;
+  auto length = bin.second;
+
+  // check to see if the pack fit within the build plate
+  double build_plate_x = 200, build_plate_y = 200;
+  spdlog::debug("BinPack: comparing resulting bin to build plate size");
+  if (width > build_plate_x || length > build_plate_y) {
+    spdlog::debug("BinPack error: packed volume exceeds build plate");
+    throw std::runtime_error("Bin Packing error: bin exceeds build plate");
   }
+  // calculate the offset necessary for centering the pack on the build plate
+  double offset_x = (build_plate_x - width) / 2;
+  double offset_y = (build_plate_y - length) / 2;
+  // translate the objects
+  packer.translate(offset_x, offset_y);
+
 }
 
 void make_build_volume() {

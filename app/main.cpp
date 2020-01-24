@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
 
   auto imp = sse::Importer{};
 
-  auto objects = vector<sse::Object>();
+  auto objects = vector<std::shared_ptr<sse::Object>>();
 
   for (const auto &f : files) {
     cout << "Loading file: " << f << endl;
@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
     if (v == std::nullopt) {
       cerr << "Error processing file " << f << endl;
     } else {
-      objects.push_back(sse::Object(v.value()));
+      objects.push_back(std::make_shared<sse::Object>(sse::Object(v.value())));
     }
   }
 

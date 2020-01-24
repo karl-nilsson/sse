@@ -1,5 +1,23 @@
-#pragma once
+/**
+ * StepSlicerEngine
+ * Copyright (C) 2020 Karl Nilsson
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
+#pragma once
+// OCCT headers
 #include <TopoDS.hxx>
 #include <TopoDS_Iterator.hxx>
 #include <TopAbs.hxx>
@@ -38,20 +56,21 @@
 #include <BRepTools_WireExplorer.hxx>
 #include <BRepTools.hxx>
 #include <BRep_Tool.hxx>
-
+// STL headers
 #include <fstream>
 #include <iostream>
 #include <map>
 #include <string>
 #include <vector>
 #include <optional>
-
+// SSE headers
 #include <sse/Importer.hpp>
 #include <sse/Slice.hpp>
 #include <sse/version.hpp>
 #include <sse/Object.hpp>
 #include <sse/Settings.hpp>
-
+#include <sse/Packer.hpp>
+// external headers
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
@@ -66,7 +85,7 @@ TopTools_ListOfShape make_tools(const double layerHeight, const double objectHei
 
 std::vector<TopoDS_Face> process_slice(TopoDS_Shape s, double z);
 
-std::optional<TopoDS_Shape> splitter(const std::vector<Object> objects);
+std::optional<TopoDS_Shape> splitter(const std::vector<std::shared_ptr<Object>> &objects);
 
 void slice(const TopTools_ListOfShape &objects);
 TopTools_ListOfShape makeTools(const double layerHeight,

@@ -1,3 +1,21 @@
+/**
+ * StepSlicerEngine
+ * Copyright (C) 2020 Karl Nilsson
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #pragma once
 
 #include <BRepBndLib.hxx>
@@ -54,13 +72,13 @@ public:
   void scale(const double x, const double y, const double z);
   const Bnd_Box &get_bound_box() { return this->bounding_box; }
   const Bnd_Box2d &get_footprint() { return this->footprint; }
-  const double width() {
+  double width() {
     return bounding_box.CornerMax().X() - bounding_box.CornerMin().X();
   }
-  const double length() {
+  double length() {
     return bounding_box.CornerMax().Y() - bounding_box.CornerMin().Y();
   }
-  const double height() {
+  double height() {
     return bounding_box.CornerMax().Z() - bounding_box.CornerMin().Z();
   }
   const double maxZ() { return bounding_box.CornerMax().Z(); }

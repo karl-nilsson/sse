@@ -1,3 +1,21 @@
+/**
+ * StepSlicerEngine
+ * Copyright (C) 2020 Karl Nilsson
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <sse/Packer.hpp>
 
 namespace sse {
@@ -105,7 +123,8 @@ Packer::Packer(std::vector<std::shared_ptr<Object>> objects) {
            std::max(rhs.length(), rhs.width());
   });
   // create the root node. with dimensions equal to the first object
-  // this is essential, so that we don't have to grow the bin in two dimensions simultaneously
+  // this is essential, so that we don't have to grow the bin in two dimensions
+  // simultaneously
   spdlog::debug("BinPack: creating root node");
   root = std::make_shared<Node>(0, 0, objects.front()->width() + OFFSET,
                                 objects.front()->length() + OFFSET);
