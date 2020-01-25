@@ -29,16 +29,13 @@
 
 namespace sse {
 
-Node::Node(double x, double y, double w, double l)
+Packer::Node::Node(double x, double y, double w, double l)
     : x(x), y(y), width(w), length(l) {
-  // ensure both children are null
-  up = nullptr;
-  right = nullptr;
   // initialize with no object
   object = nullptr;
 }
 
-Node* Node::search(std::shared_ptr<Object> o) {
+Packer::Node* Packer::Node::search(std::shared_ptr<Object> o) {
   // leaf nodes are the only nodes valid for object insertion. this also
   // prevents inserting objects in the extraneous root nodes created when
   // growing the bin
@@ -57,20 +54,7 @@ Node* Node::search(std::shared_ptr<Object> o) {
   }
 }
 
-void Node::add_object(std::shared_ptr<Object> o) {
-  object = o;
-  // add child to the right of the inserted object
-  right = std::make_shared<Node>(x + o->width(), y, width - o->width(), length);
-  // add child above the inserted object
-  up = std::make_shared<Node>(x, y + o->length(), width, length - o->length());
-}
-
-void Node::add_children(node_ptr up, node_ptr right) {
-  this->up = up;
-  this->right = right;
-}
-
-void Node::translate(double offset_x, double offset_y) {
+void Packer::Node::translate(double offset_x, double offset_y) {
   // only translate if the node has an object
   if (full()) {
     // calculate translation dimensions
@@ -99,7 +83,7 @@ Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
   // this is essential, so that we don't have to grow the bin in two dimensions
   // simultaneously
   spdlog::debug("BinPack: creating root node");
-  root = std::make_shared<Node>(0, 0, objects.front()->width() + OFFSET,
+  root = std::make_unique<Node>(0, 0, objects.front()->width() + OFFSET,
                                 objects.front()->length() + OFFSET);
 }
 
@@ -108,13 +92,12 @@ void Packer::grow_up(double w, double l) {
   w += OFFSET;
   l += OFFSET;
   // create new root node
-  auto new_root = std::make_shared<Node>(0, 0, root->width, root->length + l);
-  // create child node
-  auto up_child = std::make_shared<Node>(0, root->length, w, l);
-  // other child is the previous root node
-  new_root->add_children(up_child, root);
+  auto new_root = std::make_unique<Node>(0, 0, root->width, root->length + l);
+  // create children
+  new_root->up = std::make_unique<Node>(0, root->length, w, l);
+  new_root->right = std::move(root);
   // finally, change pointer to the new root
-  root = new_root;
+  root = std::move(new_root);
 }
 
 void Packer::grow_right(double w, double l) {
@@ -122,13 +105,12 @@ void Packer::grow_right(double w, double l) {
   w += OFFSET;
   l += OFFSET;
   // create new root node
-  auto new_root = std::make_shared<Node>(0, 0, root->width + w, root->length);
-  // create child node
-  auto right_child = std::make_shared<Node>(root->width, 0, w, l);
-  // other child is the previous root node
-  new_root->add_children(root, right_child);
+  auto new_root = std::make_unique<Node>(0, 0, root->width + w, root->length);
+  // create children
+  new_root->up = std::move(root);
+  new_root->right = std::make_unique<Node>(root->width, 0, w, l);
   // finally, change pointer to the new root
-  root = new_root;
+  root = std::move(new_root);
 }
 
 std::pair<double, double> Packer::pack() {
@@ -179,7 +161,11 @@ std::pair<double, double> Packer::pack() {
     spdlog::debug("BinPack: adding object to tree: {.3f}x{.3f} @ ({.3f},{.3f})",
                   o->width(), o->length(), result->x, result->y);
     // add object to suitable node
-    result->add_object(o);
+    result->object = o;
+    // add child to the right of the inserted object
+    result->right = std::make_unique<Node>(result->x + o->width(), result->y, result->width - o->width(), result->length);
+    // add child above the inserted object
+    result->up = std::make_unique<Node>(result->x, result->y + o->length(), result->width, result->length - o->length());
   }
 
   // return the dimensions of the bin: (width, length)
