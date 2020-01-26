@@ -21,10 +21,6 @@
 
 namespace sse {
 
-/**
- * @brief Object::Object
- * @param s
- */
 Object::Object(TopoDS_Shape s) {
   spdlog::info("Initializing object with shape");
   this->shape = s;
@@ -34,9 +30,6 @@ Object::Object(TopoDS_Shape s) {
   this->generate_bounds();
 }
 
-/**
- * @brief Object::generate_bounds
- */
 void Object::generate_bounds() {
   spdlog::info("generating bounding box");
   // clear bounding box
@@ -54,10 +47,6 @@ void Object::generate_bounds() {
   this->footprint.Add(gp_Pnt2d(xmax, ymax));
 }
 
-/**
- * @brief Object::layFlat rotate and translate object so that one face is flat on the buildplate
- * @param face
- */
 void Object::lay_flat(const TopoDS_Face &face) {
   spdlog::info("laying object flat");
   // get the u,v bounds of selected surface
@@ -111,21 +100,12 @@ void Object::lay_flat(const TopoDS_Face &face) {
   translate(0, 0, -1 * point.Z());
 }
 
-/**
- * @brief Object::center_point
- * @return
- */
-const gp_Pnt Object::center_point() {
+const gp_Pnt Object::center_point() const {
   auto min = bounding_box.CornerMin();
   auto max = bounding_box.CornerMax();
   return gp_Pnt((min.X() + max.X()) / 2, (min.Y() + max.Y()) /2, (min.Z() + max.Z())/2);
 }
 
-/**
- * @brief Object::mirror
- * @param mirror_plane
- * TODO: double-check result
- */
 void Object::mirror(gp_Ax2 mirror_plane) {
   spdlog::debug("Mirror: ");
   auto transform = gp_Trsf();
@@ -134,11 +114,6 @@ void Object::mirror(gp_Ax2 mirror_plane) {
   this->shape = s.Shape();
 }
 
-/**
- * @brief Object::rotate
- * @param axis axis of rotation
- * @param angle angle of rotation, in degrees
- */
 void Object::rotate(const gp_Ax1 axis, const double angle) {
   spdlog::debug("Rotating object");
   auto transform = gp_Trsf();
@@ -151,19 +126,6 @@ void Object::rotate(const gp_Ax1 axis, const double angle) {
   }
 }
 
-// TODO: this may be unecessary, or maybe DRY
-void Object::rotateX(const double angle) { this->rotate(gp::OX(), angle); }
-
-void Object::rotateY(const double angle) { this->rotate(gp::OY(), angle); }
-
-void Object::rotateZ(const double angle) { this->rotate(gp::OZ(), angle); }
-
-/**
- * @brief Object::translate
- * @param x
- * @param y
- * @param z
- */
 void Object::translate(const double x, const double y, const double z) {
   spdlog::debug("Translating: ");
   auto transform = gp_Trsf();
@@ -176,12 +138,6 @@ void Object::translate(const double x, const double y, const double z) {
   }
 }
 
-/**
- * @brief Object::scale
- * @param x
- * @param y
- * @param z
- */
 void Object::scale(const double x, const double y, const double z) {
   spdlog::debug("Scaling: ");
 
@@ -193,7 +149,7 @@ void Object::scale(const double x, const double y, const double z) {
   s.Shape();
 }
 
-const double Object::get_volume() {
+double Object::get_volume() const {
   GProp_GProps volume;
   BRepGProp::VolumeProperties(this->shape, volume);
   return volume.Mass();

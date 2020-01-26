@@ -53,45 +53,162 @@
 
 namespace sse {
 
+/**
+ * @brief The Object class
+ */
 class Object {
 
 public:
+  /**
+   * @brief Object
+   * @param object
+   */
   Object(const Object& object);
+
+  /**
+   * @brief Object
+   * @param s
+   */
   Object(TopoDS_Shape s);
+
+  /**
+   * @brief generate_bounds
+   */
   void generate_bounds();
+
+  /**
+   * @brief Rotate and translate object so that one face is flat on the buildplate
+   * @param face
+   */
   void lay_flat(const TopoDS_Face &face);
+
+  /**
+   * @brief Mirror object across a plane
+   * @param mirror_plane
+   */
   void mirror(gp_Ax2 mirror_plane);
+
+  /**
+   * @brief mirrorXY
+   */
   void mirrorXY() { mirror(gp_Ax2(center_point(), gp::DZ())); }
+
+  /**
+   * @brief mirrorXZ
+   */
   void mirrorXZ() { mirror(gp_Ax2(center_point(), gp::DY())); }
+
+  /**
+   * @brief mirrorYZ
+   */
   void mirrorYZ() { mirror(gp_Ax2(center_point(), gp::DX())); }
+
+  /**
+   * @brief Rotate object
+   * @param axis Axis of rotation
+   * @param angle Angle of rotation, in degrees
+   */
   void rotate(const gp_Ax1 axis, const double angle);
-  void rotateX(const double angle);
-  void rotateY(const double angle);
-  void rotateZ(const double angle);
+
+  /**
+   * @brief Rotate object on the X axis
+   * @param angle Angle of rotation, in degrees
+   */
+  void rotateX(const double angle) {rotate(gp::OX(), angle);}
+
+  /**
+   * @brief rotateY
+   * @param angle
+   */
+  void rotateY(const double angle) {rotate(gp::OY(), angle);}
+
+  /**
+   * @brief rotateZ
+   * @param angle
+   */
+  void rotateZ(const double angle) {rotate(gp::OZ(), angle);}
+
+  /**
+   * @brief Translate object
+   * @param x
+   * @param y
+   * @param z
+   */
   void translate(const double x, const double y, const double z);
+
+  /**
+   * @brief scale
+   * @param x
+   * @param y
+   * @param z
+   */
   void scale(const double x, const double y, const double z);
-  const Bnd_Box &get_bound_box() { return this->bounding_box; }
+
+  /**
+   * @brief get_bound_box
+   * @return
+   */
+  const Bnd_Box &get_bound_box() const { return this->bounding_box; }
+
+  /**
+   * @brief get_footprint
+   * @return
+   */
   const Bnd_Box2d &get_footprint() { return this->footprint; }
-  double width() {
+
+  /**
+   * @brief width
+   * @return
+   */
+  double width() const {
     return bounding_box.CornerMax().X() - bounding_box.CornerMin().X();
   }
-  double length() {
+
+  /**
+   * @brief length
+   * @return
+   */
+  double length() const {
     return bounding_box.CornerMax().Y() - bounding_box.CornerMin().Y();
   }
-  double height() {
+
+  /**
+   * @brief height
+   * @return
+   */
+  double height() const {
     return bounding_box.CornerMax().Z() - bounding_box.CornerMin().Z();
   }
-  const double maxZ() { return bounding_box.CornerMax().Z(); }
-  const gp_Pnt center_point();
 
-  const double get_volume();
+  /**
+   * @brief maxZ
+   * @return
+   */
+  double maxZ() const { return bounding_box.CornerMax().Z(); }
 
-  const TopoDS_Shape get_shape() { return shape;}
+  /**
+   * @brief center_point
+   * @return
+   */
+  const gp_Pnt center_point() const;
+
+  /**
+   * @brief get_volume
+   * @return
+   */
+  double get_volume() const;
+
+  /**
+   * @brief get_shape
+   * @return
+   */
+  const TopoDS_Shape get_shape() const { return shape;}
 
 private:
   TopoDS_Shape shape;
   Bnd_Box bounding_box;
   Bnd_Box2d footprint;
+  bool dirty;
 };
 
 /**
