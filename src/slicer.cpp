@@ -225,7 +225,7 @@ void section(const TopTools_ListOfShape &objects,
   }
 }
 
-// center and arrange models on the buildplate
+// arrange objects in the center of the buildplate
 void arrange_objects(std::vector<std::shared_ptr<Object>> objects) {
   auto packer = Packer(objects);
   // pack the objects
@@ -234,6 +234,7 @@ void arrange_objects(std::vector<std::shared_ptr<Object>> objects) {
   auto length = bin.second;
 
   // check to see if the pack fit within the build plate
+  // FIXME: get actual buildplate volume/dimensions
   double build_plate_x = 200, build_plate_y = 200;
   spdlog::debug("BinPack: comparing resulting bin to build plate size");
   if (width > build_plate_x || length > build_plate_y) {
@@ -244,7 +245,7 @@ void arrange_objects(std::vector<std::shared_ptr<Object>> objects) {
   double offset_x = (build_plate_x - width) / 2;
   double offset_y = (build_plate_y - length) / 2;
   // translate the objects
-  packer.translate(offset_x, offset_y);
+  packer.arrange(offset_x, offset_y);
 
 }
 

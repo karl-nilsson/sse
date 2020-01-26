@@ -18,13 +18,15 @@
 
 /**
  * @file Packer.hpp
- * @brief Packs a objects into a rectangular bin
+ * @brief Packs objects into a rectangular bin
  *
  * This contains the prototypes for the Packer class
  *
  * @author Karl Nilsson
  * @bug fixed/static offset dimension between objects
- * @bug sanity check: make sure object doesn't have infinite dimensions
+ * @bug bounds check: ensure objects don't have infinite dimensions
+ * @bug bounds check: ensure object list isn't too big, otherwise will
+ * run out of stack space when destroying tree
  */
 
 #pragma once
@@ -32,6 +34,7 @@
 #include <algorithm>
 #include <exception>
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include <sse/Object.hpp>
@@ -60,6 +63,28 @@ namespace sse {
  */
 class Packer {
 
+public:
+  /**
+   * @brief Packer constructor
+   * @param objects List of objects to pack
+   */
+  Packer(std::vector<std::shared_ptr<Object>> objects);
+
+  /**
+   * @brief Calculate an optimized rectangular bin for the objects
+   * @return Dimensions of resulting bin
+   * @throws std::runtime Thrown if unable to grow bin properly
+   */
+  std::pair<double, double> pack();
+
+  /**
+   * @brief Move all objects to their new position on the buildplate
+   * @param offset_x X offset of bin with respect to buildplate origin
+   * @param offset_y Y offset of bin with respect to buildplate origin
+   */
+  void arrange(double offset_x, double offset_y) const;
+
+private:
   /**
    * @struct Node
    * @brief Binary tree Node
@@ -81,11 +106,11 @@ class Packer {
     //! node length
     const double length;
     //! up child node
-    node_ptr up;
+    node_ptr up {nullptr};
     //! right child node
-    node_ptr right;
+    node_ptr right {nullptr};
     //! object contained in this node
-    std::shared_ptr<Object> object;
+    Object *object {nullptr};
 
     /**
      * @brief Node constructor
@@ -94,14 +119,15 @@ class Packer {
      * @param w Width, X axis
      * @param l Length, Y axis
      */
-    Node(double x, double y, double w, double l);
+    Node(double x, double y, double w, double l)
+        : x(x), y(y), width(w), length(l) {}
 
     /**
      * @brief Check to see if object will fit in this node
      * @param o Target object
      * @return Whether object fits in node
      */
-    inline bool fits(std::shared_ptr<Object> o) {
+    inline bool fits(const Object *o) const {
       return (o->length() + OFFSET < length) && (o->width() + OFFSET < width);
     }
 
@@ -109,65 +135,47 @@ class Packer {
      * @brief Does this node contain an object?
      * @return Whether node contains an object
      */
-    inline bool full() { return object != nullptr; }
+    inline bool full() const { return object != nullptr; }
 
     /**
-     * @brief is this node a leaf?
+     * @brief Is this node a leaf?
      * @return Whether node is a leaf
      */
-    inline bool leaf() { return up != nullptr; }
+    inline bool leaf() const { return up != nullptr; }
 
-    /**
-     * @brief Search the tree for a suitable node to hold an object
-     * @param o The object to insert
-     * @return pointer to a suitable node, nullptr otherwise
-     */
-    Node *search(std::shared_ptr<Object> o);
-
-    /**
-     * @brief Translate object, then recurse to children
-     * @param offset_x X offset of bin with respect to buildplate origin
-     * @param offset_y Y offset of bin with respect to buildplate origin
-     */
-    void translate(double offset_x, double offset_y);
   }; // end Node definition
 
-public:
   /**
-   * @brief Packer constructor
-   * @param objects List of objects to pack
+   * @brief Search the tree for a suitable node to hold an object
+   * @param o The object to insert
+   * @return pointer to a suitable node, nullptr otherwise
    */
-  Packer(std::vector<std::shared_ptr<Object>> objects);
+  Node *insert_search(Node &node, const Object *o) const;
 
-  /**
-   * @brief Calculate an optimized rectangular bin for the objects
-   * @return Dimensions of resulting bin
-   * @throws std::runtime Thrown if can't grow bin properly, or can't insert
-   * object after growing bin
-   */
-  std::pair<double, double> pack();
-
-  /**
-   * @brief Translate objects to their new position
-   * @param offset_x X offset of bin with respect to buildplate origin
-   * @param offset_y Y offset of bin with respect to buildplate origin
-   */
-  void translate(double offset_x, double offset_y);
-
-private:
   /**
    * @brief Grow the bin in the +Y direction
    * @param w Width requested
    * @param l Length requested
+   * @return A new Node, big enough to fit the space required
    */
-  void grow_up(double w, double l);
+  Node *grow_up(double w, double l);
 
   /**
    * @brief Grow the bin in the +X direction
    * @param w Width requested
    * @param l Length requested
+   * @return A new Node, big enough to fit the space required
    */
-  void grow_right(double w, double l);
+  Node *grow_right(double w, double l);
+
+  /**
+   * @brief Translate an object to its new position, then recurse to children
+   * @param node Object to translate
+   * @param offset_x X offset of bin with respect to buildplate origin
+   * @param offset_y Y offset of bin with respect to buildplate origin
+   */
+  void translate(const Node &node, const double offset_x,
+                 const double offset_y) const;
 
   //! list of objects to pack
   std::vector<std::shared_ptr<Object>> objects;
