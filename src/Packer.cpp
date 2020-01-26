@@ -36,7 +36,7 @@ Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
   // specifically, compare the largest dimension (X or Y) of each object
   spdlog::debug("BinPack: sorting object list");
   std::sort(objects.begin(), objects.end(),
-            [](std::shared_ptr<Object> lhs, std::shared_ptr<Object> rhs) {
+            [](const auto& lhs, const auto& rhs) {
               return std::max(lhs->length(), lhs->width()) >
                      std::max(rhs->length(), rhs->width());
             });
@@ -50,10 +50,8 @@ Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
 
 std::pair<double, double> Packer::pack() {
   spdlog::debug("BinPack: packing");
-  // insert all objects into the tree (we already inserted first object)
-  for (auto it = objects.begin() + 1; it <= objects.end(); ++it) {
-    // get reference from iterator
-    auto o = *it;
+  // insert all objects into the tree
+  for (auto o : objects) {
     spdlog::debug("BinPack: searching for suitable node");
     // attempt to find a suitable node for the object
     auto result = insert_search(*root, o.get());

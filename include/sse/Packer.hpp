@@ -106,11 +106,11 @@ private:
     //! node length
     const double length;
     //! up child node
-    node_ptr up {nullptr};
+    node_ptr up{nullptr};
     //! right child node
-    node_ptr right {nullptr};
+    node_ptr right{nullptr};
     //! object contained in this node
-    Object *object {nullptr};
+    Object *object{nullptr};
 
     /**
      * @brief Node constructor
