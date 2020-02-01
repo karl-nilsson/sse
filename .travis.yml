@@ -1,0 +1,25 @@
+os: linux
+dist: focal
+language: cpp
+
+before_install:
+    - sudo apt-get update -qq
+    - sudo apt-get install -y libocct-*
+
+compiler:
+    - gcc
+    - clang
+
+cache:
+    apt: true
+
+branches:
+    only:
+        - devel
+
+before_script:
+    - mkdir build
+    - cd build
+    - cmake ..
+
+script: make && make test
