@@ -88,3 +88,5 @@ CMakeLists.txt.user*
 # build directory
 /build
 
+# freecad backup files
+*.FCStd1
