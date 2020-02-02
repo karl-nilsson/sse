@@ -1,4 +1,6 @@
 # STEP Slicer Engine
+[![Build Status](https://travis-ci.com/karl-nilsson/sse.svg?branch=devel)](https://travis-ci.com/karl-nilsson/sse)
+
 An experimental 3D model slicer engine, built on top of a CAD kernel
 
 ## Why?
@@ -23,13 +25,12 @@ An experimental 3D model slicer engine, built on top of a CAD kernel
 * [Redeem](http://wiki.thing-printer.com/index.php?title=Redeem)
 
 ## License
-AGPL
+[AGPL](LICENSE)
 
 ## Build Instructions
 ```
 git clone --recursive https://github.com/karl-nilsson/sse.git && cd sse
 mkdir build && cd build
 cmake ..
-make
-sudo make install
+cmake --build .
 ```

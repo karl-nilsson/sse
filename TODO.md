@@ -14,6 +14,7 @@ Refinement:
 - refine clipper lib
   - cmake library build
   - separate repo
+  - header only library?
 - GCode pattern words
 - represent build volume as 3d shell (hangprinter)
 - store effector as model for collision detection
@@ -23,6 +24,8 @@ Refinement:
   - Parallelization: TBB vs OpenMP
 
 Meta:
+- CI
+ - Travis: waiting on ubuntu 20.04
 - cmake
  - clang-format
  - clang-tidy (cppcoreguidelines)
