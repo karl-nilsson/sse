@@ -1,25 +1,23 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.15)
+
+# project basics
+project(stepslicerengine
+    VERSION 0.0.0
+    DESCRIPTION "Slicer Engine"
+    LANGUAGES CXX)
 
 # List of commandline options
-option(ENABLE_LTO "Enable link time optimization" ON)
-option(ENABLE_DOCTESTS "Include tests in the library" ON)
+option(ENABLE_LTO "Enable link time optimization" OFF)
+option(ENABLE_DOCTESTS "Build tests" ON)
 option(ENABLE_DOCUMENTATION "Build documentation" ON)
 
 # require c++17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wextra")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
-# project name
-project(stepslicerengine
-    VERSION 0.0.0
-    DESCRIPTION "Slicer Engine"
-    LANGUAGES CXX)
 
-# settings
+# global settings
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
@@ -27,7 +25,6 @@ set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 # add custom cmake modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-
 
 
 # search for OpenCASCADE
@@ -44,7 +41,7 @@ find_package(fmt)
 find_package(OpenMP)
 
 # add toml11, don't build tests
-set(toml11_BUILD_TEST OFF CACHE STRING "Don't build toml tests" FORCE)
+set(toml11_BUILD_TEST OFF CACHE STRING "Omit toml tests" FORCE)
 add_subdirectory(extern/toml11 EXCLUDE_FROM_ALL)
 
 add_subdirectory(extern/spdlog EXCLUDE_FROM_ALL)
@@ -56,32 +53,37 @@ configure_file(
     @ONLY
     )
 
-# set source files
-set(SOURCES
-    src/Importer.cpp
-    src/slicer.cpp
-    src/Slice.cpp
-    src/Object.cpp
-    src/Settings.cpp
-    src/Support.cpp
-    src/SVGWriter.cpp
-    src/Packer.cpp
-    include/sse/Importer.hpp
-    include/sse/slicer.hpp
-    include/sse/Slice.hpp
-    include/sse/Object.hpp
-    include/sse/Settings.hpp
-    include/sse/Support.hpp
-    include/sse/SVGWriter.hpp
-    include/sse/Packer.hpp
-)
-
 # main library
-add_library(libsse SHARED ${SOURCES})
+add_library(libsse SHARED)
 # alias
 add_library(libsse::libsse ALIAS libsse)
 # prevent "liblibsse.so"
 set_target_properties(libsse PROPERTIES OUTPUT_NAME "sse")
+
+target_compile_options(libsse PRIVATE -Wall -Wextra -Wpedantic)
+
+# TODO: correctly sort files into proper context
+target_sources(libsse
+  PRIVATE
+      src/Importer.cpp
+      src/slicer.cpp
+      src/Slice.cpp
+      src/Object.cpp
+      src/Settings.cpp
+      src/Support.cpp
+      src/SVGWriter.cpp
+      src/Packer.cpp
+  PUBLIC
+      include/sse/Importer.hpp
+      include/sse/slicer.hpp
+      include/sse/Slice.hpp
+      include/sse/Object.hpp
+      include/sse/Settings.hpp
+      include/sse/Support.hpp
+      include/sse/SVGWriter.hpp
+      include/sse/Packer.hpp
+  INTERFACE
+)
 
 
 target_include_directories(libsse BEFORE
@@ -105,10 +107,25 @@ target_link_libraries(libsse
         OpenMP::OpenMP_CXX
 #        clipper
         toml11::toml11
-        spdlog::spdlog_header_only
     PRIVATE
+        spdlog::spdlog_header_only
         fmt
 )
+
+
+if(ENABLE_LTO)
+    ### Check if we can enable Link Time Optimization
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT supported OUTPUT error)
+    if(supported)
+        message(STATUS "IPO / LTO supported, enabling")
+        set_target_properties(${PROJECT_NAME} PROPERTIES INTERPROCEDURAL_OPTIMIZATION ON)
+    else()
+        message(STATUS "IPO / LTO not supported: <${error}>, will not enable")
+    endif()
+endif()
+
+
 
 #FIXME
 if(FALSE)
@@ -116,7 +133,7 @@ if(FALSE)
 include(GNUInstallDirs)
 set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/libsse)
 
-# targets
+# install targets
 install(
     TARGETS libsse
     EXPORT libsse-targets
@@ -145,7 +162,7 @@ include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
     ${CMAKE_CURRENT_BINARY_DIR}/libsseConfigVersion.cmake
     VERSION ${PACKAGE_VERSION}
-    COMPATIBILITY AnyNewerVersion
+    COMPATIBILITY SameMajorVersion
 )
 
 # generate libsseConfig.cmake
