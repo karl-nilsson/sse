@@ -32,11 +32,25 @@ namespace sse {
 
 Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
     : objects(objects) {
+  // check for empty vector
+  if (objects.empty()) {
+    throw std::runtime_error("Binpack: no objects to pack");
+  }
+  // check for invalid objects (infinite or zero volume)
+  // TODO: consider using c++20 ranges
+  for (auto o : objects) {
+    if (o->get_bound_box().IsOpen()) {
+      throw std::runtime_error("Binpack: object has infinite volume");
+    }
+    if (o->get_bound_box().IsVoid()) {
+      throw std::runtime_error("Binpack: object is empty");
+    }
+  }
   // sort the objects, biggest to smallest, in terms of footprint
   // specifically, compare the largest dimension (X or Y) of each object
   spdlog::debug("BinPack: sorting object list");
   std::sort(objects.begin(), objects.end(),
-            [](const auto& lhs, const auto& rhs) {
+            [](const auto &lhs, const auto &rhs) {
               return std::max(lhs->length(), lhs->width()) >
                      std::max(rhs->length(), rhs->width());
             });
@@ -49,6 +63,9 @@ Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
 }
 
 std::pair<double, double> Packer::pack() {
+
+
+
   spdlog::debug("BinPack: packing");
   // insert all objects into the tree
   for (auto o : objects) {
