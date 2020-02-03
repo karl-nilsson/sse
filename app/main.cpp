@@ -66,13 +66,13 @@ int main(int argc, char **argv) {
 
     // print help message then quit
     if (result.count("help")) {
-      cout << opts.help({"", "Group"}) << endl;
+      cout << opts.help({"", "Group"}) << '\n';
       return 0;
     }
 
     // print version then quit
     if (result.count("version")) {
-      cout << "sse version " << VERSION << "\ngit sha: " << "VERSION_SHA" << endl;
+      cout << "sse version " << VERSION << "\ngit sha: " << "VERSION_SHA" << '\n';
       return 0;
     }
 
@@ -81,12 +81,12 @@ int main(int argc, char **argv) {
 
     // automaticall position models on the build plate
     if (result.count("autoplace")) {
-      cout << "autoplace" << endl;
+      cout << "autoplace" << '\n';
     }
 
     // load profile
     if (result.count("p")) {
-      cout << "profile: " << result["profile"].as<string>() << endl;
+      cout << "profile: " << result["profile"].as<string>() << '\n';
       auto profile = fs::path(result["profile"].as<string>());
       sse::init_settings(profile);
     }
@@ -96,36 +96,36 @@ int main(int argc, char **argv) {
       files = result["positional"].as<vector<string>>();
     } else {
       // no files to slice, error out
-      cerr << "Error: no files provided" << endl;
+      cerr << "Error: no files provided\n";
     }
 
   } catch (const cxxopts::OptionException &e) {
     // no files to slice, error and exit
-    cerr << "ERROR PARSING OPTIONS: " << e.what() << std::endl;
+    cerr << "ERROR PARSING OPTIONS: " << e.what() << '\n';
     exit(1);
   }
 
   auto imp = sse::Importer{};
 
-  auto objects = vector<std::shared_ptr<sse::Object>>();
+  auto objects = vector<shared_ptr<sse::Object>>();
 
   for (const auto &f : files) {
-    cout << "Loading file: " << f << endl;
+    cout << "Loading file: " << f << '\n';
     // check if file exists
     if (!fs::exists(f)) {
-      cerr << "file " << f << " does not exist, skipping" << endl;
+      cerr << "file " << f << " does not exist, skipping\n";
       continue;
     }
     // import the object, then add it to the list
     auto v = imp.importSTEP(f.c_str());
-    if (v == std::nullopt) {
-      cerr << "Error processing file " << f << endl;
+    if (v == nullopt) {
+      cerr << "Error processing file " << f << '\n';
     } else {
-      objects.push_back(std::make_shared<sse::Object>(sse::Object(v.value())));
+      objects.push_back(make_shared<sse::Object>(v.value()));
     }
   }
 
-  cout << "Max string len: " << string().max_size() << endl;
+  cout << "Max string len: " << string().max_size() << '\n';
 
   sse::splitter(objects);
 
