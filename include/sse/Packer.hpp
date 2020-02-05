@@ -47,8 +47,7 @@
  * (i.e. expand all rectangles individually, based on brim, if applicable.
  * keep in mind, brim may not expand footprint, i.e. brim for a sphere)
  */
-/// buffer space 10mm each direction
-#define OFFSET 10
+#define OFFSET 0
 
 namespace sse {
 

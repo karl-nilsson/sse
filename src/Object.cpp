@@ -16,35 +16,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <sse/Object.hpp>
+/**
+ * @file
+ * @brief
+ * @author
+ *
+ * @bug TODO: consider changing transform to TopoDS_Shape.Location()
+ */
 
+#include <sse/Object.hpp>
 
 namespace sse {
 
-Object::Object(TopoDS_Shape s) {
+Object::Object(TopoDS_Shape &s) : shape(std::make_unique<TopoDS_Shape>(s)) {
   spdlog::info("Initializing object with shape");
-  this->shape = s;
   // calculate the bounding box
-  this->bounding_box = Bnd_Box();
-  this->footprint = Bnd_Box2d();
-  this->generate_bounds();
+  bounding_box = Bnd_Box();
+  footprint = Bnd_Box2d();
+  generate_bounds();
 }
 
 void Object::generate_bounds() {
   spdlog::info("generating bounding box");
   // clear bounding box
-  this->bounding_box.SetVoid();
+  bounding_box.SetVoid();
   // create bounding box
-  BRepBndLib::Add(this->shape, this->bounding_box);
+  BRepBndLib::Add(*shape, bounding_box);
 
   spdlog::info("generating footprint");
   // clear footprint
-  this->footprint.SetVoid();
+  footprint.SetVoid();
   // TODO: simplify
   Standard_Real xmin, ymin, xmax, ymax, tmp;
-  this->bounding_box.Get(xmin, ymin, tmp, xmax, ymax, tmp);
-  this->footprint.Add(gp_Pnt2d(xmin, ymin));
-  this->footprint.Add(gp_Pnt2d(xmax, ymax));
+  bounding_box.Get(xmin, ymin, tmp, xmax, ymax, tmp);
+  footprint.Add(gp_Pnt2d(xmin, ymin));
+  footprint.Add(gp_Pnt2d(xmax, ymax));
 }
 
 void Object::lay_flat(const TopoDS_Face &face) {
@@ -59,12 +65,14 @@ void Object::lay_flat(const TopoDS_Face &face) {
                                  (vmin + vmax) / 2, 1, 1e-6);
   // normal undefined, error
   // TODO: raise error?
-  if(! props.IsNormalDefined()) {
-      return;
+  if (!props.IsNormalDefined()) {
+    return;
   }
 
   auto normal = props.Normal();
-  spdlog::debug("Face normal: ");
+  // TODO: better log messages
+  spdlog::debug("Face normal: {:f},{:f},{:f}", normal.X(), normal.Y(),
+                normal.Z());
   // get the coordinate of the face at (u,v)
   auto point = props.Value();
   // if the face was reversed, reverse the normal
@@ -74,20 +82,17 @@ void Object::lay_flat(const TopoDS_Face &face) {
   }
 
   // if normals aren't already equal, rotate until they are
-  if (!normal.IsEqual(gp::DZ(), 0.0001)) {
+  // TODO: better decision regarding tolerance
+  if (!normal.IsOpposite(gp::DZ(), 0.0001)) {
     // the axis of rotation is the cross product of the two vectors
-    auto axis = normal.Crossed(gp::DZ());
-    // use midpoint of bounding box as the center of rotation
-    auto min = bounding_box.CornerMin();
-    auto max = bounding_box.CornerMax();
-    spdlog::debug("Axis: ");
-    spdlog::debug("Angle: ");
+    auto unit_vector = normal.Crossed(gp::DZ());
+    spdlog::debug("Axis: {:f},{:f},{:f}");
+    spdlog::debug("Angle: {:f}°");
+    // rotate the object, so that the specified normal is opposite the +Z unit
+    // vector
     // TODO: verify center point is correct/good idea
     // TODO: verify angle calc correctness
-    rotate(gp_Ax1(gp_Pnt((min.X() + max.X()) / 2, (min.Y() + max.Y()) / 2,
-                         (min.Z() + max.Z()) / 2),
-                  axis),
-           normal.Angle(gp::DZ()));
+    rotate(gp_Ax1(center_point(), unit_vector), normal.Angle(gp::DZ()) + M_PI);
 
     // if rotation happened, recalculate coordinate
     // TODO: make more elegant
@@ -103,55 +108,62 @@ void Object::lay_flat(const TopoDS_Face &face) {
 const gp_Pnt Object::center_point() const {
   auto min = bounding_box.CornerMin();
   auto max = bounding_box.CornerMax();
-  return gp_Pnt((min.X() + max.X()) / 2, (min.Y() + max.Y()) /2, (min.Z() + max.Z())/2);
+  return gp_Pnt((min.X() + max.X()) / 2, (min.Y() + max.Y()) / 2,
+                (min.Z() + max.Z()) / 2);
 }
 
 void Object::mirror(gp_Ax2 mirror_plane) {
   spdlog::debug("Mirror: ");
-  auto transform = gp_Trsf();
-  transform.SetMirror(mirror_plane);
-  auto s = BRepBuilderAPI_Transform(this->shape, transform);
-  this->shape = s.Shape();
+  auto mirror = gp_Trsf();
+  mirror.SetMirror(mirror_plane);
+  transform(mirror);
 }
 
 void Object::rotate(const gp_Ax1 axis, const double angle) {
-  spdlog::debug("Rotating object");
-  auto transform = gp_Trsf();
-  transform.SetRotation(axis, angle * M_PI / 180);
-  try {
-    auto s = BRepBuilderAPI_Transform(this->shape, transform).Shape();
-    this->shape = s;
-  } catch (StdFail_NotDone& e) {
-    e.Print(std::cerr);
-  }
+  spdlog::debug("Rotating object: {+:f}°", angle);
+  auto rotate = gp_Trsf();
+  rotate.SetRotation(axis, angle * M_PI / 180);
+  transform(rotate);
 }
 
 void Object::translate(const double x, const double y, const double z) {
-  spdlog::debug("Translating: ");
-  auto transform = gp_Trsf();
-  transform.SetTranslation(gp_Vec(x, y, z));
-  try {
-    auto s = BRepBuilderAPI_Transform(this->shape, transform).Shape();
-    this->shape = s;
-  } catch (StdFail_NotDone& e) {
-    e.Print(std::cerr);
-  }
+  translate(gp_Vec(x, y, z));
+}
+
+void Object::translate(const gp_Vec v) {
+  spdlog::debug("Translating vector: {:f},{:f},{:f}", v.X(), v.Y(), v.Z());
+  auto translate = gp_Trsf();
+  translate.SetTranslation(v);
+  transform(translate);
+}
+
+void Object::translate(const gp_Pnt dest) {
+  spdlog::debug("Translating to {:f},{:f},{:f}", dest.X(), dest.Y(), dest.Z());
+  auto translate = gp_Trsf();
+  translate.SetTranslation(bounding_box.CornerMin(), dest);
+  transform(translate);
 }
 
 void Object::scale(const double x, const double y, const double z) {
   spdlog::debug("Scaling: ");
-
   // TODO: get working
   auto v = gp_Vec(x, y, z);
   auto scale = gp_Trsf();
-  scale.SetScale(center_point(), x);
-  auto s = BRepBuilderAPI_Transform(this->shape, scale);
-  s.Shape();
+  transform(scale);
+}
+
+void Object::transform(const gp_Trsf transform) {
+  try {
+    auto s = BRepBuilderAPI_Transform(*shape, transform).Shape();
+    shape = std::make_unique<TopoDS_Shape>(s);
+  } catch (const StdFail_NotDone &e) {
+    spdlog::error(e.GetMessageString());
+  }
 }
 
 double Object::get_volume() const {
   GProp_GProps volume;
-  BRepGProp::VolumeProperties(this->shape, volume);
+  BRepGProp::VolumeProperties(*shape, volume);
   return volume.Mass();
 }
 

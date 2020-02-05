@@ -64,8 +64,6 @@ Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
 
 std::pair<double, double> Packer::pack() {
 
-
-
   spdlog::debug("BinPack: packing");
   // insert all objects into the tree
   for (auto o : objects) {
@@ -177,16 +175,10 @@ void Packer::translate(const Node &node, const double offset_x,
                        const double offset_y) const {
   // only translate if the node has an object
   if (node.full()) {
-    // calculate translation dimensions
-    auto delta_x =
-        node.x - node.object->get_bound_box().CornerMin().X() + offset_x;
-    auto delta_y =
-        node.y - node.object->get_bound_box().CornerMin().Y() + offset_y;
-    // perform translation
-    // FIXME: use name of object
-    spdlog::debug("Moving object %{}s to ({.3f},{.3f})", "FIXME", node.x,
-                  node.y);
-    node.object->translate(delta_x, delta_y, 0);
+    // perform translation (only in XY direction)
+    node.object->translate(
+        gp_Pnt(node.x + offset_x, node.y + offset_y,
+               node.object->get_bound_box().CornerMin().Z()));
   }
   // recurse to children
   if (!node.leaf()) {

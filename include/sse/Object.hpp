@@ -23,9 +23,9 @@
 #include <BRepBuilderAPI_GTransform.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
+#include <BRepGProp.hxx>
 #include <BRepTools.hxx>
 #include <BRep_Tool.hxx>
-#include <BRepGProp.hxx>
 #include <GProp_GProps.hxx>
 
 #include <BndLib.hxx>
@@ -43,9 +43,11 @@
 #include <AIS_Shape.hxx>
 #include <GeomLProp_SLProps.hxx>
 #include <Standard_ConstructionError.hxx>
+#include <Standard_Handle.hxx>
 #include <StdFail_NotDone.hxx>
 
 #include <math.h>
+#include <memory>
 
 #include <spdlog/fmt/ostr.h>
 #include <spdlog/sinks/stdout_sinks.h>
@@ -63,13 +65,13 @@ public:
    * @brief Object
    * @param object
    */
-  Object(const Object& object);
+  Object(const Object &object);
 
   /**
    * @brief Object
    * @param s
    */
-  Object(TopoDS_Shape s);
+  Object(TopoDS_Shape &s);
 
   /**
    * @brief generate_bounds
@@ -77,7 +79,8 @@ public:
   void generate_bounds();
 
   /**
-   * @brief Rotate and translate object so that one face is flat on the buildplate
+   * @brief Rotate and translate object so that one face is flat on the
+   * buildplate
    * @param face
    */
   void lay_flat(const TopoDS_Face &face);
@@ -104,29 +107,29 @@ public:
   void mirrorYZ() { mirror(gp_Ax2(center_point(), gp::DX())); }
 
   /**
-   * @brief Rotate object
+   * @brief Rotate object about center of object
    * @param axis Axis of rotation
    * @param angle Angle of rotation, in degrees
    */
   void rotate(const gp_Ax1 axis, const double angle);
 
   /**
-   * @brief Rotate object on the X axis
+   * @brief Rotate object about the X axis
    * @param angle Angle of rotation, in degrees
    */
-  void rotateX(const double angle) {rotate(gp::OX(), angle);}
+  void rotateX(const double angle) { rotate(gp::OX(), angle); }
 
   /**
    * @brief rotateY
    * @param angle
    */
-  void rotateY(const double angle) {rotate(gp::OY(), angle);}
+  void rotateY(const double angle) { rotate(gp::OY(), angle); }
 
   /**
    * @brief rotateZ
    * @param angle
    */
-  void rotateZ(const double angle) {rotate(gp::OZ(), angle);}
+  void rotateZ(const double angle) { rotate(gp::OZ(), angle); }
 
   /**
    * @brief Translate object
@@ -137,12 +140,26 @@ public:
   void translate(const double x, const double y, const double z);
 
   /**
+   * @brief translate
+   * @param v
+   */
+  void translate(const gp_Vec v);
+
+  /**
+   * @brief translate
+   * @param dest
+   */
+  void translate(const gp_Pnt dest);
+
+  /**
    * @brief scale
    * @param x
    * @param y
    * @param z
    */
   void scale(const double x, const double y, const double z);
+
+  void transform(const gp_Trsf transform);
 
   /**
    * @brief get_bound_box
@@ -202,13 +219,13 @@ public:
    * @brief get_shape
    * @return
    */
-  const TopoDS_Shape get_shape() const { return shape;}
+  inline TopoDS_Shape &get_shape() { return *shape; }
 
 private:
-  TopoDS_Shape shape;
+  std::unique_ptr<TopoDS_Shape> shape;
   Bnd_Box bounding_box;
   Bnd_Box2d footprint;
-  bool dirty;
+  std::string name;
 };
 
 /**
@@ -223,4 +240,3 @@ std::ostream &operator<<(std::ostream &os, const Object &c) {
 */
 
 } // namespace sse
-
