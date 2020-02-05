@@ -63,12 +63,7 @@ void init_settings(fs::path configfile) {
   s.parse(configfile);
 }
 
-/**
- * @brief makeTools
- * @param layerHeight
- * @param objectHeight
- * @return A list of tools (planar faces) to slice an object
- */
+
 TopTools_ListOfShape make_tools(const double layer_height,
                                 const double object_height) {
   spdlog::info("Creating splitter tools");
@@ -82,12 +77,7 @@ TopTools_ListOfShape make_tools(const double layer_height,
   return result;
 }
 
-/**
- * @brief makeSpiralFace
- * @param height
- * @param radius
- * @return
- */
+
 TopoDS_Face make_spiral_face(const double height, const double layer_height) {
   // make a unit cylinder, vertical axis, center @ (0,0), radius of 1
   Handle_Geom_CylindricalSurface cylinder =
@@ -109,16 +99,12 @@ TopoDS_Face make_spiral_face(const double height, const double layer_height) {
   return face;
 }
 
-/**
- * @brief splitter Use the splitter algorithm to split a solid into slices
- * @param objects
- * @param tools
- * @return the list of shapes, or std::nullopt if failure
- */
+
 std::optional<TopoDS_Shape> splitter(const std::vector<std::shared_ptr<Object>> &objects) {
   // find the highest z point of all objects
   double z = 0;
   auto obj = TopTools_ListOfShape();
+  // FIXME
   for (auto o : objects) {
     z = std::max(z, o->get_bound_box().CornerMax().Z());
     obj.Append(o->get_shape());
@@ -127,7 +113,9 @@ std::optional<TopoDS_Shape> splitter(const std::vector<std::shared_ptr<Object>> 
   Settings &s = Settings::getInstance();
   // FIXME more sane layer height fallback mechanism
   auto layer_height = toml::find_or<double>(s.config, "layer_height", 0.02);
+  spdlog::info(fmt::format("layer height: {f}", layer_height));
   // create the slicing planes
+  spdlog::info("creating slicing planes");
   auto tools = make_tools(layer_height, z);
   auto splitter = BRepAlgoAPI_Splitter{};
   // set the arguments
@@ -135,12 +123,11 @@ std::optional<TopoDS_Shape> splitter(const std::vector<std::shared_ptr<Object>> 
   splitter.SetTools(tools);
   // run in parallel
   splitter.SetRunParallel(true);
-  splitter.SetFuzzyValue(0.0);
+  splitter.SetFuzzyValue(0.001);
   // run the algorithm
   splitter.Build();
   // check error status
   if (splitter.HasErrors()) {
-    std::cerr << "Error while splitting shape" << std::endl;
     spdlog::error("Error while splitting shape: ");
     splitter.DumpErrors(std::cerr);
     // TODO: dump error to spdlog
@@ -157,14 +144,11 @@ void make_slices(TopoDS_Shape slices) {
   // slices is a TopoDS compound, so we have to iterate over it
   for (auto it = TopoDS_Iterator(slices); it.More(); it.Next()) {
     const auto child = it.Value();
+    process_slice(child, 0);
   }
 }
 
-/**
- * @brief process_slice
- * @param s
- * @return all faces parallel and coincident with the slicing plane
- */
+
 std::vector<TopoDS_Face> process_slice(TopoDS_Shape s, double z) {
   auto faces = std::vector<TopoDS_Face>();
 
@@ -176,7 +160,7 @@ std::vector<TopoDS_Face> process_slice(TopoDS_Shape s, double z) {
     // TODO: choose better U,V values
     auto props = GeomLProp_SLProps(BRep_Tool::Surface(f), (umin + umax) / 2,
                                    (vmin + vmax) / 2, 1, 1e-6);
-    // if normal isn't the same as slicing plane, short-circuit
+    // if normal isn't the same (opposite) as slicing plane, short-circuit
     // TODO: verify floating point equality, low epsilon
     if (gp::DZ().IsOpposite(props.Normal(), 0.01) &&
         fabs(props.Value().Z() - z) < pow(10, -6)) {
@@ -188,10 +172,7 @@ std::vector<TopoDS_Face> process_slice(TopoDS_Shape s, double z) {
   return faces;
 }
 
-/**
- * @brief debug_results
- * @param result
- */
+
 void debug_results(const TopoDS_Shape &result) {
   std::cout << TopAbs::ShapeTypeToString(result.ShapeType()) << std::endl;
 
@@ -202,12 +183,7 @@ void debug_results(const TopoDS_Shape &result) {
   }
 }
 
-/**
- * @brief section use the section algorithm to obtain a list of edges from an
- * intersection
- * @param objects
- * @param tools
- */
+
 void section(const TopTools_ListOfShape &objects,
              const TopTools_ListOfShape &tools) {
   BOPAlgo_Section section;
@@ -225,13 +201,11 @@ void section(const TopTools_ListOfShape &objects,
   }
 }
 
-// arrange objects in the center of the buildplate
+
 void arrange_objects(std::vector<std::shared_ptr<Object>> objects) {
   auto packer = Packer(objects);
-  // pack the objects
-  auto bin = packer.pack();
-  auto width = bin.first;
-  auto length = bin.second;
+  // pack the objects, get dimensions of resulting bin
+  auto [width, length] = packer.pack();
 
   // check to see if the pack fit within the build plate
   // FIXME: get actual buildplate volume/dimensions

@@ -25,6 +25,7 @@
 #include <TopExp_Explorer.hxx>
 #include <TopTools.hxx>
 #include <TopTools_ListOfShape.hxx>
+#include <TopTools_HSequenceOfShape.hxx>
 
 #include <IFSelect.hxx>
 #include <STEPCAFControl_Reader.hxx>
@@ -81,17 +82,49 @@ void init_log(unsigned int _loglevel);
 
 void init_settings(fs::path configfile);
 
-TopTools_ListOfShape make_tools(const double layerHeight, const double objectHeight);
 
+
+
+/**
+ * @brief process_slice
+ * @param s
+ * @return all faces parallel and coincident with the slicing plane
+ */
 std::vector<TopoDS_Face> process_slice(TopoDS_Shape s, double z);
 
+
+/**
+ * @brief splitter Use the splitter algorithm to split a solid into slices
+ * @param objects
+ * @param tools
+ * @return the list of shapes, or std::nullopt if failure
+ */
 std::optional<TopoDS_Shape> splitter(const std::vector<std::shared_ptr<Object>> &objects);
 
+
 void slice(const TopTools_ListOfShape &objects);
+
+/**
+ * @brief makeTools
+ * @param layerHeight
+ * @param objectHeight
+ * @return A list of tools (planar faces) to slice an object
+ */
 TopTools_ListOfShape makeTools(const double layerHeight,
                                const double objectHeight);
 
+/**
+ * @brief makeSpiralFace
+ * @param height
+ * @param radius
+ * @return
+ */
+TopoDS_Face make_spiral_face(const double height, const double layer_height);
 
+/**
+ * @brief debug_results
+ * @param result
+ */
 void debug_results(const TopoDS_Shape &result);
 std::optional<TopoDS_Shape> splitter(const TopTools_ListOfShape &objects,
                                      const TopTools_ListOfShape &tools);
@@ -99,5 +132,13 @@ std::optional<TopoDS_Shape> splitter(const TopTools_ListOfShape &objects,
 void arrange_objects(std::vector<Object> objects);
 
 void make_build_volume();
+
+/**
+ * @brief section use the section algorithm to obtain a list of edges from an
+ * intersection
+ * @param objects
+ * @param tools
+ */
+void section(const TopTools_ListOfShape &objects, const TopTools_ListOfShape &tools);
 
 }
