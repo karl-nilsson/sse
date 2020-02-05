@@ -5,12 +5,12 @@
 [submodule "extern/spdlog"]
 	path = extern/spdlog
 	url = https://github.com/gabime/spdlog.git
-    branch = v1.4.2
+    branch = v1.5.0
 [submodule "extern/doctest"]
 	path = extern/doctest
 	url = https://github.com/onqtam/doctest.git
-    branch = v2.3.5
+    branch = 2.3.6
 [submodule "extern/toml11"]
 	path = extern/toml11
 	url = https://github.com/ToruNiina/toml11.git
-    branch = v3.1.0
+    branch = v3.3.0
