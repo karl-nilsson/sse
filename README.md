@@ -1,4 +1,5 @@
 # STEP Slicer Engine
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/3ed52535476d453f97456e77e79612c2)](https://app.codacy.com/manual/karl-nilsson/sse?utm_source=github.com&utm_medium=referral&utm_content=karl-nilsson/sse&utm_campaign=Badge_Grade_Dashboard)
 [![Build Status](https://travis-ci.com/karl-nilsson/sse.svg?branch=devel)](https://travis-ci.com/karl-nilsson/sse)
 
 An experimental 3D model slicer engine, built on top of a CAD kernel
