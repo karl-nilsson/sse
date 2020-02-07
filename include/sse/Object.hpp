@@ -68,13 +68,13 @@ public:
   Object(const Object &object);
 
   /**
-   * @brief Object
-   * @param s
+   * @brief Object constructor
+   * @param s Underlying shape
    */
   Object(TopoDS_Shape &s);
 
   /**
-   * @brief generate_bounds
+   * @brief Generate the bounding box
    */
   void generate_bounds();
 
@@ -120,39 +120,39 @@ public:
   void rotateX(const double angle) { rotate(gp::OX(), angle); }
 
   /**
-   * @brief rotateY
-   * @param angle
+   * @brief Rotate object about the Y axis
+   * @param angle Angle of rotation, in degrees
    */
   void rotateY(const double angle) { rotate(gp::OY(), angle); }
 
   /**
-   * @brief rotateZ
-   * @param angle
+   * @brief Rotate object about the Z axis
+   * @param angle Angle of rotation, in degrees
    */
   void rotateZ(const double angle) { rotate(gp::OZ(), angle); }
 
   /**
    * @brief Translate object
-   * @param x
-   * @param y
-   * @param z
+   * @param x X distance
+   * @param y Y distance
+   * @param z Z distance
    */
   void translate(const double x, const double y, const double z);
 
   /**
-   * @brief translate
-   * @param v
+   * @brief Translate the object
+   * @param v translation vector
    */
   void translate(const gp_Vec v);
 
   /**
-   * @brief translate
-   * @param dest
+   * @brief Translate the object
+   * @param dest point of destination
    */
   void translate(const gp_Pnt dest);
 
   /**
-   * @brief scale
+   * @brief Scale the object
    * @param x
    * @param y
    * @param z
@@ -162,36 +162,36 @@ public:
   void transform(const gp_Trsf transform);
 
   /**
-   * @brief get_bound_box
-   * @return
+   * @brief Get the bounding box, aligned to the cartesian axes
+   * @return bounding box
    */
   const Bnd_Box &get_bound_box() const { return this->bounding_box; }
 
   /**
-   * @brief get_footprint
+   * @brief Get the bottom rectangle of the bounding box
    * @return
    */
   const Bnd_Box2d &get_footprint() { return this->footprint; }
 
   /**
-   * @brief width
-   * @return
+   * @brief Get the X dimension of the bounding box
+   * @return width
    */
   double width() const {
     return bounding_box.CornerMax().X() - bounding_box.CornerMin().X();
   }
 
   /**
-   * @brief length
-   * @return
+   * @brief Get the Y dimension of the bounding box
+   * @return length
    */
   double length() const {
     return bounding_box.CornerMax().Y() - bounding_box.CornerMin().Y();
   }
 
   /**
-   * @brief height
-   * @return
+   * @brief Get the Z dimension of the bounding box
+   * @return height
    */
   double height() const {
     return bounding_box.CornerMax().Z() - bounding_box.CornerMin().Z();
@@ -228,15 +228,6 @@ private:
   std::string name;
 };
 
-/**
- * @brief operator <<
- * @param os
- * @param c
- * @return
- *
-std::ostream &operator<<(std::ostream &os, const Object &c) {
-  return os << "testing";
-}
-*/
+
 
 } // namespace sse

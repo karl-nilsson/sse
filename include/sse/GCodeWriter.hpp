@@ -58,19 +58,50 @@ class GCodeWriter{
 
 public:
     GCodeWriter();
+
+    /**
+     * @brief Create the comment header for the program
+     */
     void create_header();
-    void add_comment(std::string comment);
+
+    /**
+     * @brief Add a comment line to the program
+     * @param comment
+     */
+    inline void add_comment(std::string comment) {data.append(";" + comment);}
+
+    /**
+     * @brief Add a rapid move to the program
+     * @param x
+     * @param y
+     * @param z
+     */
     void add_rapid(double x, double y, double z);
+
+    /**
+     * @brief Add a linear move to the program
+     * @param c
+     */
     void add_line(GeomAdaptor_Curve c);
+
+    /**
+     * @brief Generate a valid arc move for the program
+     * @param c
+     */
     void add_arc(GeomAdaptor_Curve c);
+
     void add_bezier(Geom_BezierCurve b);
+
     void add_bslpine(Geom_BSplineCurve b);
+
     void add_nurbs();
+
     std::string add_segment(GeomAdaptor_Curve c);
+
     void add_wire(TopoDS_Wire w);
     void retract(double distance);
     void purge();
-    std::string get_data() {return this->data;}
+    inline std::string get_data() {return this->data;}
 private:
     std::map<double,std::vector<std::string>> data_map;
     std::string data;

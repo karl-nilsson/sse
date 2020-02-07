@@ -16,6 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @brief
+ * @author Karl Nilsson
+ *
+ *
+ */
+
+
 #include <sse/GCodeWriter.hpp>
 
 GCodeWriter::GCodeWriter() : config(sse::Settings::getInstance()) {
@@ -25,30 +33,22 @@ GCodeWriter::GCodeWriter() : config(sse::Settings::getInstance()) {
 
 }
 
-/**
- * @brief GCodeWriter::create_header Create the comment header for the GCode file
- */
 void GCodeWriter::create_header() {
   // a list of settings to include in the comment header
   auto settings_list = std::vector{"printer name", "layer_height"};
 
   // get the current date and time
   auto now = std::chrono::system_clock::to_time_t( std::chrono::system_clock::now());
+  // first line of gcode program contains meta-information
   add_comment(fmt::format("Sliced by StepSlicerEngine on {0}", std::ctime(&now)));
 
   // FIXME
   for (auto s : settings_list) {
-      // have toml format to "key = value"
+      // format settings: "key = value"
       // 10 digit precision, force inlining
       add_comment(toml::format(toml::find(config.config, s), 0, 10, true, true));
   }
 }
-
-/**
- * @brief GCodeWriter::add_comment add a comment line to the GCode
- * @param comment
- */
-void GCodeWriter::add_comment(std::string comment) { data.append(";" + comment); }
 
 void GCodeWriter::add_rapid(double x, double y, double z) {
   // get settings
