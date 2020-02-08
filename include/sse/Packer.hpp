@@ -23,7 +23,7 @@
  * This contains the prototypes for the Packer class
  *
  * @author Karl Nilsson
- * @bug fixed/static offset dimension between objects
+ * @bug fixed/static offset dimension between objects, Bnd_Box::SetGap()
  * @bug bounds check: ensure objects don't have infinite dimensions
  * @bug bounds check: ensure object list isn't too big, otherwise will
  * run out of stack space when destroying tree
@@ -47,7 +47,6 @@
  * (i.e. expand all rectangles individually, based on brim, if applicable.
  * keep in mind, brim may not expand footprint, i.e. brim for a sphere)
  */
-#define OFFSET 0
 
 namespace sse {
 
@@ -67,7 +66,7 @@ public:
    * @brief Packer constructor
    * @param objects List of objects to pack
    */
-  Packer(std::vector<std::shared_ptr<Object>> objects);
+  explicit Packer(std::vector<std::shared_ptr<Object>> objects);
 
   /**
    * @brief Calculate an optimized rectangular bin for the objects
@@ -122,12 +121,24 @@ private:
         : x(x), y(y), width(w), length(l) {}
 
     /**
+     * @brief Add object to node, then make child nodes out of leftovers
+     * @param o Object to add
+     */
+    void add_object(Object *o) {
+      object = o;
+      up = std::make_unique<Node>(x, y + object->length(), width,
+                                  length - object->length());
+      right = std::make_unique<Node>(x + object->length(), y,
+                                     width - object->width(), length);
+    }
+
+    /**
      * @brief Check to see if object will fit in this node
      * @param o Target object
      * @return Whether object fits in node
      */
     inline bool fits(const Object *o) const {
-      return (o->length() + OFFSET < length) && (o->width() + OFFSET < width);
+      return (o->length() <= length) && (o->width() <= width);
     }
 
     /**
@@ -140,7 +151,26 @@ private:
      * @brief Is this node a leaf?
      * @return Whether node is a leaf
      */
-    inline bool leaf() const { return up != nullptr; }
+    inline bool leaf() const { return up == nullptr; }
+
+    /**
+     * @brief String value of node
+     * @return "x,y widthxlength"
+     */
+    std::string strval() {
+      return fmt::format("{},{} {}x{}", x, y, width, length);
+    }
+
+    /**
+     * @brief Stream overload
+     * @param out Out stream
+     * @param node Target node
+     * @return stream
+     */
+    friend std::ostream& operator<<(std::ostream& out, Node& node) {
+      out << node.x << "," << node.y << " " << node.width << "x" << node.length;
+      return out;
+    }
 
   }; // end Node definition
 

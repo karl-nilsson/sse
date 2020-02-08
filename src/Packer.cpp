@@ -58,8 +58,8 @@ Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
   // this is essential, so that we don't have to grow the bin in two dimensions
   // simultaneously
   spdlog::debug("BinPack: creating root node");
-  root = std::make_unique<Node>(0, 0, objects.front()->width() + OFFSET,
-                                objects.front()->length() + OFFSET);
+  root = std::make_unique<Node>(0, 0, objects.front()->width(),
+                                objects.front()->length());
 }
 
 std::pair<double, double> Packer::pack() {
@@ -99,18 +99,11 @@ std::pair<double, double> Packer::pack() {
       }
     }
     // print object dimensions and location in bin
-    spdlog::debug("BinPack: adding object to bin: {.3f}x{.3f} @ ({.3f},{.3f})",
+    /*spdlog::debug("BinPack: adding object to bin: {}x{} @ ({},{})",
                   o->width(), o->length(), result->x, result->y);
+                  */
     // add object to suitable node
-    result->object = o.get();
-    // add child to the right of the inserted object
-    result->right =
-        std::make_unique<Node>(result->x + o->width(), result->y,
-                               result->width - o->width(), result->length);
-    // add child above the inserted object
-    result->up =
-        std::make_unique<Node>(result->x, result->y + o->length(),
-                               result->width, result->length - o->length());
+    result->add_object(o.get());
   }
 
   // return the dimensions of the bin: (width, length)
@@ -142,9 +135,6 @@ Packer::Node *Packer::insert_search(Node &node, const Object *o) const {
 }
 
 Packer::Node *Packer::grow_up(double w, double l) {
-  // TODO: dynamic, object-specific offset
-  w += OFFSET;
-  l += OFFSET;
   // create new root node
   auto new_root = std::make_unique<Node>(0, 0, root->width, root->length + l);
   // create children
@@ -157,9 +147,6 @@ Packer::Node *Packer::grow_up(double w, double l) {
 }
 
 Packer::Node *Packer::grow_right(double w, double l) {
-  // TODO: dynamic, object-specific offset
-  w += OFFSET;
-  l += OFFSET;
   // create new root node
   auto new_root = std::make_unique<Node>(0, 0, root->width + w, root->length);
   // create children
