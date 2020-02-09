@@ -78,30 +78,30 @@
 namespace sse {
 
 
+  /**
+ * @brief init_log
+ * @param _loglevel
+ */
 void init_log(unsigned int _loglevel);
 
-void init_settings(fs::path configfile);
-
-
-
-
 /**
- * @brief process_slice
- * @param s
- * @return all faces parallel and coincident with the slicing plane
+ * @brief init_settings
+ * @param configfile
  */
-std::vector<TopoDS_Face> process_slice(TopoDS_Shape s, double z);
-
+void init_settings(fs::path configfile);
 
 /**
  * @brief splitter Use the splitter algorithm to split a solid into slices
- * @param objects
- * @param tools
- * @return the list of shapes, or std::nullopt if failure
+ * @param objects Objects to split
+ * @return the resulting shape(s)
  */
-std::optional<TopoDS_Shape> splitter(const std::vector<std::shared_ptr<Object>> &objects);
+std::vector<Slice> splitter(const std::vector<std::shared_ptr<Object>> &objects);
 
 
+/**
+ * @brief slice
+ * @param objects
+ */
 void slice(const TopTools_ListOfShape &objects);
 
 /**
@@ -122,14 +122,21 @@ TopTools_ListOfShape makeTools(const double layerHeight,
 TopoDS_Face make_spiral_face(const double height, const double layer_height);
 
 /**
- * @brief debug_results
+ * @brief Recursively dump shape info to log
  * @param result
  */
-void debug_results(const TopoDS_Shape &result);
-std::optional<TopoDS_Shape> splitter(const TopTools_ListOfShape &objects,
-                                     const TopTools_ListOfShape &tools);
+void dump_shapes(const std::vector<TopoDS_Shape> shapes);
 
-void arrange_objects(std::vector<Object> objects);
+void dump_shapes(const TopoDS_Shape &shape);
+
+std::string dump_recurse(const TopoDS_Shape &shape);
+
+/**
+ * @brief Rearrange objects so that they are
+ * @param objects List of objects
+ * @throws
+ */
+void arrange_objects(std::vector<std::shared_ptr<Object>> objects);
 
 void make_build_volume();
 

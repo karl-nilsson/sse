@@ -63,7 +63,6 @@ void init_settings(fs::path configfile) {
   s.parse(configfile);
 }
 
-
 TopTools_ListOfShape make_tools(const double layer_height,
                                 const double object_height) {
   spdlog::info("Creating splitter tools");
@@ -76,7 +75,6 @@ TopTools_ListOfShape make_tools(const double layer_height,
   }
   return result;
 }
-
 
 TopoDS_Face make_spiral_face(const double height, const double layer_height) {
   // make a unit cylinder, vertical axis, center @ (0,0), radius of 1
@@ -99,12 +97,12 @@ TopoDS_Face make_spiral_face(const double height, const double layer_height) {
   return face;
 }
 
-
-std::optional<TopoDS_Shape> splitter(const std::vector<std::shared_ptr<Object>> &objects) {
+std::vector<Slice>
+splitter(const std::vector<std::shared_ptr<Object>> &objects) {
   // find the highest z point of all objects
   double z = 0;
   auto obj = TopTools_ListOfShape();
-  // FIXME
+  // FIXME: optimize, we copy the shape to another list
   for (auto o : objects) {
     z = std::max(z, o->get_bound_box().CornerMax().Z());
     obj.Append(o->get_shape());
@@ -113,7 +111,7 @@ std::optional<TopoDS_Shape> splitter(const std::vector<std::shared_ptr<Object>> 
   Settings &s = Settings::getInstance();
   // FIXME more sane layer height fallback mechanism
   auto layer_height = toml::find_or<double>(s.config, "layer_height", 0.02);
-  spdlog::info(fmt::format("layer height: {f}", layer_height));
+  // spdlog::info("layer height: {}", layer_height);
   // create the slicing planes
   spdlog::info("creating slicing planes");
   auto tools = make_tools(layer_height, z);
@@ -123,66 +121,88 @@ std::optional<TopoDS_Shape> splitter(const std::vector<std::shared_ptr<Object>> 
   splitter.SetTools(tools);
   // run in parallel
   splitter.SetRunParallel(true);
+  // TODO: configurabe fuzzy value
   splitter.SetFuzzyValue(0.001);
   // run the algorithm
   splitter.Build();
   // check error status
   if (splitter.HasErrors()) {
+    auto report = splitter.GetReport();
+    // TODO: dump error to spdlog
     spdlog::error("Error while splitting shape: ");
     splitter.DumpErrors(std::cerr);
-    // TODO: dump error to spdlog
-    return std::nullopt;
+    // throw error
   }
 
-  // result of the operation
-  auto &result = splitter.Shape();
-  debug_results(result);
+  auto result = std::vector<Slice>();
+  // splitter.Shape() is a TopoDS compound, so iterate over it
+  for (auto it = TopoDS_Iterator(splitter.Shape()); it.More(); it.Next()) {
+    // skip over extraneous shapes created
+    if (it.Value().ShapeType() == TopAbs_SOLID) {
+      // add slice to list
+      // FIXME: const_cast EVIL!
+      // result.push_back(Slice(const_cast<TopoDS_Shape&>(it.Value())));
+    }
+  }
+  // sort the slices by their height, ascending
+
+  /*
+  std::sort(result.begin(), result.end(), [](const auto &lhs, const auto &rhs) {
+      return lhs.get_bound_box().CornerMin.Z() < rhs.get_bound_box().CornerMin.Z();
+    });
+
+  std::sort(result.begin(), result.end(), [](const auto a, const auto b){
+      return true;
+    });
+    */
+
   return result;
 }
 
-void make_slices(TopoDS_Shape slices) {
-  // slices is a TopoDS compound, so we have to iterate over it
-  for (auto it = TopoDS_Iterator(slices); it.More(); it.Next()) {
-    const auto child = it.Value();
-    process_slice(child, 0);
-  }
-}
+void dump_shapes(const std::vector<TopoDS_Shape> shapes) {
 
-
-std::vector<TopoDS_Face> process_slice(TopoDS_Shape s, double z) {
-  auto faces = std::vector<TopoDS_Face>();
-
-  // search the slice for faces parallel and coincident with slicing plane
-  for (TopExp_Explorer exp(s, TopAbs_FACE); exp.More(); exp.Next()) {
-    auto f = TopoDS::Face(exp.Value());
-    Standard_Real umin, umax, vmin, vmax;
-    BRepTools::UVBounds(f, umin, umax, vmin, vmax);
-    // TODO: choose better U,V values
-    auto props = GeomLProp_SLProps(BRep_Tool::Surface(f), (umin + umax) / 2,
-                                   (vmin + vmax) / 2, 1, 1e-6);
-    // if normal isn't the same (opposite) as slicing plane, short-circuit
-    // TODO: verify floating point equality, low epsilon
-    if (gp::DZ().IsOpposite(props.Normal(), 0.01) &&
-        fabs(props.Value().Z() - z) < pow(10, -6)) {
-      // add face to the list of faces for the slice
-      faces.push_back(f);
+  spdlog::debug("--------Shape Dump-------");
+  for(auto s: shapes) {
+      spdlog::debug(dump_recurse(s));
     }
-  }
-
-  return faces;
+  spdlog::debug("-------------------------");
 }
 
-
-void debug_results(const TopoDS_Shape &result) {
-  std::cout << TopAbs::ShapeTypeToString(result.ShapeType()) << std::endl;
-
-  auto it = TopoDS_Iterator(result);
-  for (; it.More(); it.Next()) {
-    std::cout << TopAbs::ShapeTypeToString(it.Value().ShapeType()) << std::endl;
-    it.Value().Location();
-  }
+void dump_shapes(const TopoDS_Shape &shape) {
+  spdlog::debug("--------Shape Dump-------");
+      spdlog::debug(dump_recurse(shape));
+  spdlog::debug("-------------------------");
 }
 
+std::string dump_recurse(const TopoDS_Shape &shape) {
+  // temporary string for return value
+  std::string result;
+  // prepend info with tree characters
+  static int indent_level = 0;
+  // construct prepend string based in indentation level
+  std::string prepend;
+  for(int i = 0; i < indent_level; ++i) {
+      prepend += (i < indent_level -1 ? "|\t": "├─ ");
+    }
+
+  // TODO: provide more information
+  result += prepend + TopAbs::ShapeTypeToString(shape.ShapeType()) + "\n";
+
+  // if shape has sub-shapes, recurse
+  if (shape.ShapeType() == TopAbs_COMPOUND) {
+      // increase indentation level for subtree
+      indent_level++;
+    for (auto it = TopoDS_Iterator(shape); it.More(); it.Next()) {
+      // special character for final entry in list
+      result += dump_recurse(it.Value());
+    }
+    // when subtree is exhausted, decrement indentation level
+    indent_level--;
+
+  }
+
+  return result;
+}
 
 void section(const TopTools_ListOfShape &objects,
              const TopTools_ListOfShape &tools) {
@@ -201,12 +221,11 @@ void section(const TopTools_ListOfShape &objects,
   }
 }
 
-
 void arrange_objects(std::vector<std::shared_ptr<Object>> objects) {
+  spdlog::debug("Creating Bin Packer");
   auto packer = Packer(objects);
   // pack the objects, get dimensions of resulting bin
   auto [width, length] = packer.pack();
-
   // check to see if the pack fit within the build plate
   // FIXME: get actual buildplate volume/dimensions
   double build_plate_x = 200, build_plate_y = 200;
@@ -220,7 +239,6 @@ void arrange_objects(std::vector<std::shared_ptr<Object>> objects) {
   double offset_y = (build_plate_y - length) / 2;
   // translate the objects
   packer.arrange(offset_x, offset_y);
-
 }
 
 void make_build_volume() {
