@@ -16,8 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file Slice.hpp
+ * @brief
+ *
+ * @author Karl Nilsson
+ *
+ */
+
 #pragma once
 
+#include <TCollection.hxx>
+#include <TCollection_AsciiString.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
@@ -26,47 +36,73 @@
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Wire.hxx>
-#include <TCollection.hxx>
-#include <TCollection_AsciiString.hxx>
 
 #include <BRepTools.hxx>
 #include <BRepTools_WireExplorer.hxx>
+#include <BRepAdaptor_Surface.hxx>
 
-#include <vector>
+#include <GeomAbs_SurfaceType.hxx>
+
 #include <map>
 #include <unordered_map>
+#include <vector>
 
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_sinks.h>
 #include <spdlog/fmt/ostr.h>
+#include <spdlog/sinks/stdout_sinks.h>
+#include <spdlog/spdlog.h>
 
+#include <sse/Object.hpp>
 
+namespace sse {
+
+  /**
+ * @brief The Face struct
+ */
 struct Face {
-  Face(TopoDS_Face _face);
-  TopoDS_Face face;
-  TopTools_IndexedMapOfShape wires;
-};
-
-
-class Slice {
-
 public:
-  Slice();
-  Slice(std::vector<TopoDS_Face> _faces);
-  void add_face(TopoDS_Face face);
-  auto get_faces();
-private:
-  std::vector<Face> faces;
+  Face(const TopoDS_Face &face) : face(face) {
+    TopExp::MapShapes(face, TopAbs_WIRE, wires);
+    outerwire = BRepTools::OuterWire(face);
+  }
+  //! underlying face object
+  const TopoDS_Face &face;
+  //! map of wires contained by face
+  TopTools_IndexedMapOfShape wires;
+  //! outermost wire of face
+  TopoDS_Wire outerwire;
+
 };
 
 /**
- * @brief operator <<
- * @param os
- * @param c
- * @return
- *
-std::ostream& operator<<(std::ostream& os, const Slice& c) {
-  return os << "testing";
-}
-*/
+ * @brief The Slice class
+ */
+class Slice : Object {
 
+public:
+
+  /**
+   * @brief Create a slice, and generate child faces that are parallel to the XY plane and coincident with the z point specified
+   * @param shape Underlying shape
+   * @param z_pos Z height to generate child faces
+   */
+  explicit Slice(TopoDS_Shape &shape);
+
+  /**
+   * @brief Return all the bottom faces of the slice
+   * @return list of faces
+   */
+  std::vector<std::unique_ptr<Face>>& get_faces() { return faces;}
+
+  /**
+   * @brief operator < Comparator t
+   * @param rhs Other slice to compare against
+   * @return Whether the lowest point of this bounding box is above the lowest point in the other bounding box
+   */
+  bool operator <(const Slice& rhs) const;
+
+private:
+  //! list of faces
+  std::vector<std::unique_ptr<Face>> faces;
+};
+
+} // namespace sse

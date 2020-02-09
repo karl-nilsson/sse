@@ -16,43 +16,57 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file
+ *
+ * @author Karl Nilsson
+ */
+
 #include <sse/Slice.hpp>
 
-/**
- * @brief Slice::Slice
- * @param _faces
- */
-Slice::Slice(std::vector<TopoDS_Face> _faces) {
-  spdlog::debug("Initializing slice");
+namespace sse {
 
-  // for each face
-  for (auto f : _faces) {
-    faces.push_back(Face(f));
+Slice::Slice(TopoDS_Shape &s)
+    : Object(s), faces() {
+
+  faces = std::vector<std::unique_ptr<Face>>();
+
+  // search the slice for faces parallel and coincident with slicing plane
+  // TODO: optimize! this is extremely inefficient
+  // TODO: may be possible to use BRepAdaptor_* instead of GeomLProp_*
+  // TODO: revamp for nonplanar slicing
+  for (TopExp_Explorer exp(s, TopAbs_FACE); exp.More(); exp.Next()) {
+    // cast to the correct type
+    auto f = TopoDS::Face(exp.Value());
+    // get underlying geometry
+    auto b = BRepAdaptor_Surface(f);
+    // if face is not a plane, short-circuit
+    if (b.GetType() != GeomAbs_Plane) {
+      continue;
+    }
+
+    // get the parametric boundaries of the face
+    Standard_Real umin, umax, vmin, vmax;
+    BRepTools::UVBounds(f, umin, umax, vmin, vmax);
+    // get the properties of surface, in order to get a point on the surface,
+    // and the normal at said point
+    // TODO: choose better U,V values
+    auto props = GeomLProp_SLProps(BRep_Tool::Surface(f), (umin + umax) / 2,
+                                   (vmin + vmax) / 2, 1, 1e-6);
+    // if normal isn't the same (opposite) as slicing plane, short-circuit
+    // use the bounding box to
+    // TODO: verify floating point equality, low epsilon
+    if (gp::DZ().IsOpposite(props.Normal(), 0.01) &&
+        fabs(props.Value().Z() - get_bound_box().CornerMin().Z()) < pow(10, -6)) {
+      // add face to the list of faces for the slice
+      faces.push_back(std::make_unique<Face>(f));
+    }
   }
-
-  //    TopExp::MapShapes(f, TopAbs_WIRE, wires);
 }
 
-/**
- * @brief Slice::add_face add a face to the slice
- * @param f
- */
-void Slice::add_face(TopoDS_Face face) {
-  faces.push_back(Face(face));
+bool Slice::operator<(const Slice& rhs) const {
+  // compare lowest Z coordinate of both bounding boxes
+  return get_bound_box().CornerMin().Z() < rhs.get_bound_box().CornerMin().Z();
 }
 
-/**
- * @brief Slice::get_faces return a list of faces in the slice
- */
-auto Slice::get_faces() {
-  return faces;
-}
-
-
-/**
- * @brief Face::Face
- * @param _face
- */
-Face::Face(TopoDS_Face _face): face(_face){
-  TopExp::MapShapes(face, TopAbs_WIRE, wires);
-}
+} // namespace sse
