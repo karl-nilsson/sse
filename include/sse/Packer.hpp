@@ -117,8 +117,9 @@ private:
      * @param w Width, X axis
      * @param l Length, Y axis
      */
-    Node(double x, double y, double w, double l)
-        : x(x), y(y), width(w), length(l) {}
+    Node(double x, double y, double w, double l, node_ptr up=nullptr, node_ptr right=nullptr)
+        : x(x), y(y), width(w), length(l), up(std::move(up)), right(std::move(right)) {
+    }
 
     /**
      * @brief Add object to node, then make child nodes out of leftovers
@@ -183,19 +184,19 @@ private:
 
   /**
    * @brief Grow the bin in the +Y direction
-   * @param w Width requested
-   * @param l Length requested
+   * @param width Width requested
+   * @param length Length requested
    * @return A new Node, big enough to fit the space required
    */
-  Node *grow_up(double w, double l);
+  Node *grow_up(double width, double length);
 
   /**
    * @brief Grow the bin in the +X direction
-   * @param w Width requested
-   * @param l Length requested
+   * @param width Width requested
+   * @param length Length requested
    * @return A new Node, big enough to fit the space required
    */
-  Node *grow_right(double w, double l);
+  Node *grow_right(double width, double length);
 
   /**
    * @brief Translate an object to its new position, then recurse to children

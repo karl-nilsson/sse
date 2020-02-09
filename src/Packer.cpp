@@ -134,26 +134,24 @@ Packer::Node *Packer::insert_search(Node &node, const Object *o) const {
   return (n ? n : insert_search(*node.up, o));
 }
 
-Packer::Node *Packer::grow_up(double w, double l) {
-  // create new root node
-  auto new_root = std::make_unique<Node>(0, 0, root->width, root->length + l);
-  // create children
-  new_root->up = std::make_unique<Node>(0, root->length, w, l);
-  new_root->right = std::move(root);
-  // finally, change pointer to the new root
-  root = std::move(new_root);
+Packer::Node *Packer::grow_up(double width, double length) {
+  // create a new bigger root node
+  // up child node: new node of desired size
+  // right child: previous root
+  root = std::make_unique<Node>(0,0, root->width, root->length + length,
+                                std::make_unique<Node>(0, root->length, width, length),
+                                std::move(root));
   // return available node
   return root->up.get();
 }
 
-Packer::Node *Packer::grow_right(double w, double l) {
-  // create new root node
-  auto new_root = std::make_unique<Node>(0, 0, root->width + w, root->length);
-  // create children
-  new_root->up = std::move(root);
-  new_root->right = std::make_unique<Node>(root->width, 0, w, l);
-  // finally, change pointer to the new root
-  root = std::move(new_root);
+Packer::Node *Packer::grow_right(double width, double length) {
+  // create a new bigger root node
+  // up child: previous root
+  // right child node: new node of desired size
+  root = std::make_unique<Node>(0,0, root->width, root->length + length,
+                                std::move(root),
+                                std::make_unique<Node>(root->width, 0, width, length));
   // return available node
   return root->right.get();
 }
