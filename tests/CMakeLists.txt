@@ -6,6 +6,9 @@ set(TEST_NAMES
 
 
 add_executable(unit_test ${TEST_NAMES})
+
+target_compile_features(unit_test PRIVATE cxx_std_17)
+
 target_link_libraries(unit_test
   PRIVATE
     doctest::doctest

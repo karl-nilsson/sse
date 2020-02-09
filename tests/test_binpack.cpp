@@ -22,7 +22,8 @@ TEST_CASE("Packer parameter sanitization") {
 
   SUBCASE("testing binpacker with empty object") {
     // add object with zero volume
-    objects.push_back(std::make_shared<sse::Object>(TopoDS_Shape()));
+    auto a = TopoDS_Shape();
+    objects.push_back(std::make_shared<sse::Object>(a));
     CHECK_THROWS_AS(auto p = sse::Packer(objects), std::runtime_error);
   }
 
@@ -31,7 +32,8 @@ TEST_CASE("Packer parameter sanitization") {
     auto face = BRepBuilderAPI_MakeFace(gp_Pln(gp::Origin(), gp::DZ()));
     // create a halfspace
     auto halfspace = BRepPrimAPI_MakeHalfSpace(face, gp_Pnt(0, 0, -1));
-    auto o = std::make_shared<sse::Object>(halfspace.Shape());
+    auto s = halfspace.Shape();
+    auto o = std::make_shared<sse::Object>(s);
     objects.push_back(std::move(o));
     // attempt to pack object
     CHECK_THROWS_AS(auto p = sse::Packer(objects), std::runtime_error);
@@ -40,7 +42,8 @@ TEST_CASE("Packer parameter sanitization") {
   SUBCASE("testing binpacker with 1000 objects") {
     // create 1000 empty objects
     for (auto i = 0; i < 1000; ++i) {
-      objects.push_back(std::make_shared<sse::Object>(TopoDS_Shape()));
+        auto a = TopoDS_Shape();
+        objects.push_back(std::make_shared<sse::Object>(a));
     }
     CHECK_THROWS_AS(auto p = sse::Packer(objects), std::runtime_error);
   }
@@ -52,8 +55,8 @@ TEST_CASE("Packer cubes test") {
   auto objects = std::vector<std::shared_ptr<sse::Object>>();
   // ensure vector is empty
   REQUIRE(objects.size() == 0);
-  // make a box with one corner at (0,0,0), with X,Y,Z dimensions of 100
-  auto box = BRepPrimAPI_MakeBox(gp::Origin(), 100, 100, 100).Shape();
+  // make a box with one corner at origin, with X,Y,Z dimensions of 10
+  auto box = BRepPrimAPI_MakeBox(10, 10, 10).Shape();
 
   SUBCASE("List of squares") {
     for (auto i = 1; i < 16; i++) {
