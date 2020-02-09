@@ -65,13 +65,13 @@ public:
    * @brief Object
    * @param object
    */
-  Object(const Object &object);
+  explicit Object(const Object &object);
 
   /**
    * @brief Object constructor
    * @param s Underlying shape
    */
-  Object(TopoDS_Shape &s);
+  explicit Object(TopoDS_Shape &s);
 
   /**
    * @brief Generate the bounding box

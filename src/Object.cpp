@@ -30,7 +30,7 @@ namespace sse {
 
 Object::Object(TopoDS_Shape &s) : shape(std::make_unique<TopoDS_Shape>(s)) {
   spdlog::info("Initializing object with shape");
-  // calculate the bounding box
+  // calculate the axis-aligned bounding box
   bounding_box = Bnd_Box();
   footprint = Bnd_Box2d();
   generate_bounds();
@@ -42,15 +42,18 @@ void Object::generate_bounds() {
   bounding_box.SetVoid();
   // create bounding box
   BRepBndLib::Add(*shape, bounding_box);
-
+  // reset gap
+  // TODO: configurable gap
+  bounding_box.SetGap(5);
   spdlog::info("generating footprint");
   // clear footprint
   footprint.SetVoid();
-  // TODO: simplify
-  Standard_Real xmin, ymin, xmax, ymax, tmp;
-  bounding_box.Get(xmin, ymin, tmp, xmax, ymax, tmp);
-  footprint.Add(gp_Pnt2d(xmin, ymin));
-  footprint.Add(gp_Pnt2d(xmax, ymax));
+  // add corner points to footprint
+  // unfortunately, I can't find an elegant way to convert gp_Pnt to gp_Pnt2d
+  footprint.Add(
+      gp_Pnt2d(bounding_box.CornerMin().X(), bounding_box.CornerMin().Y()));
+  footprint.Add(
+      gp_Pnt2d(bounding_box.CornerMax().X(), bounding_box.CornerMin().Y()));
 }
 
 void Object::lay_flat(const TopoDS_Face &face) {
@@ -120,7 +123,7 @@ void Object::mirror(gp_Ax2 mirror_plane) {
 }
 
 void Object::rotate(const gp_Ax1 axis, const double angle) {
-  spdlog::debug("Rotating object: {+:f}°", angle);
+  spdlog::debug("Rotating object: {}°", angle);
   auto rotate = gp_Trsf();
   rotate.SetRotation(axis, angle * M_PI / 180);
   transform(rotate);
@@ -131,14 +134,16 @@ void Object::translate(const double x, const double y, const double z) {
 }
 
 void Object::translate(const gp_Vec v) {
-  spdlog::debug("Translating vector: {:f},{:f},{:f}", v.X(), v.Y(), v.Z());
+  // FIXME: broken
+  // spdlog::debug("Translating vector: {},{},{}", static_cast<double>(v.X()), static_cast<double>(v.Y()), static_cast<double>(v.Z()));
   auto translate = gp_Trsf();
   translate.SetTranslation(v);
   transform(translate);
 }
 
 void Object::translate(const gp_Pnt dest) {
-  spdlog::debug("Translating to {:f},{:f},{:f}", dest.X(), dest.Y(), dest.Z());
+  // FIXME: broken
+  // spdlog::debug("Translating to {},{},{}", static_cast<double>(dest.X()), static_cast<double>(dest.Y()), static_cast<double>(dest.Z()));
   auto translate = gp_Trsf();
   translate.SetTranslation(bounding_box.CornerMin(), dest);
   transform(translate);
