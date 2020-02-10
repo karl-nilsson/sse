@@ -27,10 +27,12 @@ int main(int argc, char **argv) {
   double layerheight, linewidth = 0.0;
   string profile_filename;
   vector<string> files;
+  bool autoplace = false;
 
   cxxopts::Options opts(argv[0], " - Slice CAD files for 3D printing");
   opts.positional_help("[optional args]").show_positional_help();
 
+  // clang-format off
   opts.allow_unrecognised_options().add_options()
       // basic global settings
       ("h,help", "Help")
@@ -45,8 +47,8 @@ int main(int argc, char **argv) {
       ("fan_speed", "part cooling fan speed", cxxopts::value<double>())
 
       // speeds/feed group
-      ("m,extrusion_multiplier", "Extrusion Multiplien",
-       cxxopts::value<double>())("speed", "Print speed, mm/s", cxxopts::value<double>())
+      ("m,extrusion_multiplier", "Extrusion Multiplier", cxxopts::value<double>())
+      ("speed", "Print speed, mm/s", cxxopts::value<double>())
       ("rapid", "Move speed, mm/s", cxxopts::value<double>())
 
       // placement group
@@ -59,6 +61,7 @@ int main(int argc, char **argv) {
 
       // positional, i.e. files to slice
       ("positional", "Positional arguments", cxxopts::value<vector<string>>());
+  // clang-format on
 
   try {
     opts.parse_positional("positional");
@@ -72,16 +75,17 @@ int main(int argc, char **argv) {
 
     // print version then quit
     if (result.count("version")) {
-      cout << "sse version " << VERSION << "\ngit sha: " << "VERSION_SHA" << '\n';
+      cout << "sse version " << VERSION << "\ngit sha: "
+           << "VERSION_SHA" << '\n';
       return 0;
     }
 
     // adjust verbosity
     sse::init_log(result.count("verbose"));
 
-    // automaticall position models on the build plate
+    // automatically position models on the build plate
     if (result.count("autoplace")) {
-      cout << "autoplace" << '\n';
+      autoplace = true;
     }
 
     // load profile
@@ -106,7 +110,6 @@ int main(int argc, char **argv) {
   }
 
   auto imp = sse::Importer{};
-
   auto objects = vector<shared_ptr<sse::Object>>();
 
   for (const auto &f : files) {
@@ -118,6 +121,7 @@ int main(int argc, char **argv) {
     }
     // import the object, then add it to the list
     auto v = imp.importSTEP(f.c_str());
+
     if (v == nullopt) {
       cerr << "Error processing file " << f << '\n';
     } else {
@@ -125,9 +129,14 @@ int main(int argc, char **argv) {
     }
   }
 
-  cout << "Max string len: " << string().max_size() << '\n';
+  // auto arrange objects
+  if (autoplace) {
+    sse::arrange_objects(objects);
+  }
+  // slice the objects
+  // auto result = sse::splitter(objects);
+  // generate gcode
 
-  sse::splitter(objects);
 
   return 0;
 }
