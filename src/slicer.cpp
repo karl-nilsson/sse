@@ -20,51 +20,25 @@
 
 namespace sse {
 
-void init_log(unsigned int _loglevel = 3) {
-  auto loglevel = spdlog::level::info;
-
-  auto console = spdlog::stderr_color_mt("console");
-  auto error_logger = spdlog::stderr_color_mt("stderr");
-  spdlog::set_default_logger(console);
-
-  // FIXME: probably a more elegant way to do this
-  switch (_loglevel) {
-  case 0:
-    loglevel = spdlog::level::off;
-    break;
-  case 1:
-    loglevel = spdlog::level::critical;
-    break;
-  case 2:
-    loglevel = spdlog::level::err;
-    break;
-  case 3:
-    loglevel = spdlog::level::warn;
-    break;
-  case 4:
-    loglevel = spdlog::level::info;
-    break;
-  case 5:
-    loglevel = spdlog::level::debug;
-    break;
-  default:
-    loglevel = spdlog::level::info;
-    break;
-  }
-
+Slicer::Slicer(const fs::path configfile,
+               const spdlog::level::level_enum loglevel)
+    : settings(Settings::getInstance()) {
+  // setup loggels
+  auto console_logger = spdlog::stdout_color_mt("console");
+  // auto error_logger = spdlog::stderr_color_mt("stderr");
+  spdlog::set_default_logger(console_logger);
+  // TODO: maybe unnecessary
+  spdlog::flush_on(spdlog::level::info);
+  // set log level
   spdlog::set_level(loglevel);
-
-  spdlog::info("Logger initialized");
-}
-
-void init_settings(fs::path configfile) {
-  auto &s = sse::Settings::getInstance();
+  spdlog::debug("Logger initialized");
+  // parse settings
   spdlog::debug("Initializing settings");
-  s.parse(configfile);
+  settings.parse(configfile);
 }
 
-TopTools_ListOfShape make_tools(const double layer_height,
-                                const double object_height) {
+TopTools_ListOfShape Slicer::make_tools(const double layer_height,
+                                        const double object_height) {
   spdlog::info("Creating splitter tools");
   auto result = TopTools_ListOfShape{};
   // create an unbounded plane, parallel to the xy plane,
@@ -97,8 +71,8 @@ TopoDS_Face make_spiral_face(const double height, const double layer_height) {
   return face;
 }
 
-std::vector<Slice>
-splitter(const std::vector<std::shared_ptr<Object>> &objects) {
+std::vector<std::unique_ptr<Slice>>
+Slicer::slice(const std::vector<std::shared_ptr<Object>> &objects) {
   // find the highest z point of all objects
   double z = 0;
   auto obj = TopTools_ListOfShape();
@@ -108,14 +82,17 @@ splitter(const std::vector<std::shared_ptr<Object>> &objects) {
     obj.Append(o->get_shape());
   }
 
-  Settings &s = Settings::getInstance();
   // FIXME more sane layer height fallback mechanism
-  auto layer_height = toml::find_or<double>(s.config, "layer_height", 0.02);
-  // spdlog::info("layer height: {}", layer_height);
+  double layer_height = settings.get_setting_fallback<double>("layer_height", 0.2);
+  // FIXME: for some reason, the following line results in std::bad_alloc, so cout instead
+  // spdlog::info("Layer Height: {}", layer_height);
+  std::cout << "layer height: " << layer_height << std::endl;
   // create the slicing planes
   spdlog::info("creating slicing planes");
   auto tools = make_tools(layer_height, z);
   auto splitter = BRepAlgoAPI_Splitter{};
+  // TODO: progress indicator using BRepAlgoAPI_Splitter::SetProgressIndicator
+
   // set the arguments
   splitter.SetArguments(obj);
   splitter.SetTools(tools);
@@ -132,80 +109,86 @@ splitter(const std::vector<std::shared_ptr<Object>> &objects) {
     spdlog::error("Error while splitting shape: ");
     splitter.DumpErrors(std::cerr);
     // throw error
+    throw std::runtime_error("Error splitting shapes");
   }
 
-  auto result = std::vector<Slice>();
+  auto slices = std::vector<std::unique_ptr<Slice>>();
+  auto it = TopExp_Explorer();
+  BRepBuilderAPI_Copy copy;
+  Bnd_Box b;
   // splitter.Shape() is a TopoDS compound, so iterate over it
-  for (auto it = TopoDS_Iterator(splitter.Shape()); it.More(); it.Next()) {
-    // skip over extraneous shapes created
-    if (it.Value().ShapeType() == TopAbs_SOLID) {
-      // add slice to list
-      // FIXME: const_cast EVIL!
-      // result.push_back(Slice(const_cast<TopoDS_Shape&>(it.Value())));
-    }
+  for (it.Init(splitter.Shape(), TopAbs_SOLID); it.More(); it.Next()) {
+    // TODO: I don't like having to make a copy of the shape
+    // iterator returns a const ref, so can't directly construct Slice
+    // TODO: simplify
+    copy.Perform(it.Current());
+    auto a = copy.Shape();
+    // result.push_back(std::make_unique<Slice>(a));
+    // spdlog::debug("Z-location: {}", result.back()->strval());
+
+    b.SetVoid();
+    BRepBndLib::AddOptimal(it.Value(), b);
+    // b.DumpJson(std::cout);
+    // std::cout << "\n";
+    // spdlog::debug("{}: .{}f", i++, b.CornerMin().Z());
+    // result.push_back(std::make_unique<Slice>(copy));
   }
-  // sort the slices by their height, ascending
 
-  /*
-  std::sort(result.begin(), result.end(), [](const auto &lhs, const auto &rhs) {
-      return lhs.get_bound_box().CornerMin.Z() < rhs.get_bound_box().CornerMin.Z();
-    });
+  // sort the slices by height, ascending
+  std::sort(slices.begin(), slices.end());
 
-  std::sort(result.begin(), result.end(), [](const auto a, const auto b){
-      return true;
-    });
-    */
+  std::cout << "slices: " << slices.size() << std::endl;
 
-  return result;
+  // spdlog::debug("number of slices: {d}", slices.size());
+
+  return slices;
 }
 
-void dump_shapes(const std::vector<TopoDS_Shape> shapes) {
-
+void Slicer::dump_shapes(const std::vector<TopoDS_Shape> shapes) {
   spdlog::debug("--------Shape Dump-------");
-  for(auto s: shapes) {
-      spdlog::debug(dump_recurse(s));
-    }
+  for (auto s : shapes) {
+    spdlog::debug(dump_recurse(s));
+  }
   spdlog::debug("-------------------------");
 }
 
-void dump_shapes(const TopoDS_Shape &shape) {
+void Slicer::dump_shapes(const TopoDS_Shape &shape) {
   spdlog::debug("--------Shape Dump-------");
-      spdlog::debug(dump_recurse(shape));
+  spdlog::debug(dump_recurse(shape));
   spdlog::debug("-------------------------");
 }
 
-std::string dump_recurse(const TopoDS_Shape &shape) {
+std::string Slicer::dump_recurse(const TopoDS_Shape &shape) {
   // temporary string for return value
   std::string result;
   // prepend info with tree characters
   static int indent_level = 0;
   // construct prepend string based in indentation level
   std::string prepend;
-  for(int i = 0; i < indent_level; ++i) {
-      prepend += (i < indent_level -1 ? "|\t": "├─ ");
-    }
+  for (int i = 0; i < indent_level; ++i) {
+    prepend += (i < indent_level - 1 ? "|\t" : "├─ ");
+  }
 
   // TODO: provide more information
   result += prepend + TopAbs::ShapeTypeToString(shape.ShapeType()) + "\n";
 
   // if shape has sub-shapes, recurse
   if (shape.ShapeType() == TopAbs_COMPOUND) {
-      // increase indentation level for subtree
-      indent_level++;
+    // increase indentation level for subtree
+    indent_level++;
     for (auto it = TopoDS_Iterator(shape); it.More(); it.Next()) {
       // special character for final entry in list
       result += dump_recurse(it.Value());
     }
     // when subtree is exhausted, decrement indentation level
     indent_level--;
-
   }
 
   return result;
 }
 
-void section(const TopTools_ListOfShape &objects,
-             const TopTools_ListOfShape &tools) {
+void Slicer::section(const TopTools_ListOfShape &objects,
+                     const TopTools_ListOfShape &tools) {
   BOPAlgo_Section section;
   // get first object
   TopoDS_Shape object = objects.First();
@@ -221,7 +204,7 @@ void section(const TopTools_ListOfShape &objects,
   }
 }
 
-void arrange_objects(std::vector<std::shared_ptr<Object>> objects) {
+void Slicer::arrange_objects(std::vector<std::shared_ptr<Object>> objects) {
   spdlog::debug("Creating Bin Packer");
   auto packer = Packer(objects);
   // pack the objects, get dimensions of resulting bin
@@ -241,7 +224,7 @@ void arrange_objects(std::vector<std::shared_ptr<Object>> objects) {
   packer.arrange(offset_x, offset_y);
 }
 
-void make_build_volume() {
+void Slicer::make_build_volume() {
   // get build volume from settings
 }
 

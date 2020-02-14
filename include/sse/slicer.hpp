@@ -18,14 +18,14 @@
 
 #pragma once
 // OCCT headers
-#include <TopoDS.hxx>
-#include <TopoDS_Iterator.hxx>
 #include <TopAbs.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopTools.hxx>
-#include <TopTools_ListOfShape.hxx>
 #include <TopTools_HSequenceOfShape.hxx>
+#include <TopTools_ListOfShape.hxx>
+#include <TopoDS.hxx>
+#include <TopoDS_Iterator.hxx>
 
 #include <IFSelect.hxx>
 #include <STEPCAFControl_Reader.hxx>
@@ -34,9 +34,9 @@
 #include <TDF.hxx>
 #include <TDF_Attribute.hxx>
 
+#include <Geom2d_Line.hxx>
 #include <GeomFill_Pipe.hxx>
 #include <Geom_CylindricalSurface.hxx>
-#include <Geom2d_Line.hxx>
 
 #include <GCE2d_MakeSegment.hxx>
 
@@ -50,102 +50,103 @@
 #include <BRepAlgo.hxx>
 #include <BRepAlgoAPI_Splitter.hxx>
 #include <BRepBuilderAPI.hxx>
+#include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepOffsetAPI_MakePipe.hxx>
-#include <BRepTools_WireExplorer.hxx>
 #include <BRepTools.hxx>
+#include <BRepTools_WireExplorer.hxx>
 #include <BRep_Tool.hxx>
 // STL headers
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
-#include <optional>
 // SSE headers
 #include <sse/Importer.hpp>
+#include <sse/Object.hpp>
+#include <sse/Packer.hpp>
+#include <sse/Settings.hpp>
 #include <sse/Slice.hpp>
 #include <sse/version.hpp>
-#include <sse/Object.hpp>
-#include <sse/Settings.hpp>
-#include <sse/Packer.hpp>
 // external headers
-#include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
 
 namespace sse {
 
+class Slicer {
+public:
+  Slicer(const fs::path configfile,
+         const spdlog::level::level_enum loglevel = spdlog::level::info);
 
   /**
- * @brief init_log
- * @param _loglevel
- */
-void init_log(unsigned int _loglevel);
+   * @brief init_settings
+   * @param configfile
+   */
+  void init_settings(fs::path configfile);
 
-/**
- * @brief init_settings
- * @param configfile
- */
-void init_settings(fs::path configfile);
+  /**
+   * @brief Slice a list of solids using the splitter algorithm
+   * @param objects Objects to split
+   * @return the resulting shape(s)
+   */
+  std::vector<std::unique_ptr<Slice>>
+  slice(const std::vector<std::shared_ptr<Object>> &objects);
 
-/**
- * @brief splitter Use the splitter algorithm to split a solid into slices
- * @param objects Objects to split
- * @return the resulting shape(s)
- */
-std::vector<Slice> splitter(const std::vector<std::shared_ptr<Object>> &objects);
+  /**
+   * @brief Create a list of slicing planes
+   * @param layerHeight Distance between planes
+   * @param objectHeight Total height
+   * @return A list of tools (planar faces) to slice an object
+   */
+  TopTools_ListOfShape makeTools(const double layerHeight,
+                                 const double objectHeight);
 
+  /**
+   * @brief makeSpiralFace
+   * @param height
+   * @param radius
+   * @return
+   */
+  TopoDS_Face make_spiral_face(const double height, const double layer_height);
 
-/**
- * @brief slice
- * @param objects
- */
-void slice(const TopTools_ListOfShape &objects);
+  /**
+   * @brief Recursively dump shape info to log
+   * @param result
+   */
+  void dump_shapes(const std::vector<TopoDS_Shape> shapes);
 
-/**
- * @brief makeTools
- * @param layerHeight
- * @param objectHeight
- * @return A list of tools (planar faces) to slice an object
- */
-TopTools_ListOfShape makeTools(const double layerHeight,
-                               const double objectHeight);
+  void dump_shapes(const TopoDS_Shape &shape);
 
-/**
- * @brief makeSpiralFace
- * @param height
- * @param radius
- * @return
- */
-TopoDS_Face make_spiral_face(const double height, const double layer_height);
+  /**
+   * @brief Rearrange objects so that they are
+   * @param objects List of objects
+   * @throws
+   */
+  void arrange_objects(std::vector<std::shared_ptr<Object>> objects);
 
-/**
- * @brief Recursively dump shape info to log
- * @param result
- */
-void dump_shapes(const std::vector<TopoDS_Shape> shapes);
+  void make_build_volume();
 
-void dump_shapes(const TopoDS_Shape &shape);
+  /**
+   * @brief section use the section algorithm to obtain a list of edges from an
+   * intersection
+   * @param objects
+   * @param tools
+   */
+  void section(const TopTools_ListOfShape &objects,
+               const TopTools_ListOfShape &tools);
 
-std::string dump_recurse(const TopoDS_Shape &shape);
+private:
+  Settings &settings;
 
-/**
- * @brief Rearrange objects so that they are
- * @param objects List of objects
- * @throws
- */
-void arrange_objects(std::vector<std::shared_ptr<Object>> objects);
+  TopTools_ListOfShape make_tools(const double layer_height,
+                                  const double object_height);
 
-void make_build_volume();
+  std::string dump_recurse(const TopoDS_Shape &shape);
+};
 
-/**
- * @brief section use the section algorithm to obtain a list of edges from an
- * intersection
- * @param objects
- * @param tools
- */
-void section(const TopTools_ListOfShape &objects, const TopTools_ListOfShape &tools);
-
-}
+} // namespace sse

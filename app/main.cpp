@@ -80,9 +80,6 @@ int main(int argc, char **argv) {
       return 0;
     }
 
-    // adjust verbosity
-    sse::init_log(result.count("verbose"));
-
     // automatically position models on the build plate
     if (result.count("autoplace")) {
       autoplace = true;
@@ -91,8 +88,7 @@ int main(int argc, char **argv) {
     // load profile
     if (result.count("p")) {
       cout << "profile: " << result["profile"].as<string>() << '\n';
-      auto profile = fs::path(result["profile"].as<string>());
-      sse::init_settings(profile);
+      profile_filename = fs::path(result["profile"].as<string>());
     }
 
     // positional args, i.e. files to slice
@@ -108,6 +104,10 @@ int main(int argc, char **argv) {
     cerr << "ERROR PARSING OPTIONS: " << e.what() << '\n';
     exit(1);
   }
+
+  // TODO: configurable log level
+  // int loglevel = result.count("verbose");
+  auto s = sse::Slicer(profile_filename, spdlog::level::debug);
 
   auto imp = sse::Importer{};
   auto objects = vector<shared_ptr<sse::Object>>();
@@ -131,11 +131,20 @@ int main(int argc, char **argv) {
 
   // auto arrange objects
   if (autoplace) {
-    sse::arrange_objects(objects);
+    s.arrange_objects(objects);
   }
   // slice the objects
-  // auto result = sse::splitter(objects);
+  auto result = s.slice(objects);
   // generate gcode
+  for(auto &slice: result) {
+      // print Z height
+      // cout << *slice << endl;
+      //
+      // slice->generate_shells(0,0);
+      //
+      // slice->generate_infill(0,0,0);
+
+    }
 
 
   return 0;
