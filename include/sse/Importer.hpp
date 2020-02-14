@@ -28,27 +28,44 @@
 #include <TopTools_HSequenceOfShape.hxx>
 #include <TopTools_ListOfShape.hxx>
 #include <Interface_Static.hxx>
+#include <BRepBuilderAPI.hxx>
+#include <BRep_Builder.hxx>
+#include <BRepTools.hxx>
 
 
 #include <iostream>
-#include <optional>
+#include <string>
+#include <algorithm>
 
 namespace sse {
 
 class Importer {
 public:
-  Importer();
+//  Importer();
 
-  const std::optional<TopoDS_Shape>
-  importSTEP(const Standard_CString &filename);
+  TopoDS_Shape import(const std::string &filename);
 
-  const IFSelect_ReturnStatus importIGES(const std::string &filename,
-                                         Handle(TopTools_HSequenceOfShape) &
-                                             shapes);
+  /**
+   * @brief Import STEP file
+   * @param filename
+   * @return TopoDS_Shape if successful
+   */
+  TopoDS_Shape
+  importSTEP(const std::string &filename);
 
-  const IFSelect_ReturnStatus importMesh(const std::string &filename,
-                                         Handle(TopTools_HSequenceOfShape) &
-                                             shapes);
+
+  TopoDS_Shape importIGES(const std::string &filename);
+
+  TopoDS_Shape importSolid(const std::string &filename, const bool STEP);
+
+  TopoDS_Shape importMesh(const std::string &filename);
+
+  /**
+   * @brief importBREP
+   * @param filename
+   * @return
+   */
+  TopoDS_Shape importBREP(const std::string &filename);
 };
 
 

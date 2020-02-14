@@ -16,6 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @brief
+ *
+ * @author Karl Nilsson
+ * @todo refactor, DRY
+ *
+ */
+
 #include <sse/Importer.hpp>
 
 namespace sse {
@@ -23,18 +31,47 @@ namespace sse {
 /**
  * @brief Importer::Importer
  */
-Importer::Importer() {}
+TopoDS_Shape Importer::import(const std::string &filename) {
+  // get the file extension
+  const auto i = filename.rfind(".", filename.length());
+  if (i == std::string::npos) {
+    throw std::runtime_error("Error: filename missing extension: " + filename);
+  }
+  std::string extension = filename.substr(i + 1, filename.length() - 1);
+  // convert extension to lowercase
+  std::transform(extension.begin(), extension.end(), extension.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
 
-const std::optional<TopoDS_Shape>
-Importer::importSTEP(const Standard_CString &filename) {
+  // TODO: refacto, DRY
+  if (extension == "step") {
+    return importSTEP(filename);
+  } else if (extension == "iges") {
+    return importIGES(filename);
+  } else if (extension == "brep") {
+    return importBREP(filename);
+  } else if (extension == "stl") {
+    return importMesh(filename);
+  } else if (extension == "obj") {
+    return importMesh(filename);
+  } else if (extension == "stepz") {
+    // unzip file
+    // process temporary file
+    return importSTEP("");
+  } else {
+    throw std::runtime_error("Error: invalid file: " + filename);
+  }
+}
+
+TopoDS_Shape Importer::importSTEP(const std::string &filename) {
 
   auto reader = STEPControl_Reader();
-  auto status = reader.ReadFile(filename);
+  auto status = reader.ReadFile(filename.c_str());
   // debug info
   reader.PrintCheckLoad(false, IFSelect_ListByItem);
   // return error
   if (status != IFSelect_RetDone) {
-    return std::nullopt;
+    throw std::runtime_error("Error: importing file failed: " + filename);
+    // return status;
   }
 
   // increase default trace level
@@ -45,24 +82,63 @@ Importer::importSTEP(const Standard_CString &filename) {
 
   // Root transfers
   auto nbr = reader.NbRootsForTransfer();
-  reader.PrintCheckTransfer(Standard_False, IFSelect_ItemsByEntity);
+  reader.PrintCheckTransfer(false, IFSelect_ItemsByEntity);
 
   reader.TransferRoots();
-  std::optional<TopoDS_Shape> shapes = reader.OneShape();
 
-  return shapes;
+  return reader.OneShape();
 }
 
-const IFSelect_ReturnStatus
-Importer::importIGES(const std::string &filename,
-                     Handle(TopTools_HSequenceOfShape) & shapes) {
-  return IFSelect_RetVoid;
+TopoDS_Shape Importer::importIGES(const std::string &filename) {
+  auto reader = IGESControl_Reader();
+  auto status = reader.ReadFile(filename.c_str());
+  // debug info
+  reader.PrintCheckLoad(false, IFSelect_ListByItem);
+  if (status != IFSelect_RetDone) {
+    throw std::runtime_error("Error: importing file failed: " + filename);
+  }
+  reader.PrintCheckLoad(false, IFSelect_ItemsByEntity);
+  auto nbr = reader.NbRootsForTransfer();
+  reader.PrintCheckTransfer(false, IFSelect_ItemsByEntity);
+  reader.TransferRoots();
+  return reader.OneShape();
 }
 
-const IFSelect_ReturnStatus
-Importer::importMesh(const std::string &filename,
-                     Handle(TopTools_HSequenceOfShape) & shapes) {
-  return IFSelect_RetVoid;
+TopoDS_Shape Importer::importSolid(const std::string &filename, const bool STEP) {
+  // FIXME
+  auto reader = STEPControl_Reader();
+  auto status = reader.ReadFile(filename.c_str());
+  // debug info
+  reader.PrintCheckLoad(false, IFSelect_ListByItem);
+  // return error
+  if (status != IFSelect_RetDone) {
+    throw std::runtime_error("Error: importing file failed: " + filename);
+    // return status;
+  }
+
+  // increase default trace level
+  // reader.WS()->MapReader()->SetTraceLevel(2);
+
+  // check the file
+  reader.PrintCheckLoad(false, IFSelect_ItemsByEntity);
+
+  // Root transfers
+  auto nbr = reader.NbRootsForTransfer();
+  reader.PrintCheckTransfer(false, IFSelect_ItemsByEntity);
+
+  reader.TransferRoots();
+
+  return reader.OneShape();
+}
+
+TopoDS_Shape Importer::importMesh(const std::string &filename) {
+  return TopoDS_Shape();
+}
+
+TopoDS_Shape Importer::importBREP(const std::string &filename) {
+  TopoDS_Shape shape;
+  BRep_Builder b;
+  BRepTools::Read(shape, filename.c_str(), b);
 }
 
 } // namespace sse

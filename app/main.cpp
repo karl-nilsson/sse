@@ -119,14 +119,15 @@ int main(int argc, char **argv) {
       cerr << "file " << f << " does not exist, skipping\n";
       continue;
     }
-    // import the object, then add it to the list
-    auto v = imp.importSTEP(f.c_str());
-
-    if (v == nullopt) {
-      cerr << "Error processing file " << f << '\n';
-    } else {
-      objects.push_back(make_shared<sse::Object>(v.value()));
+    try {
+      // import the object, then add it to the list
+      TopoDS_Shape s = imp.import(f.c_str());
+      objects.push_back(make_shared<sse::Object>(s));
+    } catch (std::runtime_error &e) {
+      cerr << e.what() << endl;
+      continue;
     }
+
   }
 
   // auto arrange objects
@@ -136,16 +137,14 @@ int main(int argc, char **argv) {
   // slice the objects
   auto result = s.slice(objects);
   // generate gcode
-  for(auto &slice: result) {
-      // print Z height
-      // cout << *slice << endl;
-      //
-      // slice->generate_shells(0,0);
-      //
-      // slice->generate_infill(0,0,0);
-
-    }
-
+  for (auto &slice : result) {
+    // print Z height
+    // cout << *slice << endl;
+    //
+    // slice->generate_shells(0,0);
+    //
+    // slice->generate_infill(0,0,0);
+  }
 
   return 0;
 }
