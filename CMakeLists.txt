@@ -31,11 +31,57 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 # TODO: specify OCCT version
 find_package(OpenCASCADE REQUIRED)
 message(STATUS "OpenCASCADE v${OpenCASCADE_VERSION} found")
-# TODO: trim to only used libraries
-set(OpenCASCADE_USED_LIBS ${OpenCASCADE_LIBRARIES})
+# list of all OCCT libs: OpenCASCADE_LIBRARIES
+# trim to only used libs
+set(OpenCASCADE_USED_LIBS
+  "TKernel"
+  "TKMath"
+  "TKG2d"
+  "TKG3d"
+  "TKGeomBase"
+  "TKBRep"
+  "TKGeomAlgo"
+  "TKTopAlgo"
+  "TKPrim"
+  "TKBO"
+# "TKShHealing"
+  "TKBool"
+  "TKHLR"
+  "TKOffset"
+  "TKFeat"
+  "TKMesh"
+  "TKXMesh"
+  "TKCDF"
+# "TKLCAF"
+# "TKCAF"
+  "TKBinL"
+  "TKXmlL"
+  "TKBin"
+  "TKXml"
+  "TKStdL"
+  "TKStd"
+  "TKTObj"
+  "TKBinTObj"
+# "TKXmlTObj"
+# "TKVCAF"
+  "TKXSBase"
+  "TKSTEPBase"
+  "TKSTEPAttr"
+  "TKSTEP209"
+  "TKSTEP"
+  "TKIGES"
+# "TKXCAF"
+  "TKXDEIGES"
+  "TKXDESTEP"
+  "TKSTL"
+# "TKXmlXCAF"
+# "TKBinXCAF"
+  "TKRWMesh"
+# "TKTopTest"
+# "TKDCAF"
+  )
+message(STATUS ${OpenCASCADE_USED_LIBS})
 
-# TODO: remove when C++20 releases
-find_package(fmt)
 
 # search for OpenMP
 find_package(OpenMP)
@@ -103,13 +149,12 @@ target_include_directories(libsse BEFORE
 target_link_libraries(libsse
     PUBLIC
         stdc++fs
-        ${OpenCASCADE_LIBRARIES}
+        ${OpenCASCADE_USED_LIBS}
         OpenMP::OpenMP_CXX
 #        clipper
         toml11::toml11
     PRIVATE
         spdlog::spdlog_header_only
-        fmt
 )
 
 
