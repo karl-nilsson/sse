@@ -28,32 +28,43 @@
 
 namespace sse {
 
-Object::Object(TopoDS_Shape &s) : shape(std::make_unique<TopoDS_Shape>(s)) {
+Object::Object(TopoDS_Shape &shape, const std::string fname) : shape(std::make_unique<TopoDS_Shape>(shape)), filename(fname) {
   spdlog::info("Initializing object with shape");
   // calculate the axis-aligned bounding box
   bounding_box = Bnd_Box();
   footprint = Bnd_Box2d();
-  generate_bounds();
+  generate_bounds(false, 5);
 }
 
-void Object::generate_bounds() {
+void Object::generate_bounds(bool optimal, double gap) {
   spdlog::info("generating bounding box");
   // clear bounding box
   bounding_box.SetVoid();
   // create bounding box
-  BRepBndLib::Add(*shape, bounding_box);
+  // TODO: test perf of BRepBndLib::AddOptimal
+  if (optimal) {
+    BRepBndLib::AddOptimal(*shape, bounding_box);
+  } else {
+    BRepBndLib::Add(*shape, bounding_box);
+  }
+
   // reset gap
   // TODO: configurable gap
-  bounding_box.SetGap(5);
+  bounding_box.SetGap(gap);
   spdlog::info("generating footprint");
   // clear footprint
   footprint.SetVoid();
   // add corner points to footprint
   // unfortunately, I can't find an elegant way to convert gp_Pnt to gp_Pnt2d
-  footprint.Add(
-      gp_Pnt2d(bounding_box.CornerMin().X(), bounding_box.CornerMin().Y()));
-  footprint.Add(
-      gp_Pnt2d(bounding_box.CornerMax().X(), bounding_box.CornerMin().Y()));
+
+  try {
+    footprint.Add(
+        gp_Pnt2d(bounding_box.CornerMin().X(), bounding_box.CornerMin().Y()));
+    footprint.Add(
+        gp_Pnt2d(bounding_box.CornerMax().X(), bounding_box.CornerMin().Y()));
+  }  catch (Standard_ConstructionError &e) {
+    spdlog::error(e.GetMessageString());
+  }
 }
 
 void Object::lay_flat(const TopoDS_Face &face) {

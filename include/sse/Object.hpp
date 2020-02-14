@@ -48,9 +48,8 @@
 
 #include <math.h>
 #include <memory>
+#include <iostream>
 
-#include <spdlog/fmt/ostr.h>
-#include <spdlog/sinks/stdout_sinks.h>
 #include <spdlog/spdlog.h>
 
 namespace sse {
@@ -61,22 +60,19 @@ namespace sse {
 class Object {
 
 public:
-  /**
-   * @brief Object
-   * @param object
-   */
-  explicit Object(const Object &object);
 
   /**
    * @brief Object constructor
    * @param s Underlying shape
    */
-  explicit Object(TopoDS_Shape &s);
+  explicit Object(TopoDS_Shape &shape, const std::string fname = "");
 
   /**
    * @brief Generate the bounding box
+   * @param optimal Flag to generate optimal bounding box
+   * @param gap Increase bounding box by $gap in each direction
    */
-  void generate_bounds();
+  void generate_bounds(bool optimal, double gap);
 
   /**
    * @brief Rotate and translate object so that one face is flat on the
@@ -221,8 +217,14 @@ public:
    */
   inline TopoDS_Shape &get_shape() { return *shape; }
 
+  friend std::ostream& operator<<(std::ostream& out, Object& o){
+    o.get_bound_box().DumpJson(out);
+    return out;
+  }
+
 private:
   std::unique_ptr<TopoDS_Shape> shape;
+  const std::string filename;
   Bnd_Box bounding_box;
   Bnd_Box2d footprint;
   std::string name;
