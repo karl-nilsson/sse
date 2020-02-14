@@ -40,15 +40,48 @@ class Settings {
 public:
   toml::value config;
 
+  /**
+   * @brief Parse toml file
+   * @param _file File to parse
+   */
   void parse(fs::path _file);
 
-  template <typename T> T get_setting_fallback(std::string setting, T _default);
-  template <typename T> T get_setting(std::string setting);
+  /**
+   * @brief Get a setting by name, with a designated fallback
+   * @param setting Setting name
+   * @param fallback Fallback value
+   * @param return Setting if it exists, fallback otherwise
+   *
+   */
+  template <typename T> T get_setting_fallback(std::string setting, T fallback) {
+    return toml::find_or<T>(config, setting, fallback);
+  }
 
+  /**
+   * @brief Get a setting
+   * @param setting Setting name
+   * @return return Setting
+   */
+  template <typename T> T get_setting(std::string setting) {
+    return toml::find<T>(config, setting);
+  }
+
+  /**
+   * @brief Dump settings to string
+   * @return List of strings
+   */
   std::string dump();
+
+  /**
+   * @brief Save settings to file
+   */
   void save();
 
   // don't touch anything beneath here; required for singleton
+  /**
+   * @brief getInstance Get instance of settings
+   * @return Settings instance
+   */
   static Settings &getInstance() {
     static Settings instance;
     return instance;
