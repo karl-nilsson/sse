@@ -26,8 +26,9 @@
 
 namespace sse {
 
+  // FIXME: figure out what to do with filename field of Object
 Slice::Slice(TopoDS_Shape &s)
-    : Object(s), faces() {
+    : Object(s) {
 
   faces = std::vector<std::unique_ptr<Face>>();
 
@@ -35,7 +36,9 @@ Slice::Slice(TopoDS_Shape &s)
   // TODO: optimize! this is extremely inefficient
   // TODO: may be possible to use BRepAdaptor_* instead of GeomLProp_*
   // TODO: revamp for nonplanar slicing
+  int i = 0;
   for (TopExp_Explorer exp(s, TopAbs_FACE); exp.More(); exp.Next()) {
+    spdlog::debug(i);
     // cast to the correct type
     auto f = TopoDS::Face(exp.Value());
     // get underlying geometry
@@ -62,6 +65,26 @@ Slice::Slice(TopoDS_Shape &s)
       faces.push_back(std::make_unique<Face>(f));
     }
   }
+}
+
+void Slice::generate_shells(int num, double width) {
+
+}
+
+void Slice::generate_infill(double percent, double angle, double line_width) {
+  // for rectilinear infill, the infill% = num lines * line width / face width
+  int num_lines = percent * width() / line_width;
+  // get the bounding box's underlying points
+  Standard_Real xmin, xmax, ymin, ymax;
+  get_footprint().Get(xmin, ymin, xmax, ymax);
+  // calculate offset between lines;
+  double offset = width() / num_lines;
+  for(int i = 0; i < num_lines; ++i) {
+      // generate line
+      // x1 = xmin + (i * offset)
+      // y1 = ymin
+      // x2 = xmin + (y / tan(angle))
+    }
 }
 
 bool Slice::operator<(const Slice& rhs) const {

@@ -47,8 +47,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <spdlog/fmt/ostr.h>
-#include <spdlog/sinks/stdout_sinks.h>
 #include <spdlog/spdlog.h>
 
 #include <sse/Object.hpp>
@@ -63,6 +61,8 @@ public:
   Face(const TopoDS_Face &face) : face(face) {
     TopExp::MapShapes(face, TopAbs_WIRE, wires);
     outerwire = BRepTools::OuterWire(face);
+    // push outermost wire back
+    // offsets.push_back(outerwire);
   }
   //! underlying face object
   const TopoDS_Face &face;
@@ -70,13 +70,14 @@ public:
   TopTools_IndexedMapOfShape wires;
   //! outermost wire of face
   TopoDS_Wire outerwire;
+  // std::vector<TopoDS_Wire &> offsets;
 
 };
 
 /**
  * @brief The Slice class
  */
-class Slice : Object {
+class Slice : public Object {
 
 public:
 
@@ -92,6 +93,20 @@ public:
    * @return list of faces
    */
   std::vector<std::unique_ptr<Face>>& get_faces() { return faces;}
+
+  /**
+   * @brief Generate shells for the slice
+   * @param num
+   * @param width
+   */
+  void generate_shells(int num, double width);
+
+  // TODO: configurable infill pattern
+  /**
+   * @brief generate_infill
+   * @param percent
+   */
+  void generate_infill(double percent, double angle, double line_width);
 
   /**
    * @brief operator < Comparator t

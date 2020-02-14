@@ -155,14 +155,6 @@ private:
     inline bool leaf() const { return up == nullptr; }
 
     /**
-     * @brief String value of node
-     * @return "x,y widthxlength"
-     */
-    std::string strval() {
-      return fmt::format("{},{} {}x{}", x, y, width, length);
-    }
-
-    /**
      * @brief Stream overload
      * @param out Out stream
      * @param node Target node
