@@ -37,7 +37,7 @@ Object::Object(TopoDS_Shape &shape, const std::string fname) : shape(std::make_u
 }
 
 void Object::generate_bounds(bool optimal, double gap) {
-  spdlog::info("generating bounding box");
+  spdlog::debug("generating bounding box");
   // clear bounding box
   bounding_box.SetVoid();
   // create bounding box
@@ -51,7 +51,7 @@ void Object::generate_bounds(bool optimal, double gap) {
   // reset gap
   // TODO: configurable gap
   bounding_box.SetGap(gap);
-  spdlog::info("generating footprint");
+  spdlog::debug("generating footprint");
   // clear footprint
   footprint.SetVoid();
   // add corner points to footprint

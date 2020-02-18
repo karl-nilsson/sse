@@ -40,12 +40,14 @@
 #include <BRepTools.hxx>
 #include <BRepTools_WireExplorer.hxx>
 #include <BRepAdaptor_Surface.hxx>
+#include <BRepOffsetAPI_MakeOffset.hxx>
 
 #include <GeomAbs_SurfaceType.hxx>
 
 #include <map>
 #include <unordered_map>
 #include <vector>
+#include <memory>
 
 #include <spdlog/spdlog.h>
 
@@ -59,10 +61,9 @@ namespace sse {
 struct Face {
 public:
   Face(const TopoDS_Face &face) : face(face) {
+    // map all wires
     TopExp::MapShapes(face, TopAbs_WIRE, wires);
     outerwire = BRepTools::OuterWire(face);
-    // push outermost wire back
-    // offsets.push_back(outerwire);
   }
   //! underlying face object
   const TopoDS_Face &face;
@@ -70,7 +71,8 @@ public:
   TopTools_IndexedMapOfShape wires;
   //! outermost wire of face
   TopoDS_Wire outerwire;
-  // std::vector<TopoDS_Wire &> offsets;
+  //! list of wire offsets
+  std::vector<TopTools_ListOfShape> offset_wires;
 
 };
 

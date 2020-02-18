@@ -115,7 +115,6 @@ Slicer::slice(const std::vector<std::shared_ptr<Object>> &objects) {
   auto slices = std::vector<std::unique_ptr<Slice>>();
   auto it = TopExp_Explorer();
   BRepBuilderAPI_Copy copy;
-  Bnd_Box b;
   // splitter.Shape() is a TopoDS compound, so iterate over it
   for (it.Init(splitter.Shape(), TopAbs_SOLID); it.More(); it.Next()) {
     // TODO: I don't like having to make a copy of the shape
@@ -123,23 +122,13 @@ Slicer::slice(const std::vector<std::shared_ptr<Object>> &objects) {
     // TODO: simplify
     copy.Perform(it.Current());
     auto a = copy.Shape();
-    // result.push_back(std::make_unique<Slice>(a));
-    // spdlog::debug("Z-location: {}", result.back()->strval());
-
-    b.SetVoid();
-    BRepBndLib::AddOptimal(it.Value(), b);
-    // b.DumpJson(std::cout);
-    // std::cout << "\n";
-    // spdlog::debug("{}: .{}f", i++, b.CornerMin().Z());
-    // result.push_back(std::make_unique<Slice>(copy));
+    slices.push_back(std::make_unique<Slice>(a));
   }
 
   // sort the slices by height, ascending
   std::sort(slices.begin(), slices.end());
-
-  std::cout << "slices: " << slices.size() << std::endl;
-
-  // spdlog::debug("number of slices: {d}", slices.size());
+  // debug output
+  spdlog::debug("number of slices: {}", slices.size());
 
   return slices;
 }
