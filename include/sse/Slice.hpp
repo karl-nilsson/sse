@@ -60,7 +60,7 @@ namespace sse {
  */
 struct Face {
 public:
-  Face(const TopoDS_Face &face) : face(face) {
+  explicit Face(const TopoDS_Face &face) : face(face) {
     // map all wires
     TopExp::MapShapes(face, TopAbs_WIRE, wires);
     outerwire = BRepTools::OuterWire(face);

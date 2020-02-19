@@ -118,7 +118,7 @@ public:
    * @brief Recursively dump shape info to log
    * @param result
    */
-  void dump_shapes(const std::vector<TopoDS_Shape> shapes);
+  void dump_shapes(const std::vector<TopoDS_Shape> &shapes);
 
   void dump_shapes(const TopoDS_Shape &shape);
 

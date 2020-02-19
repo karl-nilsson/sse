@@ -19,7 +19,6 @@
 #pragma once
 
 #include <spdlog/spdlog.h>
-#include <fmt/format.h>
 #include <chrono>
 
 #include <TopExp.hxx>
@@ -68,7 +67,7 @@ public:
      * @brief Add a comment line to the program
      * @param comment
      */
-    inline void add_comment(std::string comment) {data.append(";" + comment);}
+    inline void add_comment(const std::string &comment) {data.append(";" + comment);}
 
     /**
      * @brief Add a rapid move to the program

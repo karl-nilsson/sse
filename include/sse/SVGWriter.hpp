@@ -29,7 +29,7 @@ namespace sse {
 
 class SVGWriter {
 public:
-  SVGWriter(fs::path _file);
+  explicit SVGWriter(fs::path _file);
   void add_slice();
   void add_line(double x1, double y1, double x2, double y2);
   void add_path(std::vector<svg::Point> points, bool bezier);

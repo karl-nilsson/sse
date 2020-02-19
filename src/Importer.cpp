@@ -123,7 +123,7 @@ TopoDS_Shape Importer::importSolid(const std::string &filename, const bool STEP)
   reader.PrintCheckLoad(false, IFSelect_ItemsByEntity);
 
   // Root transfers
-  auto nbr = reader.NbRootsForTransfer();
+  // auto nbr = reader.NbRootsForTransfer();
   reader.PrintCheckTransfer(false, IFSelect_ItemsByEntity);
 
   reader.TransferRoots();

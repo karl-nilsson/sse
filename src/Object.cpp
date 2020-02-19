@@ -28,7 +28,7 @@
 
 namespace sse {
 
-Object::Object(TopoDS_Shape &shape, const std::string fname) : shape(std::make_unique<TopoDS_Shape>(shape)), filename(fname) {
+Object::Object(TopoDS_Shape &shape, const std::string &fname) : shape(std::make_unique<TopoDS_Shape>(shape)), filename(fname) {
   spdlog::info("Initializing object with shape");
   // calculate the axis-aligned bounding box
   bounding_box = Bnd_Box();

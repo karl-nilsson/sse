@@ -65,7 +65,7 @@ public:
    * @brief Object constructor
    * @param s Underlying shape
    */
-  explicit Object(TopoDS_Shape &shape, const std::string fname = "");
+  explicit Object(TopoDS_Shape &shape, const std::string &fname = "");
 
   /**
    * @brief Generate the bounding box

@@ -105,6 +105,7 @@ Slicer::slice(const std::vector<std::shared_ptr<Object>> &objects) {
   // check error status
   if (splitter.HasErrors()) {
     auto report = splitter.GetReport();
+    report->Dump(std::cerr);
     // TODO: dump error to spdlog
     spdlog::error("Error while splitting shape: ");
     splitter.DumpErrors(std::cerr);
@@ -133,7 +134,7 @@ Slicer::slice(const std::vector<std::shared_ptr<Object>> &objects) {
   return slices;
 }
 
-void Slicer::dump_shapes(const std::vector<TopoDS_Shape> shapes) {
+void Slicer::dump_shapes(const std::vector<TopoDS_Shape> &shapes) {
   spdlog::debug("--------Shape Dump-------");
   for (auto s : shapes) {
     spdlog::debug(dump_recurse(s));
