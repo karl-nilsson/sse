@@ -9,8 +9,8 @@
 [submodule "extern/doctest"]
 	path = extern/doctest
 	url = https://github.com/onqtam/doctest.git
-    branch = 2.3.6
+    branch = 2.3.7
 [submodule "extern/toml11"]
 	path = extern/toml11
 	url = https://github.com/ToruNiina/toml11.git
-    branch = v3.3.0
+    branch = v3.3.1
