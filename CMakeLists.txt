@@ -4,18 +4,19 @@ cmake_minimum_required(VERSION 3.15)
 project(stepslicerengine
     VERSION 0.0.0
     DESCRIPTION "Slicer Engine"
-    LANGUAGES CXX)
+    LANGUAGES CXX
+)
+
+
 
 # List of commandline options
 option(ENABLE_LTO "Enable link time optimization" OFF)
-option(ENABLE_DOCTESTS "Build tests" ON)
-option(ENABLE_DOCUMENTATION "Build documentation" ON)
+option(ENABLE_TESTING "Build tests" ON)
 
 # require c++17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
 
 # global settings
 set(CMAKE_VERBOSE_MAKEFILE ON)
@@ -25,6 +26,39 @@ set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 # add custom cmake modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
+# fake library for options
+add_library(project_options INTERFACE)
+target_compile_features(project_options INTERFACE cxx_std_17)
+
+# Link this 'library' to use the warnings specified in CompilerWarnings.cmake
+add_library(project_warnings INTERFACE)
+
+# standard compiler warnings
+include(cmake/CompilerWarnings.cmake)
+set_project_warnings(project_warnings)
+
+# enable sanitizers
+include(cmake/Sanitizers.cmake)
+enable_sanitizers(project_options)
+
+# static analysis
+include(cmake/StaticAnalyzers.cmake)
+
+
+# enable ccache
+find_program(CCACHE ccache)
+if(CCACHE)
+  message(STATUS "ccache enabled")
+  set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE})
+else()
+  message(STATUS "ccache not found, disabled")
+endif()
+
+# enable documentation
+include(cmake/Doxygen.cmake)
+enable_doxygen()
+
 
 
 # search for OpenCASCADE
@@ -80,7 +114,6 @@ set(OpenCASCADE_USED_LIBS
 # "TKTopTest"
 # "TKDCAF"
   )
-message(STATUS ${OpenCASCADE_USED_LIBS})
 
 
 # search for OpenMP
@@ -90,6 +123,7 @@ find_package(OpenMP)
 set(toml11_BUILD_TEST OFF CACHE STRING "Omit toml tests" FORCE)
 add_subdirectory(extern/toml11 EXCLUDE_FROM_ALL)
 
+# add spdlog
 add_subdirectory(extern/spdlog EXCLUDE_FROM_ALL)
 
 # generate version info
@@ -97,7 +131,7 @@ configure_file(
     "${PROJECT_SOURCE_DIR}/include/sse/version.hpp.in"
     "${PROJECT_BINARY_DIR}/include/sse/version.hpp"
     @ONLY
-    )
+)
 
 # main library
 add_library(libsse SHARED)
@@ -155,6 +189,8 @@ target_link_libraries(libsse
         toml11::toml11
     PRIVATE
         spdlog::spdlog_header_only
+        project_options
+        project_warnings
 )
 
 
@@ -166,7 +202,7 @@ if(ENABLE_LTO)
         message(STATUS "IPO / LTO supported, enabling")
         set_target_properties(${PROJECT_NAME} PROPERTIES INTERPROCEDURAL_OPTIMIZATION ON)
     else()
-        message(STATUS "IPO / LTO not supported: <${error}>, will not enable")
+        message(STATUS "IPO / LTO not supported: <${error}>, disabled")
     endif()
 endif()
 
@@ -239,7 +275,9 @@ endif()
 #FIXME
 
 # tests switch
-if(ENABLE_DOCTESTS)
+if(ENABLE_TESTING)
+    # disable doctests' internal tests
+    set(DOCTEST_WITH_TESTS OFF CACHE STRING "Omit doctest tests" FORCE)
     add_subdirectory(extern/doctest EXCLUDE_FROM_ALL)
     enable_testing()
     add_subdirectory(tests)
