@@ -14,11 +14,12 @@ An experimental 3D model slicer engine, built on top of a CAD kernel
 * Better multi-material support
 * Edit model in-slicer
 * Exportable support structures
-* more accurate FEM simulation
 
 ## Dependencies
 * [OpenCasCade](https://www.opencascade.com/) > 7.3.0
 * [OpenMP](https://www.openmp.org/)
+* [Doxygen](http://doxygen.nl/)
+* [Graphviz](https://graphviz.org/)
 
 ## Supported CNC software:
 * [LinuxCNC](http://linuxcnc.org/)
@@ -34,4 +35,6 @@ git clone --recursive https://github.com/karl-nilsson/sse.git && cd sse
 mkdir build && cd build
 cmake ..
 cmake --build .
+ctest
 ```
+

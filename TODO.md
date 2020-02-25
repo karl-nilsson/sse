@@ -1,14 +1,17 @@
-TODO
+# TODO
 
-Features:
+## Features
 - STEP assembly import
  - Per-child print settings
-- generate support material
-- manual support material placement/removal
-- save/export supports as a STEP child object
-- export GCode as structured data, in addition to raw text
+- Supports
+ - generate support material
+ - tree supports
+ - manual support material placement/removal
+ - save/export supports as a STEP child
+- GCode
+  - export GCode as structured data, in addition to raw text
 
-Refinement:
+## Refinement
 - only link necessary parts of OCCT
 - charconv output for gcode coordinates
 - define config TOML schema
@@ -25,11 +28,10 @@ Refinement:
   - analysis: OSD_PerfMeter
   - Parallelization: TBB vs OpenMP
 
-Meta:
+## Meta
 - CI
- - Travis: waiting on ubuntu 20.04 for recent OCCT packages
+ - Travis: blocker: ubuntu 20.04 for OCCT v7.4
 - cmake
  - clang-format
  - clang-tidy (cppcoreguidelines)
  - codespell
- - doxygen

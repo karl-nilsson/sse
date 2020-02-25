@@ -4,7 +4,7 @@ language: cpp
 
 before_install:
     - sudo apt-get update -qq
-    - sudo apt-get install -y libocct-*
+    - sudo apt-get install -y libocct-* doxygen graphviz
 
 compiler:
     - gcc
@@ -22,4 +22,6 @@ before_script:
     - cd build
     - cmake ..
 
-script: make && make test
+script:
+    - cmake --build . -- -j2
+    - ctest -j2
