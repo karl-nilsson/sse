@@ -1,4 +1,6 @@
 layer_height = 0.4
+shells = 3
+extrusion_width = 0.4
 
 [printer]
 name = "Example printer"
