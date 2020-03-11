@@ -54,7 +54,7 @@ public:
    *
    */
   template <typename T> T get_setting_fallback(std::string setting, T fallback) {
-    return toml::find_or<T>(config, setting, fallback);
+    return toml::find_or(config, setting, fallback);
   }
 
   /**

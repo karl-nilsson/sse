@@ -23,7 +23,10 @@
 - GCode pattern words
 - represent build volume as 3d shell (hangprinter)
 - store effector as model for collision detection
-- Eval/use OCCT OCAF
+- High-level OCCT:
+  - OCAF: https://dev.opencascade.org/doc/overview/html/occt_user_guides__ocaf.html
+  - XDE: https://dev.opencascade.org/doc/overview/html/occt_user_guides__xde.html
+  - TObj
 - Performance
   - analysis: OSD_PerfMeter
   - Parallelization: TBB vs OpenMP
