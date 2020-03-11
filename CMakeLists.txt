@@ -140,8 +140,6 @@ add_library(libsse::libsse ALIAS libsse)
 # prevent "liblibsse.so"
 set_target_properties(libsse PROPERTIES OUTPUT_NAME "sse")
 
-target_compile_options(libsse PRIVATE -Wall -Wextra -Wpedantic)
-
 # TODO: correctly sort files into proper context
 target_sources(libsse
   PRIVATE
@@ -151,8 +149,8 @@ target_sources(libsse
       src/Object.cpp
       src/Settings.cpp
       src/Support.cpp
-      src/SVGWriter.cpp
       src/Packer.cpp
+      src/Packer.hpp
   PUBLIC
       include/sse/Importer.hpp
       include/sse/slicer.hpp
@@ -160,8 +158,6 @@ target_sources(libsse
       include/sse/Object.hpp
       include/sse/Settings.hpp
       include/sse/Support.hpp
-      include/sse/SVGWriter.hpp
-      include/sse/Packer.hpp
   INTERFACE
 )
 
@@ -173,9 +169,11 @@ target_include_directories(libsse BEFORE
         # generated headers found here
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
         ${OpenCASCADE_INCLUDE_DIR}
-    PRIVATE
+        # FIXME: this needs to be private
         ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${PROJECT_SOURCE_DIR}/extern/simple-svg
+    PRIVATE
+#        ${CMAKE_CURRENT_SOURCE_DIR}/src
+
 )
 
 
@@ -190,7 +188,8 @@ target_link_libraries(libsse
     PRIVATE
         spdlog::spdlog_header_only
         project_options
-        project_warnings
+# Generates too many warnings for external libs
+#        project_warnings
 )
 
 
