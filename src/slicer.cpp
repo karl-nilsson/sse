@@ -131,6 +131,14 @@ Slicer::slice(const std::vector<std::shared_ptr<Object>> &objects) {
   // debug output
   spdlog::debug("number of slices: {}", slices.size());
 
+  int num_shells = settings.get_setting_fallback<int>("shells", 3);
+  double extrusion_width =
+      settings.get_setting_fallback<double>("extrusion_width", 0.4);
+  spdlog::debug("generating shells");
+  for (auto &s : slices) {
+    s->generate_shells(num_shells, 1.0);
+  }
+
   return slices;
 }
 

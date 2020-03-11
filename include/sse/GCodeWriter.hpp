@@ -39,6 +39,8 @@
 #include <Geom_BSplineCurve.hxx>
 #include <Geom_BezierCurve.hxx>
 #include <Geom_BoundedCurve.hxx>
+#include <Geom_TrimmedCurve.hxx>
+#include <Geom_Curve.hxx>
 #include <Geom_Circle.hxx>
 #include <Geom_Curve.hxx>
 #include <Geom_Ellipse.hxx>

@@ -92,23 +92,23 @@ void GCodeWriter::add_bslpine(Geom_BSplineCurve b) {}
 void GCodeWriter::add_wire(TopoDS_Wire w) {
   // explore the wire
   auto a = BRep_Tool();
-  for (TopExp_Explorer e(w, TopAbs_EDGE); e.More(); e.Next()) {
-    try {
-      // cast to an edge, then convert to gcode
-      auto edge = TopoDS::Edge(e.Current());
-      Standard_Real u, v;
-      auto curve = GeomAdaptor_Curve(a.Curve(edge, u, v));
-
-      TopoDS_Vertex y, z;
-      TopExp::Vertices(edge, y, z);
-
-    } catch (Standard_TypeMismatch &e) {
-      e.Print(std::cerr);
-    }
+  for (BRepTools_WireExplorer we(w); we.More(); we.Next()) {
+      // get current edge
+      auto& edge = we.Current();
+      Standard_Real u_min, u_max;
+      // get unbounded curve
+      auto curve = std::make_unique<Geom_Curve>(BRep_Tool::Curve(edge, u_min, u_max));
+      // trim curve
+      auto z = std::make_unique<Geom_TrimmedCurve>(curve, u_min, u_max);
+      z->IsKind();
+      spdlog::debug("{}", z->DynamicType());
+      STANDARD_TYPE(Geom_Line);
+      // process curve
+      add_segment(curve);
   }
 }
 
-std::string GCodeWriter::add_segment(GeomAdaptor_Curve c) {
+std::string GCodeWriter::add_segment(Geom_Curve c) {
   // get settings
   auto feedrate = config.get_setting<uint>("E0.print_speed");
   auto a = c.Value(c.FirstParameter());
@@ -124,11 +124,9 @@ std::string GCodeWriter::add_segment(GeomAdaptor_Curve c) {
 
   switch (c.GetType()) {
   case GeomAbs_Line:
-    return "G1 X{} Y{} Z{} E{} F{}";
-    break;
+    return add_line(c);
   case GeomAbs_Circle:
-    return "G3";
-    break;
+    return add_arc(c);
   case GeomAbs_Ellipse:
     break;
 /*
@@ -137,12 +135,13 @@ std::string GCodeWriter::add_segment(GeomAdaptor_Curve c) {
     break;
 */
   case GeomAbs_BezierCurve:
-    return "G4";
-    break;
+    // split curve
+    return add_bezier(c);
   case GeomAbs_BSplineCurve:
-    return "G5 ";
-    break;
+    // split spline
+    return add_bspline(c);
   default:
+    throw new std::runtime_error("GCodeWriter: Invalid segment type");
     break;
   }
 }

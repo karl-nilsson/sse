@@ -26,13 +26,13 @@
 
 namespace sse {
 
-  // FIXME: figure out what to do with filename field of Object
-Slice::Slice(TopoDS_Shape &s)
-    : Object(s) {
+// FIXME: figure out what to do with filename field of Object
+Slice::Slice(TopoDS_Shape &s) : Object(s) {
   // regenerate bounding box, optimized with no gap
   generate_bounds(true, 0.0);
 
-  faces = std::vector<std::unique_ptr<Face>>();
+  faces = TopTools_HSequenceOfShape();
+  wires = TopTools_ListOfShape();
 
   // search the slice for faces parallel and coincident with slicing plane
   // TODO: optimize! this is extremely inefficient
@@ -58,61 +58,55 @@ Slice::Slice(TopoDS_Shape &s)
                                    (vmin + vmax) / 2, 1, 1e-6);
     auto normal = props.Normal();
     if (f.Orientation() == TopAbs_REVERSED) {
-        normal.Reverse();
+      normal.Reverse();
     }
     // if normal isn't the same (opposite) as slicing plane, short-circuit
-    // use the bounding box to
     // TODO: verify floating point equality, low epsilon
     // spdlog::debug("Face z: {}  Bounds z: {}", props.Value().Z(), get_bound_box().CornerMin().Z());
     // std::cout << "Face z: " << props.Value().Z() << " Bounds z: " << get_bound_box().CornerMin().Z() << std::endl;
-    // TODO: bounding box bottom face isn't the same as the slicing plane. Need to pass in slicing plane to get the correct faces
-    // if (gp::DZ().IsOpposite(props.Normal(), 0.01) && fabs(props.Value().Z() - get_bound_box().CornerMin().Z()) < pow(10, -6)) {
+    // TODO: bounding box bottom face isn't the same as the slicing plane. Need
+    // to pass in slicing plane to get the correct faces if
+    // (gp::DZ().IsOpposite(props.Normal(), 0.01) && fabs(props.Value().Z() - get_bound_box().CornerMin().Z()) < pow(10, -6)) {
     if (gp::DZ().IsOpposite(normal, 0.01)) {
       // add face to the list of faces for the slice
       spdlog::debug("adding face");
-      faces.push_back(std::make_unique<Face>(f));
+      // faces.push_back(Face(f));
+      faces.Append(f);
     }
   }
 }
 
 // TODO: better API, i.e. list of offset dimensions
 void Slice::generate_shells(int num, double width) {
-  // loop over all faces
-  for (auto &f : faces) {
 
-    // generate wire offset,
-    // TODO: generate offsets for more than just the outer wire
-    auto b = BRepOffsetAPI_MakeOffset(f->face, GeomAbs_Intersection);
+  // loop over all faces
+  for (const auto &f : faces) {
+    // cast from TopoDS_Shape to TopoDS_Face
+    const TopoDS_Face &face = TopoDS::Face(f);
+    // adding face automatically adds all wires
+    auto b = BRepOffsetAPI_MakeOffset(face, GeomAbs_Arc);
 
     try {
-      // do we need to add all wires of the face?
-      /*
-      for(auto a: f->wires) {
-          b.Addwire(a);
-      }*/
-
       // for each offset
       for (int i = 1; i <= num; ++i) {
-        // make the offset (go inwards)
-        // TODO: allow for both outward and inward offsets (positive and negative)
+        // make the offset
+        // TODO: allow for both outward and inward offsets
         b.Perform(-1 * i * width);
-        // is build necessary?
-        b.Build();
-        // add results to face
-        auto tmp = b.Generated(f->face);
-        for(const auto& s: tmp) {
-          spdlog::debug(TopAbs::ShapeTypeToString(s.ShapeType()));
-        }
-
-        f->offset_wires.push_back(tmp);
       }
 
-    }  catch (StdFail_NotDone &e) {
+    } catch (StdFail_NotDone &e) {
+      spdlog::error("offset failure");
       // catch build error
       e.Print(std::cerr);
-
     }
 
+    // get all the generated offsets
+    // FIXME: currently returns empty list
+    auto tmp = b.Generated(f);
+    for (const auto &s : tmp) {
+      spdlog::debug(TopAbs::ShapeTypeToString(s.ShapeType()));
+    }
+    wires.Append(tmp);
   }
 }
 
@@ -124,15 +118,15 @@ void Slice::generate_infill(double percent, double angle, double line_width) {
   get_footprint().Get(xmin, ymin, xmax, ymax);
   // calculate offset between lines;
   double offset = width() / num_lines;
-  for(int i = 0; i < num_lines; ++i) {
-      // generate line
-      // x1 = xmin + (i * offset)
-      // y1 = ymin
-      // x2 = xmin + (y / tan(angle))
-    }
+  for (int i = 0; i < num_lines; ++i) {
+    // generate line
+    // x1 = xmin + (i * offset)
+    // y1 = ymin
+    // x2 = xmin + (y / tan(angle))
+  }
 }
 
-bool Slice::operator<(const Slice& rhs) const {
+bool Slice::operator<(const Slice &rhs) const {
   // compare lowest Z coordinate of both bounding boxes
   return get_bound_box().CornerMin().Z() < rhs.get_bound_box().CornerMin().Z();
 }

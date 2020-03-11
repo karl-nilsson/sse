@@ -32,6 +32,7 @@
 #include <TopExp_Explorer.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <TopTools_MapOfShape.hxx>
+#include <TopTools_HSequenceOfShape.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Shape.hxx>
@@ -55,27 +56,6 @@
 
 namespace sse {
 
-  /**
- * @brief The Face struct
- */
-struct Face {
-public:
-  explicit Face(const TopoDS_Face &face) : face(face) {
-    // map all wires
-    TopExp::MapShapes(face, TopAbs_WIRE, wires);
-    outerwire = BRepTools::OuterWire(face);
-  }
-  //! underlying face object
-  const TopoDS_Face &face;
-  //! map of wires contained by face
-  TopTools_IndexedMapOfShape wires;
-  //! outermost wire of face
-  TopoDS_Wire outerwire;
-  //! list of wire offsets
-  std::vector<TopTools_ListOfShape> offset_wires;
-
-};
-
 /**
  * @brief The Slice class
  */
@@ -94,7 +74,7 @@ public:
    * @brief Return all the bottom faces of the slice
    * @return list of faces
    */
-  std::vector<std::unique_ptr<Face>>& get_faces() { return faces;}
+  inline TopTools_HSequenceOfShape& get_faces() { return faces;}
 
   /**
    * @brief Generate shells for the slice
@@ -119,7 +99,8 @@ public:
 
 private:
   //! list of faces
-  std::vector<std::unique_ptr<Face>> faces;
+  TopTools_HSequenceOfShape faces;
+  TopTools_ListOfShape wires;
 };
 
 } // namespace sse
