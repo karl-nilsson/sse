@@ -26,7 +26,7 @@
  * @author Karl Nilsson
  */
 
-#include <sse/Packer.hpp>
+#include <Packer.hpp>
 
 namespace sse {
 

@@ -1,7 +1,7 @@
 # list of all test names
 set(TEST_NAMES
   test_main.cpp
-  test_binpack.cpp
+#  test_binpack.cpp
 )
 
 

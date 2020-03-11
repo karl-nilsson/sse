@@ -1,6 +1,6 @@
 #include <doctest/doctest.h>
 
-#include <sse/Packer.hpp>
+#include <Packer.hpp>
 
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <BRepPrimAPI_MakeHalfSpace.hxx>

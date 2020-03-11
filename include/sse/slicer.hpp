@@ -68,10 +68,10 @@
 // SSE headers
 #include <sse/Importer.hpp>
 #include <sse/Object.hpp>
-#include <sse/Packer.hpp>
 #include <sse/Settings.hpp>
 #include <sse/Slice.hpp>
 #include <sse/version.hpp>
+#include <Packer.hpp>
 // external headers
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
