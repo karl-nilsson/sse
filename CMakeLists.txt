@@ -27,6 +27,10 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 # add custom cmake modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
+if(NOT APPLE)
+  set(CMAKE_INSTALL_RPATH $ORIGIN)
+endif()
+
 # fake library for options
 add_library(project_options INTERFACE)
 target_compile_features(project_options INTERFACE cxx_std_17)
@@ -121,10 +125,10 @@ find_package(OpenMP)
 
 # add toml11, don't build tests
 set(toml11_BUILD_TEST OFF CACHE STRING "Omit toml tests" FORCE)
-add_subdirectory(extern/toml11 EXCLUDE_FROM_ALL)
+add_subdirectory(external/toml11 EXCLUDE_FROM_ALL)
 
 # add spdlog
-add_subdirectory(extern/spdlog EXCLUDE_FROM_ALL)
+add_subdirectory(external/spdlog EXCLUDE_FROM_ALL)
 
 # generate version info
 configure_file(
@@ -138,7 +142,10 @@ add_library(libsse SHARED)
 # alias
 add_library(libsse::libsse ALIAS libsse)
 # prevent "liblibsse.so"
-set_target_properties(libsse PROPERTIES OUTPUT_NAME "sse")
+set_target_properties(libsse PROPERTIES
+  OUTPUT_NAME "sse"
+  SOVERSION 0
+)
 
 # TODO: correctly sort files into proper context
 target_sources(libsse
@@ -218,8 +225,12 @@ install(
     TARGETS libsse
     EXPORT libsse-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      COMPONENT libsse_Runtime
+      NAMELINK_COMPONENT libsse_Development
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      COMPONENT libsse_Development
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+      COMPONENT libsse_Runtime
 )
 
 # install headers
@@ -277,13 +288,13 @@ endif()
 if(ENABLE_TESTING)
     # disable doctests' internal tests
     set(DOCTEST_WITH_TESTS OFF CACHE STRING "Omit doctest tests" FORCE)
-    add_subdirectory(extern/doctest EXCLUDE_FROM_ALL)
+    add_subdirectory(external/doctest EXCLUDE_FROM_ALL)
     enable_testing()
     add_subdirectory(tests)
 endif()
 
 
 
-add_subdirectory(extern/cxxopts)
+add_subdirectory(external/cxxopts)
 # add executable
 add_subdirectory(app/)
