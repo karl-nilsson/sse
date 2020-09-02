@@ -34,6 +34,7 @@
 #include <BRepTools.hxx>
 #include <BRepTools_WireExplorer.hxx>
 #include <BRep_Tool.hxx>
+#include <BRepAdaptor_Curve.hxx>
 #include <Standard_Real.hxx>
 
 #include <Geom_BSplineCurve.hxx>
@@ -50,10 +51,17 @@
 #include <GeomAdaptor_Curve.hxx>
 #include <GeomAdaptor_HCurve.hxx>
 
+#include <gp.hxx>
+#include <gp_Lin.hxx>
+#include <gp_Circ.hxx>
+#include <gp_Parab.hxx>
+
 #include <sse/Settings.hpp>
 
 // start off with a buffer size of 1MB
 #define INITIAL_GCODE_SIZE 1048576
+
+namespace sse {
 
 class GCodeWriter{
 
@@ -78,18 +86,21 @@ public:
      * @param z
      */
     void add_rapid(double x, double y, double z);
+    std::string add_rapid(gp_Pnt destination);
 
     /**
      * @brief Add a linear move to the program
      * @param c
      */
-    void add_line(GeomAdaptor_Curve c);
+    std::string add_line(Geom_Line l);
+    std::string add_line(Handle(Geom_Line) l);
+    std::string add_line(gp_Lin l);
 
     /**
      * @brief Generate a valid arc move for the program
      * @param c
      */
-    void add_arc(GeomAdaptor_Curve c);
+    std::string add_arc(Handle(Geom_Circle) c);
 
     void add_bezier(Geom_BezierCurve b);
 
@@ -98,6 +109,8 @@ public:
     void add_nurbs();
 
     std::string add_segment(GeomAdaptor_Curve c);
+    std::string add_segment(Handle(Geom_Curve) c);
+    std::string add_segment(Geom_TrimmedCurve c);
 
     void add_wire(TopoDS_Wire w);
     void retract(double distance);
@@ -109,3 +122,5 @@ private:
     sse::Settings &config;
     void move_pre(GeomAdaptor_Curve c);
 };
+
+}

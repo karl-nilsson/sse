@@ -25,6 +25,8 @@
 
 #include <sse/GCodeWriter.hpp>
 
+namespace sse {
+
 GCodeWriter::GCodeWriter() : config(sse::Settings::getInstance()) {
   data = std::string();
   // reserve a large buffer upfront
@@ -54,10 +56,13 @@ void GCodeWriter::add_rapid(double x, double y, double z) {
   // get settings
   auto feedrate = config.get_setting<uint>("rapid");
   std::string move = fmt::format("G0 X{} Y{} Z{} F{};\n", x, y, z, feedrate);
-  data.append(move);
 }
 
-void GCodeWriter::add_line(GeomAdaptor_Curve c) {
+std::string GCodeWriter::add_rapid(const gp_Pnt destination) {
+  return fmt::format("G0 X{} Y{} Z{}", destination.X(), destination.Y(), destination.Z());
+}
+
+std::string GCodeWriter::add_line(Geom_Line c) {
   // get settings
   auto feedrate = config.get_setting<uint>("E0.print_speed");
   auto a = c.Value(c.FirstParameter());
@@ -68,64 +73,91 @@ void GCodeWriter::add_line(GeomAdaptor_Curve c) {
   b.Coord(x, y, z);
 
   // calculate line distance
-  auto dist = a.Distance(b);
-
-  double distance = fabs(c.FirstParameter() - c.LastParameter());
+  auto distance = a.Distance(b);
 
   std::string move =
       fmt::format("G1 X{} Y{} Z{} E{} F{}\n;", x, y, z, distance, feedrate);
-  data.append(move);
+
+  return move;
 }
 
-void GCodeWriter::add_arc(GeomAdaptor_Curve c) {
+std::string GCodeWriter::add_line(Handle(Geom_Line) l) {
+
+  auto start = l->Value(l->FirstParameter());
+  auto end = l->Value(l->LastParameter());
+
+  auto distance = end.Distance(start);
+
+  auto feedrate = config.get_setting<uint>("E0.print_speed");
+
+  return fmt::format("G1 X{} Y{} Z{} E{} F{}\n", end.X(), end.Y(), end.Z(), distance, feedrate);
+}
+
+std::string GCodeWriter::add_line(gp_Lin l) { return ""; }
+
+std::string GCodeWriter::add_arc(Handle(Geom_Circle) c) {
   // TODO: figure out whether CW or CCW
   std::string move = fmt::format("G2 X{} Y{} Z{} I{} J{} P{} E{}\n");
-  data.append(move);
+  return move;
 }
 
 void GCodeWriter::add_nurbs() {}
 
 void GCodeWriter::add_bezier(Geom_BezierCurve b) {}
 
-void GCodeWriter::add_bslpine(Geom_BSplineCurve b) {}
+void GCodeWriter::add_bslpine(Geom_BSplineCurve b) {
+  for(auto i = 0; i < b.NbPoles(); ++i) {
+      auto a = b.Pole(i);
+    }
+
+
+}
 
 void GCodeWriter::add_wire(TopoDS_Wire w) {
   // explore the wire
   auto a = BRep_Tool();
   for (BRepTools_WireExplorer we(w); we.More(); we.Next()) {
-      // get current edge
-      auto& edge = we.Current();
-      Standard_Real u_min, u_max;
-      // get unbounded curve
-      auto curve = std::make_unique<Geom_Curve>(BRep_Tool::Curve(edge, u_min, u_max));
-      // trim curve
-      auto z = std::make_unique<Geom_TrimmedCurve>(curve, u_min, u_max);
-      z->IsKind();
-      spdlog::debug("{}", z->DynamicType());
-      STANDARD_TYPE(Geom_Line);
-      // process curve
-      add_segment(curve);
+    // get current edge
+    auto &edge = we.Current();
+    Standard_Real u_min, u_max;
+    // get handle to unbounded curve
+    // auto curve = BRepAdaptor_Curve(edge);
+    auto curve = BRep_Tool::Curve(edge, u_min, u_max);
+    // trim curve
+    auto z = Geom_TrimmedCurve(curve, u_min, u_max);
+    // auto a = Handle(Geom_Line)::DownCast(z);
+    // z->IsKind() == STANDARD_TYPE(Geom_Line);
+    // process curve
+    add_segment(curve);
   }
 }
 
-std::string GCodeWriter::add_segment(Geom_Curve c) {
+std::string GCodeWriter::add_segment(Handle(Geom_Curve) c) {
   // get settings
   auto feedrate = config.get_setting<uint>("E0.print_speed");
-  auto a = c.Value(c.FirstParameter());
-  double x, y, z;
-  a.Coord(x, y, z);
 
-  auto b = c.Value(c.LastParameter());
-  b.Coord(x, y, z);
+  if (c->IsKind(STANDARD_TYPE(Geom_Line))) {
 
-  auto dist = a.Distance(b);
+    auto t = Handle(Geom_Line)::DownCast(c);
+    return add_line(t);
+  } else if (c->IsKind(STANDARD_TYPE(Geom_Circle))) {
+    auto t = Handle(Geom_Circle)::DownCast(c);
+    return add_arc(t);
+  } else if (c->IsKind(STANDARD_TYPE(Geom_BezierCurve))) {
+    auto t = Handle(Geom_BezierCurve)::DownCast(c);
+  } else if (c->IsKind(STANDARD_TYPE(Geom_BSplineCurve))) {
+    auto t = Handle(Geom_BSplineCurve)::DownCast(c);
+  } else {
+    throw new std::runtime_error(
+        fmt::format("GCodeWriter: Invalid edge type: {}", c->get_type_name()));
+  }
 
-  double distance = fabs(c.FirstParameter() - c.LastParameter());
-
+  /*
   switch (c.GetType()) {
   case GeomAbs_Line:
-    return add_line(c);
+    return add_line(c.Line());
   case GeomAbs_Circle:
+
     return add_arc(c);
   case GeomAbs_Ellipse:
     break;
@@ -133,7 +165,7 @@ std::string GCodeWriter::add_segment(Geom_Curve c) {
   case GeomAbs_NonUniform:
     return "G5.2";
     break;
-*/
+
   case GeomAbs_BezierCurve:
     // split curve
     return add_bezier(c);
@@ -144,6 +176,7 @@ std::string GCodeWriter::add_segment(Geom_Curve c) {
     throw new std::runtime_error("GCodeWriter: Invalid segment type");
     break;
   }
+  */
 }
 
 void GCodeWriter::retract(double distance) {
@@ -152,3 +185,5 @@ void GCodeWriter::retract(double distance) {
                                  retraction_speed);
   data.append(move);
 }
+
+} // namespace sse

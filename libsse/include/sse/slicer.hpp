@@ -72,6 +72,7 @@
 #include <sse/Slice.hpp>
 #include <sse/version.hpp>
 #include <Packer.hpp>
+#include <sse/GCodeWriter.hpp>
 // external headers
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>

@@ -32,9 +32,8 @@ An experimental 3D model slicer engine, built on top of a CAD kernel
 ## Build Instructions
 ```
 git clone --recursive https://github.com/karl-nilsson/sse.git && cd sse
-mkdir build && cd build
-cmake ..
-cmake --build .
+cmake -S . -B build
+cmake --build build
 ctest
 ```
 

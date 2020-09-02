@@ -27,6 +27,7 @@
   - OCAF: https://dev.opencascade.org/doc/overview/html/occt_user_guides__ocaf.html
   - XDE: https://dev.opencascade.org/doc/overview/html/occt_user_guides__xde.html
   - TObj
+  - XCAFPrs_AISObject
 - Performance
   - analysis: OSD_PerfMeter
   - Parallelization: TBB vs OpenMP
