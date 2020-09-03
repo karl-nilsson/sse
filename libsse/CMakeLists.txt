@@ -1,6 +1,5 @@
 project(libsse)
 
-message(${PROJECT_SOURCE_DIR})
 # generate version info
 configure_file(
     "${PROJECT_SOURCE_DIR}/include/sse/version.hpp.in"
@@ -46,10 +45,8 @@ target_include_directories(libsse BEFORE
         # generated headers found here
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
         ${OpenCASCADE_INCLUDE_DIR}
-        # FIXME: this needs to be private
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
     PRIVATE
-#        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 
 )
 
