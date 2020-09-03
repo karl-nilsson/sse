@@ -7,11 +7,14 @@ project(stepslicerengine
     LANGUAGES CXX
 )
 
+# enable testing
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+  include(CTest)
+endif()
 
 
 # List of commandline options
 option(ENABLE_LTO "Enable link time optimization" OFF)
-option(ENABLE_TESTING "Build tests" ON)
 
 # require c++17
 set(CMAKE_CXX_STANDARD 17)
@@ -49,6 +52,7 @@ enable_sanitizers(project_options)
 # static analysis
 include(cmake/StaticAnalyzers.cmake)
 
+if(FALSE)
 if(ENABLE_LTO)
     # Check if we can enable Link Time Optimization
     include(CheckIPOSupported)
@@ -59,6 +63,7 @@ if(ENABLE_LTO)
     else()
         message(STATUS "IPO / LTO not supported: <${error}>, disabled")
     endif()
+endif()
 endif()
 
 # enable ccache
@@ -152,11 +157,12 @@ add_subdirectory(external/cxxopts)
 add_subdirectory(app/)
 
 # tests switch
-if(ENABLE_TESTING)
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
     # disable doctests' internal tests
     set(DOCTEST_WITH_TESTS OFF CACHE STRING "Omit doctest tests" FORCE)
+    # include doctest
     add_subdirectory(external/doctest EXCLUDE_FROM_ALL)
-    enable_testing()
+    # add tests
     add_subdirectory(tests)
 endif()
 
