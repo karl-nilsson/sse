@@ -218,7 +218,8 @@ public:
   inline TopoDS_Shape &get_shape() { return *shape; }
 
   friend std::ostream& operator<<(std::ostream& out, Object& o){
-    o.get_bound_box().DumpJson(out);
+    // DumpJson only in occt-7.4
+    // o.get_bound_box().DumpJson(out);
     return out;
   }
 
