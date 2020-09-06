@@ -12,13 +12,13 @@ add_library(${PROJECT_NAME} SHARED)
 # alias
 add_library(libsse::libsse ALIAS ${PROJECT_NAME})
 # prevent "liblibsse.so"
-set_target_properties(libsse PROPERTIES
+set_target_properties(${PROJECT_NAME} PROPERTIES
   OUTPUT_NAME "sse"
   SOVERSION 0
 )
 
 # TODO: correctly sort files into proper context
-target_sources(libsse
+target_sources(${PROJECT_NAME}
   PRIVATE
       src/Importer.cpp
       src/slicer.cpp
@@ -27,32 +27,29 @@ target_sources(libsse
       src/Settings.cpp
       src/Support.cpp
       src/Packer.cpp
-      src/Packer.hpp
-  PUBLIC
       include/sse/Importer.hpp
       include/sse/slicer.hpp
       include/sse/Slice.hpp
       include/sse/Object.hpp
       include/sse/Settings.hpp
       include/sse/Support.hpp
+      include/Packer.hpp
 )
 
-
-target_include_directories(libsse BEFORE
+target_include_directories(${PROJECT_NAME} BEFORE
     PUBLIC
         $<INSTALL_INTERFACE:include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         # generated headers found here
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
         ${OpenCASCADE_INCLUDE_DIR}
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-
+        ${PROJECT_SOURCE_DIR}/src
 )
 
 
 # link library dependencies
-target_link_libraries(libsse
+target_link_libraries(${PROJECT_NAME}
     PUBLIC
         stdc++fs
         ${OpenCASCADE_USED_LIBS}
@@ -75,7 +72,7 @@ set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/libsse)
 
 # install targets
 install(
-    TARGETS libsse
+    TARGETS ${PROJECT_NAME}
     EXPORT libsse-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
       COMPONENT libsse_Runtime
@@ -132,7 +129,7 @@ export(
     NAMESPACE libsse::
 )
 
-export(PACKAGE libsse)
+export(PACKAGE ${PROJECT_NAME})
 
 endif()
 #FIXME
