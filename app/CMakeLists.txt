@@ -13,5 +13,5 @@ target_link_libraries(${PROJECT_NAME}
 # install location
 install(TARGETS sse
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-      COMPONENT sse_Runtime
+    COMPONENT sse_Runtime
 )

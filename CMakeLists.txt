@@ -79,8 +79,6 @@ endif()
 include(cmake/Doxygen.cmake)
 enable_doxygen()
 
-
-
 # search for OpenCASCADE
 # TODO: specify OCCT version
 find_package(OpenCASCADE REQUIRED)
@@ -133,28 +131,17 @@ set(OpenCASCADE_USED_LIBS
   "TKRWMesh"
 # "TKTopTest"
 # "TKDCAF"
-  )
+)
+
+# add external dependencies
+add_subdirectory(external)
 
 
-# search for OpenMP
-find_package(OpenMP)
-
-# add toml11, don't build tests
-set(toml11_BUILD_TEST OFF CACHE STRING "Omit toml tests" FORCE)
-add_subdirectory(external/toml11 EXCLUDE_FROM_ALL)
-
-# add spdlog
-add_subdirectory(external/spdlog EXCLUDE_FROM_ALL)
-
-# build library
+# add library
 add_subdirectory(libsse)
 
-# add cxxopts
-set(CXXOPTS_BUILD_EXAMPLES OFF CACHE STRING "Omit cxxopts examples")
-add_subdirectory(external/cxxopts)
-
 # add executable
-add_subdirectory(app/)
+add_subdirectory(app)
 
 # tests switch
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)

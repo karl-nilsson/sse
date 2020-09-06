@@ -53,7 +53,6 @@ target_link_libraries(${PROJECT_NAME}
     PUBLIC
         stdc++fs
         ${OpenCASCADE_USED_LIBS}
-        OpenMP::OpenMP_CXX
 #        clipper
         toml11::toml11
     PRIVATE
