@@ -40,7 +40,7 @@ Slice::Slice(TopoDS_Shape &s) : Object(s) {
   // TODO: revamp for nonplanar slicing
   for (TopExp_Explorer exp(s, TopAbs_FACE); exp.More(); exp.Next()) {
     // cast to the correct type
-    auto f = TopoDS::Face(exp.Value());
+    auto f = TopoDS::Face(exp.Current());
     // get underlying geometry
     auto b = BRepAdaptor_Surface(f);
     // if face is not a plane, short-circuit
