@@ -26,7 +26,7 @@
  * @author Karl Nilsson
  */
 
-#include <Packer.hpp>
+#include <sse/Packer.hpp>
 
 namespace sse {
 
@@ -39,7 +39,12 @@ Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
   // check for invalid objects (infinite or zero volume)
   // TODO: consider using c++20 ranges
   for (auto o : objects) {
-    if (o->get_bound_box().IsOpen()) {
+    // TODO: occt v7.4.0, replace with IsOpen
+    // clang-format off
+    if (o->get_bound_box().IsOpenXmin() || o->get_bound_box().IsOpenXmax() ||
+        o->get_bound_box().IsOpenYmin() || o->get_bound_box().IsOpenYmax() ||
+        o->get_bound_box().IsOpenZmin() || o->get_bound_box().IsOpenZmax()) {
+    // clang-format on
       throw std::runtime_error("Binpack: object has infinite volume");
     }
     if (o->get_bound_box().IsVoid()) {

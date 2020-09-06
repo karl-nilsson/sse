@@ -33,7 +33,7 @@ target_sources(${PROJECT_NAME}
       include/sse/Object.hpp
       include/sse/Settings.hpp
       include/sse/Support.hpp
-      include/Packer.hpp
+      include/sse/Packer.hpp
 )
 
 target_include_directories(${PROJECT_NAME} BEFORE

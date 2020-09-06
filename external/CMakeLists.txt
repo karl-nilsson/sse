@@ -11,4 +11,5 @@ add_subdirectory(spdlog EXCLUDE_FROM_ALL)
 # add cxxopts
 set(CXXOPTS_BUILD_EXAMPLES OFF CACHE STRING "Omit cxxopts examples")
 set(CXXOPTS_BUILD_TESTS OFF CACHE STRING "Omit cxxopts tests")
+set(CXXOPTS_ENABLE_INSTALL OFF CACHE STRING "Disable cxxopts install")
 add_subdirectory(cxxopts)
