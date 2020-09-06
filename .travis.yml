@@ -4,7 +4,7 @@ language: cpp
 
 before_install:
     - sudo apt-get update -qq
-    - sudo apt-get install -y libocct-* occt-misc doxygen graphviz cmake libtbb-dev
+    - sudo apt-get install -y libocct-* occt-misc doxygen graphviz cmake libtbb-dev libxi-dev
 
 compiler:
     - gcc

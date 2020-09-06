@@ -128,7 +128,7 @@ set(OpenCASCADE_USED_LIBS
   "TKSTL"
 # "TKXmlXCAF"
 # "TKBinXCAF"
-  "TKRWMesh"
+# "TKRWMesh"
 # "TKTopTest"
 # "TKDCAF"
 )

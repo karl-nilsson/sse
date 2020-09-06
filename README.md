@@ -17,7 +17,7 @@ An experimental 3D model slicer engine, built on top of a CAD kernel
 
 ## Dependencies
 * [OpenCasCade](https://www.opencascade.com/) > 7.3.0
-* [OpenMP](https://www.openmp.org/)
+* [TBB](https://software.intel.com/content/www/us/en/develop/tools/threading-building-blocks.html)
 * [Doxygen](http://doxygen.nl/)
 * [Graphviz](https://graphviz.org/)
 
