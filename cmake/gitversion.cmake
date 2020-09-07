@@ -1,6 +1,6 @@
 # if possible, use git to add revision information to the build
 find_package(Git QUIET)
-if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR/.git}")
+if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
     message(NOTICE "Git found, generating version info")
     include(GetGitRevisionDescription)
     execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
