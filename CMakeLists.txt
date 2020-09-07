@@ -148,10 +148,6 @@ add_subdirectory(app)
 
 # tests switch
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
-    # disable doctests' internal tests
-    set(DOCTEST_WITH_TESTS OFF CACHE STRING "Omit doctest tests" FORCE)
-    # include doctest
-    add_subdirectory(external/doctest EXCLUDE_FROM_ALL)
     # add tests
     add_subdirectory(tests)
 endif()

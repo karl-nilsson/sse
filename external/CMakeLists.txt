@@ -1,15 +1,40 @@
-# search for OpenMP
-find_package(OpenMP)
+include(FetchContent)
 
-# add toml11, don't build tests
+# toml11
+FetchContent_Declare(toml11
+  GIT_REPOSITORY https://github.com/ToruNiina/toml11
+  GIT_TAG v3.5.0
+)
+# toml11 built options
 set(toml11_BUILD_TEST OFF CACHE STRING "Omit toml tests" FORCE)
-add_subdirectory(toml11 EXCLUDE_FROM_ALL)
 
-# add spdlog
-add_subdirectory(spdlog EXCLUDE_FROM_ALL)
-
-# add cxxopts
+# spdlog
+FetchContent_Declare(spdlog
+  GIT_REPOSITORY https://github.com/gabime/spdlog
+  GIT_TAG v1.8.0
+)
+# cxxopts
+FetchContent_Declare(cxxopts
+  GIT_REPOSITORY https://github.com/jarro2783/cxxopts
+  GIT_TAG v2.2.1
+)
+# cxxopts build options
 set(CXXOPTS_BUILD_EXAMPLES OFF CACHE STRING "Omit cxxopts examples")
 set(CXXOPTS_BUILD_TESTS OFF CACHE STRING "Omit cxxopts tests")
 set(CXXOPTS_ENABLE_INSTALL OFF CACHE STRING "Disable cxxopts install")
-add_subdirectory(cxxopts)
+
+# add libraries
+FetchContent_MakeAvailable(toml11 spdlog cxxopts)
+
+
+# only include doctest if building tests
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
+  # doctest
+  FetchContent_Declare(doctest
+    GIT_REPOSITORY https://github.com/onqtam/doctest
+    GIT_TAG 2.4.0
+  )
+  # disable doctests' internal tests
+  set(DOCTEST_WITH_TESTS OFF CACHE STRING "Omit doctest tests" FORCE)
+  FetchContent_MakeAvailable(doctest)
+endif()
