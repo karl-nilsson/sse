@@ -15,6 +15,7 @@ cache:
 
 branches:
     only:
+        - master
         - devel
 
 before_script:
