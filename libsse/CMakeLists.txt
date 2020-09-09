@@ -16,6 +16,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
   OUTPUT_NAME "sse"
   SOVERSION 0
 )
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
 # TODO: correctly sort files into proper context
 target_sources(${PROJECT_NAME}
