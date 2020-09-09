@@ -56,8 +56,8 @@ target_link_libraries(${PROJECT_NAME}
         ${OpenCASCADE_USED_LIBS}
 #        clipper
         toml11::toml11
-    PRIVATE
         spdlog::spdlog_header_only
+    PRIVATE
         project_options
 # Generates too many warnings for external libs
 #        project_warnings
