@@ -21,6 +21,7 @@ branches:
 before_script:
     - cmake -S . -B build
 
+# build and test
 script:
     - cmake --build build/ -j2
-    - ctest -j2
+    - cd build && ctest -VV -j2
