@@ -1,0 +1,56 @@
+/**
+ * @mainpage Documentation
+ *
+ * This document describes the STEPSlicerEngine library, libsse.
+ *
+ * @tableofcontents
+ *
+ * @section Overview
+ *
+ *
+ * - @subpage User_Guide
+ * - @subpage Technical
+ * - @subpage Release_Notes
+ * - @subpage Roadmap
+ */
+
+/**
+ * @page User_Guide User Guide
+ *
+ * @par Install Dependencies
+ * Ubuntu Focal:
+ * @code{.shell-session}
+ * apt-get install -y build-essential cmake libocct-* occt-misc doxygen graphviz libtbb-dev libxi-dev doxygen dot
+ * @endcode
+ *
+ * <br />
+ * @par Building
+ * @code{.shell-session}
+ * cmake -S . -B build
+ * cmake --build build -j4
+ * # run tests
+ * cd build && ctest
+ * @endcode
+ *
+ *
+ * @par Installing
+ * @code{.shell-session}
+ * # from build directory
+ * sudo make install
+ * @endcode
+ */
+
+/**
+ * @page Technical Technical Guide
+ *
+ */
+
+/**
+ * @page Release_Notes Release Notes
+ *
+ */
+
+/**
+ * @page Roadmap Roadmap
+ *
+ */
