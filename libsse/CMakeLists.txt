@@ -63,6 +63,10 @@ target_link_libraries(${PROJECT_NAME}
 #        project_warnings
 )
 
+# build documentation
+if(BUILD_DOC)
+  add_subdirectory(doc)
+endif()
 
 #FIXME
 if(FALSE)

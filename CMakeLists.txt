@@ -15,6 +15,7 @@ endif()
 
 # List of commandline options
 option(ENABLE_LTO "Enable link time optimization" OFF)
+option(BUILD_DOC "Build library documentation" ON)
 
 # require c++17
 set(CMAKE_CXX_STANDARD 17)
@@ -77,10 +78,6 @@ if(CCACHE)
 else()
   message(STATUS "ccache not found, disabled")
 endif()
-
-# enable documentation
-include(cmake/Doxygen.cmake)
-enable_doxygen()
 
 # search for OpenCASCADE
 # TODO: specify OCCT version
