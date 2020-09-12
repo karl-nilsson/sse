@@ -55,6 +55,7 @@
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepOffsetAPI_MakePipe.hxx>
+#include <BRepOffsetAPI_MakePipeShell.hxx>
 #include <BRepTools.hxx>
 #include <BRepTools_WireExplorer.hxx>
 #include <BRep_Tool.hxx>
@@ -113,7 +114,7 @@ public:
    * @param radius
    * @return
    */
-  TopoDS_Face make_spiral_face(const double height, const double layer_height);
+  TopoDS_Shape make_spiral_face(const double height, const double layer_height);
 
   /**
    * @brief Recursively dump shape info to log

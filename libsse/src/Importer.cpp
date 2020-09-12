@@ -139,6 +139,7 @@ TopoDS_Shape Importer::importBREP(const std::string &filename) {
   TopoDS_Shape shape;
   BRep_Builder b;
   BRepTools::Read(shape, filename.c_str(), b);
+  return TopoDS_Shape();
 }
 
 } // namespace sse

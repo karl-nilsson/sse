@@ -50,25 +50,35 @@ TopTools_ListOfShape Slicer::make_tools(const double layer_height,
   return result;
 }
 
-TopoDS_Face make_spiral_face(const double height, const double layer_height) {
-  // make a unit cylinder, vertical axis, center @ (0,0), radius of 1
+TopoDS_Shape make_spiral_face(const double height, const double layer_height) {
+  // TODO: use settings class
+  // find the center of the bed
+  double build_plate_x = 200, build_plate_y = 200;
+  double center_x = build_plate_x = 2, center_y = build_plate_y / 2;
+  auto center_point = gp_Pnt(center_x, center_y, 0);
+
+  // create unit cylinder, at the center of the buildplate, verticle axis, radius=1
   Handle_Geom_CylindricalSurface cylinder =
-      new Geom_CylindricalSurface(gp::XOY(), 1.0);
+      new Geom_CylindricalSurface(gp_Ax2(center_point, gp::DZ()), 1.0);
   // TODO: center helix axis should be the central print axis
   auto line = gp_Lin2d(gp::Origin2d(), gp_Dir2d(layer_height, 1.0));
   Handle_Geom2d_TrimmedCurve segment = GCE2d_MakeSegment(line, 0.0, M_PI * 2.0);
   // make the helixcal edge
   auto helixEdge =
       BRepBuilderAPI_MakeEdge(segment, cylinder, 0.0, 6.0 * M_PI).Edge();
-  auto wire = BRepBuilderAPI_MakeWire(helixEdge);
-  // make infinite line to sweep
-  auto profile = NULL;
+  auto path = BRepBuilderAPI_MakeWire(helixEdge).Wire();
+  // make line to sweep
+  auto profile = BRepBuilderAPI_MakeEdge(gp_Ax1(center_point, gp_Dir(1,0,0))).Edge();
   // sweep line to create face
-  // auto face = GeomFill_Pipe();
-  // auto a = BRepOffsetAPI_MakePipe();
-  auto face = TopoDS_Face();
+  auto result = BRepOffsetAPI_MakePipeShell(path);
+  // set to freenet
+  result.SetMode(Standard_True);
+  result.Add(profile);
+  result.Build();
+  // list of results
+  //result.Generated();
 
-  return face;
+  return result.FirstShape();
 }
 
 std::vector<std::unique_ptr<Slice>>
