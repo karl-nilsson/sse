@@ -57,7 +57,7 @@ TopoDS_Shape make_spiral_face(const double height, const double layer_height) {
   double center_x = build_plate_x = 2, center_y = build_plate_y / 2;
   auto center_point = gp_Pnt(center_x, center_y, 0);
 
-  // create unit cylinder, at the center of the buildplate, verticle axis, radius=1
+  // create unit cylinder, at the center of the buildplate, vertical axis, radius=1
   Handle_Geom_CylindricalSurface cylinder =
       new Geom_CylindricalSurface(gp_Ax2(center_point, gp::DZ()), 1.0);
   // TODO: center helix axis should be the central print axis
