@@ -9,8 +9,8 @@ configure_file(
 
 # main library
 add_library(${PROJECT_NAME} SHARED)
-# alias
-add_library(libsse::libsse ALIAS ${PROJECT_NAME})
+# create alias libsse::libsse
+add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 # prevent "liblibsse.so"
 set_target_properties(${PROJECT_NAME} PROPERTIES
   OUTPUT_NAME "sse"
@@ -72,19 +72,53 @@ endif()
 if(FALSE)
 
 include(GNUInstallDirs)
-set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/libsse)
+set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 
 # install targets
 install(
     TARGETS ${PROJECT_NAME}
-    EXPORT libsse-targets
+    EXPORT ${PROJECT_NAME}_Targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      COMPONENT libsse_Runtime
-      NAMELINK_COMPONENT libsse_Development
+      COMPONENT ${PROJECT_NAME}_Runtime
+      NAMELINK_COMPONENT ${PROJECT_NAME}_Development
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      COMPONENT libsse_Development
+      COMPONENT ${PROJECT_NAME}_Development
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-      COMPONENT libsse_Runtime
+      COMPONENT ${PROJECT_NAME}_Runtime
+)
+
+# Create libsseConfigVersion.cmake
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+    # maybe ${PROJECT_VERSION} ???
+    VERSION ${PACKAGE_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+# generate libsseConfig.cmake
+configure_package_config_file(
+    "${CMAKE_CURRENT_LIST_DIR}/cmake/${PROJECT_NAME}Config.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+    INSTALL_DESTINATION
+      ${INSTALL_CONFIGDIR}
+)
+
+# export targets to a script
+install(
+    EXPORT ${PROJECT_NAME}_Targets
+    FILE ${PROJECT_NAME}Targets.cmake
+    NAMESPACE ${PROJECT_NAME}::
+    DESTINATION ${INSTALL_CONFIGDIR}
+)
+
+# install config and configversion
+install(
+    FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+    DESTINATION
+        ${INSTALL_CONFIGDIR}
 )
 
 # install headers
@@ -93,44 +127,13 @@ install(
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-# export targets to a script
-install(
-    EXPORT libsse-targets
-    FILE libsseTargets.cmake
-    NAMESPACE libsse::
-    DESTINATION ${INSTALL_CONFIGDIR}
-)
 
-# Create libsseConfigVersion.cmake
-include(CMakePackageConfigHelpers)
-
-write_basic_package_version_file(
-    ${CMAKE_CURRENT_BINARY_DIR}/libsseConfigVersion.cmake
-    VERSION ${PACKAGE_VERSION}
-    COMPATIBILITY SameMajorVersion
-)
-
-# generate libsseConfig.cmake
-configure_package_config_file(
-    ${CMAKE_CURRENT_LIST_DIR}/cmake/libsseConfig.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/libsseConfig.cmake
-    INSTALL_DESTINATION ${INSTALL_CONFIGDIR}
-)
-
-# install config and configversion
-install(
-    FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/libsseConfig.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/libsseConfigVersion.cmake
-    DESTINATION
-        ${INSTALL_CONFIGDIR}
-)
-
+# ????
 # exporting from build tree
 export(
-    EXPORT libsse-targets
-    FILE ${CMAKE_CURRENT_BINARY_DIR}/libsseTargets.cmake
-    NAMESPACE libsse::
+    EXPORT ${PROJECT_NAME}_Targets
+    FILE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake
+    NAMESPACE ${PROJECT_NAME}::
 )
 
 export(PACKAGE ${PROJECT_NAME})
