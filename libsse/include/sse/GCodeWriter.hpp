@@ -90,7 +90,7 @@ public:
 
     /**
      * @brief Add a linear move to the program
-     * @param c
+     * @param l
      */
     std::string add_line(Geom_Line l);
     std::string add_line(Handle(Geom_Line) l);

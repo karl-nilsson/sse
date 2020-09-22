@@ -17,10 +17,11 @@
  */
 
 #include <sse/slicer.hpp>
+#include <utility>
 
 namespace sse {
 
-Slicer::Slicer(const fs::path configfile,
+Slicer::Slicer(const fs::path& configfile,
                const spdlog::level::level_enum loglevel)
     : settings(Settings::getInstance()) {
   // setup loggels
@@ -54,7 +55,7 @@ TopoDS_Shape make_spiral_face(const double height, const double layer_height) {
   // TODO: use settings class
   // find the center of the bed
   double build_plate_x = 200, build_plate_y = 200;
-  double center_x = build_plate_x = 2, center_y = build_plate_y / 2;
+  double center_x = build_plate_x / 2, center_y = build_plate_y / 2;
   auto center_point = gp_Pnt(center_x, center_y, 0);
 
   // create unit cylinder, at the center of the buildplate, vertical axis, radius=1
@@ -87,13 +88,13 @@ Slicer::slice(const std::vector<std::shared_ptr<Object>> &objects) {
   double z = 0;
   auto obj = TopTools_ListOfShape();
   // FIXME: optimize, we copy the shape to another list
-  for (auto o : objects) {
+  for (const auto& o : objects) {
     z = std::max(z, o->get_bound_box().CornerMax().Z());
     obj.Append(o->get_shape());
   }
 
   // FIXME more sane layer height fallback mechanism
-  double layer_height = settings.get_setting_fallback<double>("layer_height", 0.2);
+  auto layer_height = settings.get_setting_fallback<double>("layer_height", 0.2);
   // FIXME: for some reason, the following line results in std::bad_alloc, so cout instead
   // spdlog::info("Layer Height: {}", layer_height);
   std::cout << "layer height: " << layer_height << std::endl;
@@ -114,7 +115,7 @@ Slicer::slice(const std::vector<std::shared_ptr<Object>> &objects) {
   splitter.Build();
   // check error status
   if (splitter.HasErrors()) {
-    auto report = splitter.GetReport();
+    const auto& report = splitter.GetReport();
     report->Dump(std::cerr);
     // TODO: dump error to spdlog
     spdlog::error("Error while splitting shape: ");
@@ -142,7 +143,7 @@ Slicer::slice(const std::vector<std::shared_ptr<Object>> &objects) {
   spdlog::debug("number of slices: {}", slices.size());
 
   int num_shells = settings.get_setting_fallback<int>("shells", 3);
-  double extrusion_width =
+  auto extrusion_width =
       settings.get_setting_fallback<double>("extrusion_width", 0.4);
   spdlog::debug("generating shells");
   for (auto &s : slices) {
@@ -154,7 +155,7 @@ Slicer::slice(const std::vector<std::shared_ptr<Object>> &objects) {
 
 void Slicer::dump_shapes(const std::vector<TopoDS_Shape> &shapes) {
   spdlog::debug("--------Shape Dump-------");
-  for (auto s : shapes) {
+  for (const auto &s : shapes) {
     spdlog::debug(dump_recurse(s));
   }
   spdlog::debug("-------------------------");
@@ -199,11 +200,11 @@ void Slicer::section(const TopTools_ListOfShape &objects,
                      const TopTools_ListOfShape &tools) {
   BOPAlgo_Section section;
   // get first object
-  TopoDS_Shape object = objects.First();
+  const TopoDS_Shape& object = objects.First();
 
   TopTools_ListOfShape result;
 
-  for (auto face : tools) {
+  for (const auto& face : tools) {
     // section object
     section.AddArgument(object);
     section.AddArgument(face);

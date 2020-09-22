@@ -17,11 +17,12 @@
  */
 
 #include <sse/Settings.hpp>
+#include <utility>
 
 namespace sse {
 
 void Settings::parse(fs::path _file) {
-  file = _file;
+  file = std::move(_file);
 
   // TODO: more error checks: permissions
   // check if file exists

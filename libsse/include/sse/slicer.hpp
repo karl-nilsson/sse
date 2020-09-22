@@ -82,7 +82,7 @@ namespace sse {
 
 class Slicer {
 public:
-  Slicer(const fs::path configfile,
+  Slicer(const fs::path& configfile,
          const spdlog::level::level_enum loglevel = spdlog::level::info);
 
   /**

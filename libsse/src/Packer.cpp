@@ -38,8 +38,9 @@ Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
   }
   // check for invalid objects (infinite or zero volume)
   // TODO: consider using c++20 ranges
-  for (auto o : objects) {
+  for (const auto &o : objects) {
     // TODO: occt v7.4.0, replace with IsOpen
+    // if(o->get_bound_box().IsOpen()) {
     // clang-format off
     if (o->get_bound_box().IsOpenXmin() || o->get_bound_box().IsOpenXmax() ||
         o->get_bound_box().IsOpenYmin() || o->get_bound_box().IsOpenYmax() ||
@@ -71,10 +72,10 @@ std::pair<double, double> Packer::pack() {
 
   spdlog::debug("BinPack: packing");
   // insert all objects into the tree
-  for (auto o : objects) {
+  for (const auto &o : objects) {
     spdlog::debug("BinPack: searching for suitable node");
     // attempt to find a suitable node for the object
-    auto result = insert_search(*root, o.get());
+    auto *result = insert_search(*root, o.get());
     // no node found, grow the bin
     if (!result) {
       spdlog::debug("BinPack: insufficient space; growing bin");
@@ -134,7 +135,7 @@ Packer::Node *Packer::insert_search(Node &node, const Object *o) const {
   }
   // if node is not a leaf
   // search the right child
-  auto n = insert_search(*node.right, o);
+  auto *n = insert_search(*node.right, o);
   // otherwise, try up child
   return (n ? n : insert_search(*node.up, o));
 }

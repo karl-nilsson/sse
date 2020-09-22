@@ -33,7 +33,7 @@ namespace sse {
  */
 TopoDS_Shape Importer::import(const std::string &filename) {
   // get the file extension
-  const auto i = filename.rfind(".", filename.length());
+  const auto i = filename.rfind('.', filename.length());
   if (i == std::string::npos) {
     throw std::runtime_error("Error: filename missing extension: " + filename);
   }

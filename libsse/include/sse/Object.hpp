@@ -63,7 +63,8 @@ public:
 
   /**
    * @brief Object constructor
-   * @param s Underlying shape
+   * @param shape Underlying shape
+   * @param frame Filename
    */
   explicit Object(TopoDS_Shape &shape, const std::string &fname = "");
 

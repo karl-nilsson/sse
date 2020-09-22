@@ -50,7 +50,7 @@ public:
    * @brief Get a setting by name, with a designated fallback
    * @param setting Setting name
    * @param fallback Fallback value
-   * @param return Setting if it exists, fallback otherwise
+   * @return return Setting if it exists, fallback otherwise
    *
    */
   template <typename T> T get_setting_fallback(std::string setting, T fallback) {
