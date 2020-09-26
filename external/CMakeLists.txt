@@ -3,7 +3,7 @@ include(FetchContent)
 # toml11
 FetchContent_Declare(toml11
   GIT_REPOSITORY https://github.com/ToruNiina/toml11
-  GIT_TAG v3.5.0
+  GIT_TAG v3.6.0
 )
 # toml11 built options
 set(toml11_BUILD_TEST OFF CACHE STRING "Omit toml tests" FORCE)
