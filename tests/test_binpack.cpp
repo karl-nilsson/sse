@@ -5,7 +5,7 @@
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <BRepPrimAPI_MakeHalfSpace.hxx>
 
-#include <math.h>
+#include <cmath>
 #include <memory>
 #include <iostream>
 
@@ -15,12 +15,11 @@ TEST_CASE("Packer parameter sanitization") {
   // ensure vector is empty
   REQUIRE(objects.size() == 0);
 
-  /*
+
   SUBCASE("testing empty binpacker") {
     // should throw an error
-    CHECK_THROWS(auto p = sse::Packer(objects));
+    CHECK_THROWS_AS(sse::Packer p{objects}, std::runtime_error);
   }
-  */
 
   SUBCASE("testing binpacker with empty object") {
     // add object with zero volume
@@ -41,10 +40,13 @@ TEST_CASE("Packer parameter sanitization") {
     CHECK_THROWS_AS(auto p = sse::Packer(objects), std::runtime_error);
   }
 
-  SUBCASE("testing binpacker with 1000 objects") {
-    // create 1000 empty objects
-    for (auto i = 0; i < 1000; ++i) {
-        auto a = TopoDS_Shape();
+  SUBCASE("testing binpacker with too many objects") {
+    // create excessive objects objects
+    BRepPrimAPI_MakeBox box{1,1,1};
+    box.Build();
+    // MAXIMUM_OBJECTS is defined in Packer.hpp
+    for (auto i = 0; i <= MAXIMUM_OBJECTS; ++i) {
+        auto a = box.Solid();
         objects.push_back(std::make_shared<sse::Object>(a));
     }
     CHECK_THROWS_AS(auto p = sse::Packer(objects), std::runtime_error);
@@ -58,16 +60,18 @@ TEST_CASE("Packer cubes test") {
   // ensure vector is empty
   REQUIRE(objects.size() == 0);
   // make a box with one corner at origin, with X,Y,Z dimensions of 10
-  auto box = BRepPrimAPI_MakeBox(10, 10, 10).Shape();
+  auto box = BRepPrimAPI_MakeBox(10, 10, 10);
+  box.Build();
+  auto a = box.Shape();
 
   SUBCASE("List of squares") {
-    for (auto i = 1; i < 16; i++) {
+    for (auto i = 1; i < 16; ++i) {
       CAPTURE(i);
-      // generate subcase label
-      SUBCASE(fmt::format("{i} squares", i).c_str()) {
+      SUBCASE("") {
+      // SUBCASE(fmt::format("{i} squares", i).c_str()) {
         // push all objects to vector
         for (auto j = 0; j < i; ++j) {
-          objects.push_back(std::make_shared<sse::Object>(box));
+          objects.push_back(std::make_shared<sse::Object>(a));
         }
         auto p = sse::Packer(objects);
 

@@ -35,6 +35,8 @@ Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
   // check for empty vector
   if (objects.empty()) {
     throw std::runtime_error("Binpack: no objects to pack");
+  } else if(objects.size() > MAXIMUM_OBJECTS) {
+    throw std::runtime_error("Too many objects");
   }
   // check for invalid objects (infinite or zero volume)
   // TODO: consider using c++20 ranges

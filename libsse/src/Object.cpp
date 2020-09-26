@@ -29,7 +29,7 @@
 namespace sse {
 
 Object::Object(TopoDS_Shape &shape, const std::string &fname) : shape(std::make_unique<TopoDS_Shape>(shape)), filename(fname) {
-  spdlog::info("Initializing object with shape");
+  spdlog::debug("Initializing object with shape");
   // calculate the axis-aligned bounding box
   bounding_box = Bnd_Box();
   footprint = Bnd_Box2d();
@@ -56,7 +56,6 @@ void Object::generate_bounds(bool optimal, double gap) {
   footprint.SetVoid();
   // add corner points to footprint
   // unfortunately, I can't find an elegant way to convert gp_Pnt to gp_Pnt2d
-
   try {
     footprint.Add(
         gp_Pnt2d(bounding_box.CornerMin().X(), bounding_box.CornerMin().Y()));

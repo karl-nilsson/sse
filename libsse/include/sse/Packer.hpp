@@ -50,6 +50,8 @@
 
 namespace sse {
 
+#define MAXIMUM_OBJECTS 1000
+
 /**
  * @class Packer
  * @brief Pack objects into a rectangular bin, based on their XY bounding box.
