@@ -15,7 +15,7 @@ endif()
 
 # List of commandline options
 option(ENABLE_LTO "Enable link time optimization" OFF)
-option(BUILD_DOC "Build library documentation" ON)
+option(BUILD_DOC "Build library documentation" OFF)
 
 # require c++17
 set(CMAKE_CXX_STANDARD 17)

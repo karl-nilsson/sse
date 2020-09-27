@@ -14,7 +14,6 @@ if(DOXYGEN_FOUND)
   set(DOXYGEN_COLLABORATION_GRAPH YES)
   # include private sources
   set(DOXYGEN_EXTRACT_ALL YES)
-  set(DOXYGEN_INLINE_SOURCES YES)
   set(DOXYGEN_REFERENCED_BY_RELATION YES)
   set(DOXYGEN_REFERENCES_RELATION YES)
   # this function automatically sets Doxyfile's project name, version, and description
