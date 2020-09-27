@@ -54,7 +54,7 @@ Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
       throw std::runtime_error("Binpack: object is empty");
     }
   }
-  // sort the objects, biggest to smallest, in terms of footprint
+  // sort the objects, largest to smallest, in terms of footprint
   // specifically, compare the largest dimension (X or Y) of each object
   spdlog::debug("BinPack: sorting object list");
   std::sort(objects.begin(), objects.end(),
@@ -62,9 +62,8 @@ Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
               return std::max(lhs->length(), lhs->width()) >
                      std::max(rhs->length(), rhs->width());
             });
-  // create the root node. with dimensions equal to the first object
-  // this is essential, so that we don't have to grow the bin in two dimensions
-  // simultaneously
+  // create the root node, with dimensions equal to the first object
+  // this is essential, to avoid growing the bin in two dimensions simultaneously
   spdlog::debug("BinPack: creating root node");
   root = std::make_unique<Node>(0, 0, objects.front()->width(),
                                 objects.front()->length());
@@ -107,20 +106,14 @@ std::pair<double, double> Packer::pack() {
       }
     }
     // print object dimensions and location in bin
-    /*spdlog::debug("BinPack: adding object to bin: {}x{} @ ({},{})",
+    spdlog::debug("BinPack: adding object to bin: {}x{} @ ({},{})",
                   o->width(), o->length(), result->x, result->y);
-                  */
     // add object to suitable node
     result->add_object(o.get());
   }
 
-  // return the dimensions of the bin: (width, length)
+  // return the final dimensions of the bin: (width, length)
   return std::make_pair(root->width, root->length);
-}
-
-void Packer::arrange(double offset_x, double offset_y) const {
-  spdlog::debug("BinPack: translating objects to new location");
-  translate(*root, offset_x, offset_y);
 }
 
 Packer::Node *Packer::insert_search(Node &node, const Object *o) const {
@@ -128,17 +121,15 @@ Packer::Node *Packer::insert_search(Node &node, const Object *o) const {
   // prevents inserting objects in the extraneous root nodes created when
   // growing the bin
   if (node.leaf()) {
-    // if node is full, or is too small, return
+    // if node is full, or is too small, return failure
     if (node.full() || !node.fits(o)) {
       return nullptr;
     }
-    // return this node
+    // success
     return &node;
   }
-  // if node is not a leaf
-  // search the right child
+  // node is not a leaf, search children
   auto *n = insert_search(*node.right, o);
-  // otherwise, try up child
   return (n ? n : insert_search(*node.up, o));
 }
 
@@ -164,10 +155,16 @@ Packer::Node *Packer::grow_right(double width, double length) {
   return root->right.get();
 }
 
+void Packer::arrange(double offset_x, double offset_y) const {
+  spdlog::debug("BinPack: translating objects to new location");
+  translate(*root, offset_x, offset_y);
+}
+
 void Packer::translate(const Node &node, const double offset_x,
                        const double offset_y) const {
   // only translate if the node has an object
   if (node.full()) {
+    spdlog::debug("BinPack: moving object to ({},{})", node.x + offset_x, node.y + offset_y);
     // perform translation (only in XY direction)
     node.object->translate(
         gp_Pnt(node.x + offset_x, node.y + offset_y,
@@ -179,5 +176,7 @@ void Packer::translate(const Node &node, const double offset_x,
     translate(*node.right, offset_x, offset_y);
   }
 }
+
+#undef MAXIMUM_OBJECTS
 
 } // namespace sse

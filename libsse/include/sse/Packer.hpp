@@ -24,9 +24,6 @@
  *
  * @author Karl Nilsson
  * @bug fixed/static offset dimension between objects, Bnd_Box::SetGap()
- * @bug bounds check: ensure objects don't have infinite dimensions
- * @bug bounds check: ensure object list isn't too big, otherwise will
- * run out of stack space when destroying tree
  */
 
 #pragma once
@@ -50,6 +47,8 @@
 
 namespace sse {
 
+//! Maxmimum number of objects to pack/sort.
+//! TODO: figure out a better way to store/represent this value
 #define MAXIMUM_OBJECTS 1000
 
 /**
@@ -67,6 +66,9 @@ public:
   /**
    * @brief Packer constructor
    * @param objects List of objects to pack
+   * @throws std::runtime If argument is empty
+   *  std::runtime If argument size exceeds MAXIMUM_OBJECTS
+   *  std::runtime If any object has infinite or zero volume
    */
   explicit Packer(std::vector<std::shared_ptr<Object>> objects);
 
@@ -95,7 +97,7 @@ private:
    * and length in the Y axis.
    */
   struct Node {
-    //! shorthand for shared_ptr
+    //! shorthand for unique_ptr<Node>
     using node_ptr = std::unique_ptr<Node>;
     //! X position
     const double x;
@@ -120,7 +122,7 @@ private:
      * @param l Length, Y axis
      */
     Node(double x, double y, double w, double l, node_ptr up=nullptr, node_ptr right=nullptr)
-        : x(x), y(y), width(w), length(l), up(std::move(up)), right(std::move(right)) {
+        : x{x}, y{y}, width{w}, length{l}, up{std::move(up)}, right{std::move(right)} {
     }
 
     /**
@@ -163,7 +165,7 @@ private:
      * @return stream
      */
     friend std::ostream& operator<<(std::ostream& out, Node& node) {
-      out << node.x << "," << node.y << " " << node.width << "x" << node.length;
+      out << fmt::format("{},{} {}x{}", node.x, node.y, node.width, node.length);
       return out;
     }
 
@@ -204,7 +206,7 @@ private:
   //! list of objects to pack
   std::vector<std::shared_ptr<Object>> objects;
   //! root node of binary tree
-  std::unique_ptr<Node> root;
+  Node::node_ptr root;
 };
 
 } // namespace sse
