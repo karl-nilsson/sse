@@ -40,20 +40,23 @@ void Settings::parse(fs::path _file) {
 
   spdlog::debug("Printer: " + toml::find<std::string>(printer, "name"));
 
+  // load build plate
   auto build_plate = toml::find(printer, "build_plate");
   if (toml::find<bool>(build_plate, "is_circle")) {
     spdlog::debug("Build plate is circular");
   } else {
     spdlog::debug("Build plate is rectangular");
   }
+
 }
 
 std::string Settings::dump() {
-  return "";
+  return toml::format(config);
 }
 
 void Settings::save() {
   spdlog::info("Saving settings to " + file.string());
+
 }
 
 } // namespace sse

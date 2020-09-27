@@ -95,9 +95,7 @@ Slicer::slice(const std::vector<std::shared_ptr<Object>> &objects) {
 
   // FIXME more sane layer height fallback mechanism
   auto layer_height = settings.get_setting_fallback<double>("layer_height", 0.2);
-  // FIXME: for some reason, the following line results in std::bad_alloc, so cout instead
-  // spdlog::info("Layer Height: {}", layer_height);
-  std::cout << "layer height: " << layer_height << std::endl;
+  spdlog::info("Layer Height: {}", layer_height);
   // create the slicing planes
   spdlog::info("creating slicing planes");
   auto tools = make_tools(layer_height, z);

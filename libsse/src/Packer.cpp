@@ -117,8 +117,8 @@ std::pair<double, double> Packer::pack() {
 }
 
 Packer::Node *Packer::insert_search(Node &node, const Object *o) const {
-  // leaf nodes are the only nodes valid for object insertion. this also
-  // prevents inserting objects in the extraneous root nodes created when
+  // only leaf nodes are valid for object insertion. this also prevents
+  // inserting objects in the extraneous root nodes created when
   // growing the bin
   if (node.leaf()) {
     // if node is full, or is too small, return failure
@@ -134,7 +134,7 @@ Packer::Node *Packer::insert_search(Node &node, const Object *o) const {
 }
 
 Packer::Node *Packer::grow_up(double width, double length) {
-  // create a new bigger root node
+  // create a larger root node
   // up child node: new node of desired size
   // right child: previous root
   root = std::make_unique<Node>(0,0, root->width, root->length + length,
@@ -145,10 +145,10 @@ Packer::Node *Packer::grow_up(double width, double length) {
 }
 
 Packer::Node *Packer::grow_right(double width, double length) {
-  // create a new bigger root node
+  // create a larger root node
   // up child: previous root
   // right child node: new node of desired size
-  root = std::make_unique<Node>(0,0, root->width, root->length + length,
+  root = std::make_unique<Node>(0,0, root->width + width, root->length,
                                 std::move(root),
                                 std::make_unique<Node>(root->width, 0, width, length));
   // return available node
