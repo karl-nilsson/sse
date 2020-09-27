@@ -48,7 +48,7 @@
 namespace sse {
 
 //! Maxmimum number of objects to pack/sort.
-//! TODO: figure out a better way to store/represent this value
+// TODO: figure out a better way to store/represent this value
 #define MAXIMUM_OBJECTS 1000
 
 /**
@@ -206,7 +206,7 @@ private:
   //! list of objects to pack
   std::vector<std::shared_ptr<Object>> objects;
   //! root node of binary tree
-  Node::node_ptr root;
+  Node::node_ptr root = nullptr;
 };
 
 } // namespace sse

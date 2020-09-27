@@ -36,7 +36,7 @@ Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
   if (objects.empty()) {
     throw std::runtime_error("Binpack: no objects to pack");
   } else if(objects.size() > MAXIMUM_OBJECTS) {
-    throw std::runtime_error("Too many objects");
+    throw std::runtime_error("Binpack: Too many objects");
   }
   // check for invalid objects (infinite or zero volume)
   // TODO: consider using c++20 ranges
@@ -54,6 +54,10 @@ Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
       throw std::runtime_error("Binpack: object is empty");
     }
   }
+
+}
+
+std::pair<double, double> Packer::pack() {
   // sort the objects, largest to smallest, in terms of footprint
   // specifically, compare the largest dimension (X or Y) of each object
   spdlog::debug("BinPack: sorting object list");
@@ -62,14 +66,12 @@ Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
               return std::max(lhs->length(), lhs->width()) >
                      std::max(rhs->length(), rhs->width());
             });
+
   // create the root node, with dimensions equal to the first object
   // this is essential, to avoid growing the bin in two dimensions simultaneously
   spdlog::debug("BinPack: creating root node");
   root = std::make_unique<Node>(0, 0, objects.front()->width(),
                                 objects.front()->length());
-}
-
-std::pair<double, double> Packer::pack() {
 
   spdlog::debug("BinPack: packing");
   // insert all objects into the tree
@@ -157,6 +159,12 @@ Packer::Node *Packer::grow_right(double width, double length) {
 
 void Packer::arrange(double offset_x, double offset_y) const {
   spdlog::debug("BinPack: translating objects to new location");
+
+  if(!root) {
+    spdlog::error("BinPack Error: must pack before arranging");
+    return;
+  }
+
   translate(*root, offset_x, offset_y);
 }
 
