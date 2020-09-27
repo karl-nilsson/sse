@@ -64,7 +64,7 @@ public:
   /**
    * @brief Object constructor
    * @param shape Underlying shape
-   * @param frame Filename
+   * @param fnames Filename
    */
   explicit Object(TopoDS_Shape &shape, const std::string &fname = "");
 
@@ -144,9 +144,9 @@ public:
 
   /**
    * @brief Translate the object
-   * @param dest point of destination
+   * @param destination point of destination
    */
-  void translate(const gp_Pnt dest);
+  void translate(const gp_Pnt destination);
 
   /**
    * @brief Scale the object

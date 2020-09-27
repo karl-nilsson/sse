@@ -29,7 +29,7 @@
 namespace sse {
 
 Object::Object(TopoDS_Shape &shape, const std::string &fname) : shape(std::make_unique<TopoDS_Shape>(shape)), filename(fname) {
-  spdlog::debug("Initializing object with shape");
+  spdlog::debug("Object: Initializing object with shape");
   // calculate the axis-aligned bounding box
   bounding_box = Bnd_Box();
   footprint = Bnd_Box2d();
@@ -37,9 +37,13 @@ Object::Object(TopoDS_Shape &shape, const std::string &fname) : shape(std::make_
 }
 
 void Object::generate_bounds(bool optimal, double gap) {
-  spdlog::debug("generating bounding box");
+  spdlog::debug("Object: Generating bounding box");
   // clear bounding box
   bounding_box.SetVoid();
+
+  // reset gap
+  // TODO: configurable gap
+  bounding_box.SetGap(gap);
   // create bounding box
   // TODO: test perf of BRepBndLib::AddOptimal
   if (optimal) {
@@ -48,10 +52,7 @@ void Object::generate_bounds(bool optimal, double gap) {
     BRepBndLib::Add(*shape, bounding_box);
   }
 
-  // reset gap
-  // TODO: configurable gap
-  bounding_box.SetGap(gap);
-  spdlog::debug("generating footprint");
+  spdlog::debug("Object: generating footprint");
   // clear footprint
   footprint.SetVoid();
   // add corner points to footprint
@@ -67,7 +68,7 @@ void Object::generate_bounds(bool optimal, double gap) {
 }
 
 void Object::lay_flat(const TopoDS_Face &face) {
-  spdlog::info("laying object flat");
+  spdlog::info("Object: laying object flat");
   // get the u,v bounds of selected surface
   Standard_Real umin, umax, vmin, vmax;
   BRepTools::UVBounds(face, umin, umax, vmin, vmax);
@@ -126,14 +127,14 @@ const gp_Pnt Object::center_point() const {
 }
 
 void Object::mirror(gp_Ax2 mirror_plane) {
-  spdlog::debug("Mirror: ");
+  spdlog::debug("Object: Mirror: ");
   auto mirror = gp_Trsf();
   mirror.SetMirror(mirror_plane);
   transform(mirror);
 }
 
 void Object::rotate(const gp_Ax1 axis, const double angle) {
-  spdlog::debug("Rotating object: {}°", angle);
+  spdlog::debug("Object: Rotating {}°", angle);
   auto rotate = gp_Trsf();
   rotate.SetRotation(axis, angle * M_PI / 180);
   transform(rotate);
@@ -144,23 +145,23 @@ void Object::translate(const double x, const double y, const double z) {
 }
 
 void Object::translate(const gp_Vec v) {
-  // FIXME: broken
-  // spdlog::debug("Translating vector: {},{},{}", static_cast<double>(v.X()), static_cast<double>(v.Y()), static_cast<double>(v.Z()));
+  spdlog::debug("Object: Translating vector: {},{},{}", static_cast<double>(v.X()),
+                static_cast<double>(v.Y()), static_cast<double>(v.Z()));
   auto translate = gp_Trsf();
   translate.SetTranslation(v);
   transform(translate);
 }
 
-void Object::translate(const gp_Pnt dest) {
-  // FIXME: broken
-  // spdlog::debug("Translating to {},{},{}", static_cast<double>(dest.X()), static_cast<double>(dest.Y()), static_cast<double>(dest.Z()));
+void Object::translate(const gp_Pnt destination) {
+  spdlog::debug("Object: Translating to {},{},{}", static_cast<double>(destination.X()),
+                static_cast<double>(destination.Y()), static_cast<double>(destination.Z()));
   auto translate = gp_Trsf();
-  translate.SetTranslation(bounding_box.CornerMin(), dest);
+  translate.SetTranslation(bounding_box.CornerMin(), destination);
   transform(translate);
 }
 
 void Object::scale(const double x, const double y, const double z) {
-  spdlog::debug("Scaling: ");
+  spdlog::debug("Object: Scaling: ");
   // TODO: get working
   auto v = gp_Vec(x, y, z);
   auto scale = gp_Trsf();
