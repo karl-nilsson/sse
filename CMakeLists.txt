@@ -35,8 +35,10 @@ if(NOT APPLE)
   set(CMAKE_INSTALL_RPATH $ORIGIN)
 endif()
 
-# git version info
-include(gitversion)
+# get git revision information
+include(GetGitRevisionDescription)
+get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+git_describe(GIT_TAG)
 
 # fake library for options
 add_library(project_options INTERFACE)

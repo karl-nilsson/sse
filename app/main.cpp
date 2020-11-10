@@ -75,8 +75,7 @@ int main(int argc, char **argv) {
 
     // print version then quit
     if (result.count("version")) {
-      cout << "sse version " << VERSION << "\ngit sha: "
-           << VERSION_SHA << "\n";
+      fmt::print("sse version: {} git commit: {}\n", VERSION, GIT_TAG);
       return 0;
     }
 
