@@ -33,14 +33,13 @@ Object::Object(TopoDS_Shape &shape, const std::string &fname) : shape(std::make_
   // calculate the axis-aligned bounding box
   bounding_box = Bnd_Box();
   footprint = Bnd_Box2d();
-  generate_bounds(false, 5);
+  generate_bounds();
 }
 
 void Object::generate_bounds(bool optimal, double gap) {
   spdlog::debug("Object: Generating bounding box");
   // clear bounding box
   bounding_box.SetVoid();
-
   // reset gap
   // TODO: configurable gap
   bounding_box.SetGap(gap);
@@ -61,7 +60,7 @@ void Object::generate_bounds(bool optimal, double gap) {
     footprint.Add(
         gp_Pnt2d(bounding_box.CornerMin().X(), bounding_box.CornerMin().Y()));
     footprint.Add(
-        gp_Pnt2d(bounding_box.CornerMax().X(), bounding_box.CornerMin().Y()));
+        gp_Pnt2d(bounding_box.CornerMax().X(), bounding_box.CornerMax().Y()));
   }  catch (Standard_ConstructionError &e) {
     spdlog::error(e.GetMessageString());
   }
@@ -119,7 +118,7 @@ void Object::lay_flat(const TopoDS_Face &face) {
   translate(0, 0, -1 * point.Z());
 }
 
-const gp_Pnt Object::center_point() const {
+gp_Pnt Object::center_point() const {
   auto min = bounding_box.CornerMin();
   auto max = bounding_box.CornerMax();
   return gp_Pnt((min.X() + max.X()) / 2, (min.Y() + max.Y()) / 2,

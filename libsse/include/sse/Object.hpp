@@ -73,7 +73,7 @@ public:
    * @param optimal Flag to generate optimal bounding box
    * @param gap Increase bounding box by $gap in each direction
    */
-  void generate_bounds(bool optimal, double gap);
+  void generate_bounds(bool optimal = false, double gap = 0.0);
 
   /**
    * @brief Rotate and translate object so that one face is flat on the
@@ -204,7 +204,7 @@ public:
    * @brief center_point
    * @return
    */
-  const gp_Pnt center_point() const;
+  gp_Pnt center_point() const;
 
   /**
    * @brief get_volume
@@ -218,11 +218,6 @@ public:
    */
   inline TopoDS_Shape &get_shape() { return *shape; }
 
-  friend std::ostream& operator<<(std::ostream& out, Object& o){
-    // DumpJson only in occt-7.4
-    // o.get_bound_box().DumpJson(out);
-    return out;
-  }
 
 private:
   std::unique_ptr<TopoDS_Shape> shape;
