@@ -175,7 +175,7 @@ public:
    * @return width
    */
   double width() const {
-    return bounding_box.CornerMax().X() - bounding_box.CornerMin().X();
+    return bounding_box.IsVoid() ? 0 : bounding_box.CornerMax().Y() - bounding_box.CornerMin().Y();
   }
 
   /**
@@ -183,7 +183,7 @@ public:
    * @return length
    */
   double length() const {
-    return bounding_box.CornerMax().Y() - bounding_box.CornerMin().Y();
+    return bounding_box.IsVoid() ? 0 : bounding_box.CornerMax().Y() - bounding_box.CornerMin().Y();
   }
 
   /**
@@ -191,7 +191,7 @@ public:
    * @return height
    */
   double height() const {
-    return bounding_box.CornerMax().Z() - bounding_box.CornerMin().Z();
+    return bounding_box.IsVoid() ? 0 : bounding_box.CornerMax().Z() - bounding_box.CornerMin().Z();
   }
 
   /**

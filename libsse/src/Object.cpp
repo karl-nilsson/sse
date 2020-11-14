@@ -152,11 +152,15 @@ void Object::translate(const gp_Vec v) {
 }
 
 void Object::translate(const gp_Pnt destination) {
-  spdlog::debug("Object: Translating to {},{},{}", static_cast<double>(destination.X()),
+  spdlog::debug("Object: Translating to ({},{},{})", static_cast<double>(destination.X()),
                 static_cast<double>(destination.Y()), static_cast<double>(destination.Z()));
   auto translate = gp_Trsf();
   translate.SetTranslation(bounding_box.CornerMin(), destination);
   transform(translate);
+  // translate bounding box as well
+  // TODO: does this leak?
+  bounding_box = bounding_box.Transformed(translate);
+  footprint = footprint.Transformed(translate);
 }
 
 void Object::scale(const double x, const double y, const double z) {
