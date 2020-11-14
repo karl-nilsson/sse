@@ -18,11 +18,6 @@ TEST_SUITE("Bin Packer") {
     auto objects = Objects{};
     REQUIRE(objects.empty());
 
-    SUBCASE("Empty argument list") {
-      // should throw an error
-      CHECK_THROWS_AS(sse::Packer p{objects}, std::runtime_error);
-    }
-
     SUBCASE("Empty object") {
       // add object with zero volume
       auto a = TopoDS_Shape();
@@ -82,8 +77,8 @@ TEST_SUITE("Bin Packer") {
         double x = 0;
         double y = 0;
 
-        CHECK(l[i]->get_bound_box().CornerMin().X() == x);
-        CHECK(l[i]->get_bound_box().CornerMin().Y() == y);
+        CHECK(l[i]->get_bound_box().CornerMin().X() == doctest::Approx(x));
+        CHECK(l[i]->get_bound_box().CornerMin().Y() == doctest::Approx(y));
 
     }
   }
@@ -98,17 +93,27 @@ TEST_SUITE("Bin Packer") {
     auto a = box_maker.Shape();
     REQUIRE(!a.IsNull());
 
+    SUBCASE("Empty argument list") {
+      auto p = sse::Packer(objects);
+      auto result = p.pack();
+      CHECK(result.first == doctest::Approx(0.0));
+      CHECK(result.second == doctest::Approx(0.0));
+
+      CHECK_NOTHROW(p.arrange(0, 0));
+    }
+
     SUBCASE("One Cube") {
       objects.push_back(std::make_shared<sse::Object>(a));
       REQUIRE(objects.size() == 1);
       auto p = sse::Packer(objects);
       auto [x, y] = p.pack();
-      CHECK_EQ(x, objects[0]->width());
-      CHECK_EQ(y, objects[0]->length());
+      CHECK(objects[0]->width() == doctest::Approx(x));
+      CHECK(objects[0]->length() == doctest::Approx(y));
       p.arrange(0, 0);
       // calculate the correct move location
       gp_Pnt corner{0, 0, 0};
       // FIXME: currently broken
+      auto a = objects[0]->get_bound_box().CornerMin();
       CHECK(corner.IsEqual(objects[0]->get_bound_box().CornerMin(), 0.000001));
     }
 

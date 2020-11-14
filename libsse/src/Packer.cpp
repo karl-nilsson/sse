@@ -32,10 +32,8 @@ namespace sse {
 
 Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
     : objects(objects) {
-  // check for empty vector
-  if (objects.empty()) {
-    throw std::runtime_error("Binpack: no objects to pack");
-  } else if(objects.size() > MAXIMUM_OBJECTS) {
+  // check for excessive input size
+  if(objects.size() > MAXIMUM_OBJECTS) {
     throw std::runtime_error("Binpack: Too many objects");
   }
   // check for invalid objects (infinite or zero volume)
@@ -58,6 +56,12 @@ Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
 }
 
 std::pair<double, double> Packer::pack() {
+  // short-circuit if no objects
+  if(objects.empty()) {
+      spdlog::warn("BinPack: attempting to pack zero objects");
+      return std::make_pair(0, 0);
+  }
+
   // sort the objects, largest to smallest, in terms of footprint
   // specifically, compare the largest dimension (X or Y) of each object
   spdlog::debug("BinPack: sorting object list");
@@ -69,7 +73,7 @@ std::pair<double, double> Packer::pack() {
 
   // create the root node, with dimensions equal to the first object
   // this is essential, to avoid growing the bin in two dimensions simultaneously
-  spdlog::debug("BinPack: creating root node");
+  spdlog::debug("BinPack: creating root node: {}x{} @ ({},{})", objects.front()->width(), objects.front()->height(), 0, 0);
   root = std::make_unique<Node>(0, 0, objects.front()->width(),
                                 objects.front()->length());
 

@@ -66,15 +66,14 @@ public:
   /**
    * @brief Packer constructor
    * @param objects List of objects to pack
-   * @throws std::runtime If argument is empty
-   *  std::runtime If argument size exceeds MAXIMUM_OBJECTS
+   * @throws std::runtime If argument size exceeds MAXIMUM_OBJECTS
    *  std::runtime If any object has infinite or zero volume
    */
   explicit Packer(std::vector<std::shared_ptr<Object>> objects);
 
   /**
    * @brief Calculate an optimized rectangular bin for the objects
-   * @return Dimensions of resulting bin
+   * @return Dimensions of resulting bin: width, length
    * @throws std::runtime Thrown if unable to grow bin properly
    */
   std::pair<double, double> pack();
@@ -97,7 +96,7 @@ private:
    * and length in the Y axis.
    */
   struct Node {
-    //! shorthand for unique_ptr<Node>
+    // shorthand for unique_ptr<Node>
     using node_ptr = std::unique_ptr<Node>;
     //! X position
     const double x;
@@ -165,7 +164,7 @@ private:
      * @return stream
      */
     friend std::ostream& operator<<(std::ostream& out, Node& node) {
-      out << fmt::format("{},{} {}x{}", node.x, node.y, node.width, node.length);
+      out << fmt::format("({},{}) {}x{}", node.x, node.y, node.width, node.length);
       return out;
     }
 
