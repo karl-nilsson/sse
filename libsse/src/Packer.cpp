@@ -87,8 +87,8 @@ std::pair<double, double> Packer::pack() {
     if (!result) {
       spdlog::debug("BinPack: insufficient space; growing bin");
       // determine which direction to grow
-      auto can_grow_up = o->width() < root->width;
-      auto can_grow_right = o->length() < root->length;
+      auto can_grow_up = o->width() <= root->width;
+      auto can_grow_right = o->length() <= root->length;
       auto should_grow_up =
           can_grow_up && (root->width >= (root->length + o->length()));
       auto should_grow_right =
