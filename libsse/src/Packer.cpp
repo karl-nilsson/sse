@@ -96,13 +96,13 @@ std::pair<double, double> Packer::pack() {
 
       // grow the bin in the correct direction
       if (should_grow_right) {
-        result = grow_right(o->width(), o->length());
+        result = grow_right(o->width());
       } else if (should_grow_up) {
-        result = grow_up(o->width(), o->length());
+        result = grow_up(o->length());
       } else if (can_grow_right) {
-        result = grow_right(o->width(), o->length());
+        result = grow_right(o->width());
       } else if (can_grow_up) {
-        result = grow_up(o->width(), o->length());
+        result = grow_up(o->length());
       } else {
         // if we can't determine which direction to grow, throw an error
         spdlog::error(
@@ -139,24 +139,24 @@ Packer::Node *Packer::insert_search(Node &node, const Object *o) const {
   return (n ? n : insert_search(*node.up, o));
 }
 
-Packer::Node *Packer::grow_up(double width, double length) {
+Packer::Node *Packer::grow_up(double length) {
   // create a larger root node
-  // up child node: new node of desired size
-  // right child: previous root
+  // up child node: new node of desired length, located above old root node
+  // right child: previous root node
   root = std::make_unique<Node>(0,0, root->width, root->length + length,
-                                std::make_unique<Node>(0, root->length, width, length),
+                                std::make_unique<Node>(0, root->length, root->width, length),
                                 std::move(root));
   // return available node
   return root->up.get();
 }
 
-Packer::Node *Packer::grow_right(double width, double length) {
+Packer::Node *Packer::grow_right(double width) {
   // create a larger root node
-  // up child: previous root
-  // right child node: new node of desired size
+  // up child: previous root node
+  // right child node: new node of desired width, located right of old root node
   root = std::make_unique<Node>(0,0, root->width + width, root->length,
                                 std::move(root),
-                                std::make_unique<Node>(root->width, 0, width, length));
+                                std::make_unique<Node>(root->width, 0, width, root->length));
   // return available node
   return root->right.get();
 }

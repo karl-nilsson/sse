@@ -179,19 +179,17 @@ private:
 
   /**
    * @brief Grow the bin in the +Y direction
-   * @param width Width requested
    * @param length Length requested
    * @return A new Node, big enough to fit the space required
    */
-  Node *grow_up(double width, double length);
+  Node *grow_up(double length);
 
   /**
    * @brief Grow the bin in the +X direction
    * @param width Width requested
-   * @param length Length requested
    * @return A new Node, big enough to fit the space required
    */
-  Node *grow_right(double width, double length);
+  Node *grow_right(double width);
 
   /**
    * @brief Translate an object to its new position, then recurse to children
