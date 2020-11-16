@@ -11,6 +11,9 @@
 
 using Objects = std::vector<std::shared_ptr<sse::Object>>;
 
+// precision for comparing values within OCCT
+#define TEST_PRECISION 0.000001
+
 TEST_SUITE("Bin Packer") {
 
   TEST_CASE("Invalid tests") {
@@ -49,37 +52,55 @@ TEST_SUITE("Bin Packer") {
     }
   }
 
-  void check_cubes(int num, Objects& l) {
+  void check_cubes(int num) {
     // create a list of idenital objects
+    Objects o;
     BRepPrimAPI_MakeBox box_maker{10, 10, 10};
     auto a = box_maker.Shape();
     for(auto i = 0; i < num; ++i) {
-        l.push_back(std::make_shared<sse::Object>(a));
+        o.push_back(std::make_shared<sse::Object>(a));
     }
 
-    auto p = sse::Packer{l};
-    p.pack();
+    auto p = sse::Packer{o};
 
+    // dimensions of one box
+    auto box_width = o[0]->width();
+    auto box_length = o[0]->length();
     // the bin dimensions of a list of identical cubes (X elements long)
     // is ceil(sqrt(x)) x round(sqrt(x))
-
-    auto bin_width = ceil(sqrt(num)) * l[0]->width();
-    auto bin_height = round(sqrt(num)) * l[0]->width();
-    auto result = p.pack();
+    auto correct_width = ceil(sqrt(num)) * box_width;
+    auto correct_length = round(sqrt(num)) * box_length;
+    auto [width, length] = p.pack();
     // check bin dimensions
-    CHECK(result.first == doctest::Approx(bin_width));
-    CHECK(result.second == doctest::Approx(bin_height));
-
+    CHECK(width == doctest::Approx(correct_width));
+    CHECK(length == doctest::Approx(correct_length));
     // arrange cubes
     p.arrange(0, 0);
     // check location of each moved cube
-    for(std::size_t i = 0; i < l.size(); ++i) {
-        double x = 0;
-        double y = 0;
+    auto x = 0;
+    auto y = 0;
 
-        CHECK(l[i]->get_bound_box().CornerMin().X() == doctest::Approx(x));
-        CHECK(l[i]->get_bound_box().CornerMin().Y() == doctest::Approx(y));
+    for (std::size_t i = 0; i < o.size(); ++i) {
+      // square root of the previous perfect square
+      auto f = floor(sqrt(i));
+      // previous perfect square
+      auto prev_square = pow(f, 2);
+      // transition from column to row
+      auto split_point = prev_square + f;
 
+      if (i < split_point) {
+        x = f;
+        y = i - prev_square;
+      } else {
+        y = f;
+        x = i - split_point;
+      }
+
+      // check location of each cube (only X & Y)
+      CHECK(o[i]->get_bound_box().CornerMin().X() ==
+            doctest::Approx(x * box_width));
+      CHECK(o[i]->get_bound_box().CornerMin().Y() ==
+            doctest::Approx(y * box_length));
     }
   }
 
@@ -113,8 +134,7 @@ TEST_SUITE("Bin Packer") {
       // calculate the correct move location
       gp_Pnt corner{0, 0, 0};
       // FIXME: currently broken
-      auto a = objects[0]->get_bound_box().CornerMin();
-      CHECK(corner.IsEqual(objects[0]->get_bound_box().CornerMin(), 0.000001));
+      CHECK(corner.IsEqual(objects[0]->get_bound_box().CornerMin(), TEST_PRECISION));
     }
 
     SUBCASE("Double Pack") {
@@ -122,8 +142,11 @@ TEST_SUITE("Bin Packer") {
       REQUIRE(objects.size() == 1);
       auto p = sse::Packer(objects);
       // attempt to pack twice, this should work
-      p.pack();
-      p.pack();
+      auto [w1, l1] = p.pack();
+      auto [w2, l2] = p.pack();
+
+      CHECK(w1 == doctest::Approx(w2));
+      CHECK(l1 == doctest::Approx(l2));
       p.arrange(0,0);
     }
 
@@ -136,15 +159,15 @@ TEST_SUITE("Bin Packer") {
       gp_Pnt corner2{100,100,0};
 
       p.arrange(0,0);
-      CHECK(corner.IsEqual(objects[0]->get_bound_box().CornerMin(), 0.000001));
+      CHECK(corner.IsEqual(objects[0]->get_bound_box().CornerMin(), TEST_PRECISION));
       p.arrange(100, 100);
-      CHECK(corner2.IsEqual(objects[0]->get_bound_box().CornerMin(), 0.000001));
+      CHECK(corner2.IsEqual(objects[0]->get_bound_box().CornerMin(), TEST_PRECISION));
     }
 
     SUBCASE("List of identical cubes:") {
-      for (auto i = 1; i < 16; ++i) {
+      for (auto i = 1; i <= 16; ++i) {
         CAPTURE(i);
-        check_cubes(i, objects);
+        check_cubes(i);
       }
     }
   }
