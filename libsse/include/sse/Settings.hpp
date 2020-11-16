@@ -22,6 +22,7 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <cstdarg>
 
 #include <toml.hpp>
 
@@ -46,6 +47,14 @@ public:
    */
   void parse(fs::path _file);
 
+  template <typename T> T get_nested_setting(const char* setting, ...) {
+    va_list args;
+    va_start(args, setting);
+    auto result = toml::find<T>(config, args);
+    va_end(args);
+    return result;
+  }
+
   /**
    * @brief Get a setting by name, with a designated fallback
    * @param setting Setting name
@@ -53,7 +62,7 @@ public:
    * @return return Setting if it exists, fallback otherwise
    *
    */
-  template <typename T> T get_setting_fallback(std::string setting, T fallback) {
+  template <typename T> T get_setting_fallback(const std::string& setting, const T& fallback) {
     return toml::find_or(config, setting, fallback);
   }
 
@@ -62,7 +71,7 @@ public:
    * @param setting Setting name
    * @return return Setting
    */
-  template <typename T> T get_setting(std::string setting) {
+  template <typename T> T get_setting(const std::string& setting) {
     return toml::find<T>(config, setting);
   }
 
@@ -70,7 +79,7 @@ public:
    * @brief Dump settings to string
    * @return List of strings
    */
-  std::string dump();
+  std::string dump() const;
 
   /**
    * @brief Save settings to file
@@ -93,7 +102,7 @@ public:
 private:
   Settings() {}
 
-  fs::path file;
+  fs::path file;  //! input file
 };
 
 } // namespace sse

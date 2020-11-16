@@ -120,8 +120,8 @@ int main(int argc, char **argv) {
     }
     try {
       // import the object, then add it to the list
-      TopoDS_Shape s = imp.import(f.c_str());
-      objects.push_back(make_shared<sse::Object>(s));
+      TopoDS_Shape shape = imp.import(f);
+      objects.push_back(make_shared<sse::Object>(shape));
     } catch (std::runtime_error &e) {
       cerr << e.what() << endl;
       continue;

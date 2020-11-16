@@ -50,7 +50,7 @@ void Settings::parse(fs::path _file) {
 
 }
 
-std::string Settings::dump() {
+std::string Settings::dump() const {
   return toml::format(config);
 }
 

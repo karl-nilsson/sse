@@ -125,7 +125,7 @@ public:
   void dump_shapes(const TopoDS_Shape &shape);
 
   /**
-   * @brief Rearrange objects so that they are
+   * @brief Rearrange objects so that they are centered on the buildplate
    * @param objects List of objects
    * @throws
    */
