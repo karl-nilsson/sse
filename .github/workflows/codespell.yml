@@ -1,0 +1,16 @@
+name: "Codespell"
+
+on: [push, pull_request]
+jobs:
+  codespell:
+    name: Check for spelling errors
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: codespell-project/actions-codespell@master
+        with:
+          check_filenames: true
+          skip: ./.git/, ./external/, *.FCStd
+
+
+
