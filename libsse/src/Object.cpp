@@ -121,7 +121,8 @@ void Object::lay_flat(const TopoDS_Face &face) {
 gp_Pnt Object::center_point() const {
   auto min = bounding_box.CornerMin();
   auto max = bounding_box.CornerMax();
-  return gp_Pnt((min.X() + max.X()) / 2, (min.Y() + max.Y()) / 2,
+  return gp_Pnt((min.X() + max.X()) / 2,
+                (min.Y() + max.Y()) / 2,
                 (min.Z() + max.Z()) / 2);
 }
 

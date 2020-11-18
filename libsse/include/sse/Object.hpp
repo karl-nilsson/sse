@@ -154,7 +154,7 @@ public:
    * @param y
    * @param z
    */
-  void scale(const double x, const double y, const double z);
+  void scale(const double x = 1.0, const double y = 1.0, const double z = 1.0);
 
   void transform(const gp_Trsf transform);
 
@@ -175,7 +175,7 @@ public:
    * @return width
    */
   double width() const {
-    return bounding_box.IsVoid() ? 0 : bounding_box.CornerMax().Y() - bounding_box.CornerMin().Y();
+    return bounding_box.IsVoid() ? 0 : bounding_box.CornerMax().X() - bounding_box.CornerMin().X();
   }
 
   /**
