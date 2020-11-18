@@ -53,7 +53,7 @@ TEST_SUITE("Bin Packer") {
   }
 
   void check_cubes(int num) {
-    // create a list of idenital objects
+    // create a list of identical objects
     Objects o;
     BRepPrimAPI_MakeBox box_maker{10, 10, 10};
     auto a = box_maker.Shape();
@@ -96,11 +96,9 @@ TEST_SUITE("Bin Packer") {
         x = i - split_point;
       }
 
-      // check location of each cube (only X & Y)
-      CHECK(o[i]->get_bound_box().CornerMin().X() ==
-            doctest::Approx(x * box_width));
-      CHECK(o[i]->get_bound_box().CornerMin().Y() ==
-            doctest::Approx(y * box_length));
+      gp_Pnt correct_location{x * box_width, y * box_length, 0};
+      // check location of each cube
+      CHECK(o[i]->get_bound_box().CornerMin().IsEqual(correct_location, TEST_PRECISION));
     }
   }
 
