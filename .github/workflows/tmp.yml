@@ -1,0 +1,77 @@
+# For most projects, this workflow file will not need changing; you simply need
+# to commit it to your repository.
+#
+# You may wish to alter this file to override the set of languages analyzed,
+# or to provide custom queries or build logic.
+name: "Test"
+
+on:
+  push:
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches: [master]
+
+jobs:
+
+  build:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+        fail-fast: false
+        matrix:
+            config:
+                - {
+                    name: "Ubuntu_Focal_GCC",
+                    os: ubuntu-20.04,
+                    build_type: "Release",
+                    cc: "gcc",
+                    cxx: "g++"
+                  }
+
+    steps:
+
+    # print environment
+    - name: Print Environment
+      run: apt-cache search occt | cut -d ' ' -f1
+
+    - name: Save OCCT Package Names And Dependencies
+      id: occt
+      run: |
+        echo "::set-output name=pkgs::$(apt-cache search libocct | cut -d ' ' -f1)"
+
+    - name: tmp
+      id: tmp
+      run: |
+        echo "::set-output name=deps::${apt-cach depends ${{ steps.occt.outputs.pkgs }}}
+
+    - name: Print Env
+      run: |
+        echo ${{ steps.occt.outputs.pkgs }}
+        echo ${{ steps.tmp.outputs.deps }}
+
+    - name: Cache OCCT
+      id: cache_occt
+      uses: actions/cache@v2
+      with:
+        path: "~/occt"
+        key: occt-7.3
+
+    # h/t https://raymii.org/s/articles/Github_Actions_cpp_boost_cmake_speedup.html
+    # if cache hits, simply copy the files over
+    # if the cache misses, install the specified packages, then copy all their files to the cache directory
+    - name: Install OCCT From Cache
+      if: steps.cache_occt.outputs.cache-hit == 'true'
+      run: sudo cp --force --recursive ~/occt/* /
+
+    - name: Install OCCT And Update Cache
+      if: steps.cache_occt.outputs.cache-hit != 'true'
+      run: |
+        sudo apt-get update && sudo apt-get install -yq ${{ steps.occt.outputs.pkgs }}
+        mkdir -p ~/occt
+        for dep in $OCCT_PKGS; do
+          dpkg -L $dep | while IFS= read -r f; do if test -f $f; then echo $f; fi; done | xargs cp --parents --target-directory ~/occt/
+        done
+
+    - name: Install Dependencies
+      run: sudo apt-get install -y ${{ steps.tmp.outputs.pkgs }}
+
