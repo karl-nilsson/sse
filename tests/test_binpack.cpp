@@ -50,6 +50,7 @@ TEST_SUITE("Bin Packer") {
       }
       CHECK_THROWS_AS(auto p = sse::Packer(objects), std::runtime_error);
     }
+
   }
 
   void check_cubes(int num) {
@@ -125,14 +126,49 @@ TEST_SUITE("Bin Packer") {
       objects.push_back(std::make_shared<sse::Object>(a));
       REQUIRE(objects.size() == 1);
       auto p = sse::Packer(objects);
-      auto [x, y] = p.pack();
-      CHECK(objects[0]->width() == doctest::Approx(x));
-      CHECK(objects[0]->length() == doctest::Approx(y));
+      auto [width, length] = p.pack();
+      CHECK(objects[0]->width() == doctest::Approx(width));
+      CHECK(objects[0]->length() == doctest::Approx(length));
       p.arrange(0, 0);
       // calculate the correct move location
       gp_Pnt corner{0, 0, 0};
       // FIXME: currently broken
       CHECK(corner.IsEqual(objects[0]->get_bound_box().CornerMin(), TEST_PRECISION));
+    }
+
+    SUBCASE("Should Grow Right") {
+      // two identical rectangles, test packer should_grow_right
+      BRepPrimAPI_MakeBox rectangle{10, 20, 10};
+      auto r = rectangle.Shape();
+      objects.push_back(std::make_shared<sse::Object>(r));
+      rectangle = BRepPrimAPI_MakeBox{9, 19, 10};
+      r = rectangle.Shape();
+      objects.push_back(std::make_shared<sse::Object>(r));
+
+      auto p = sse::Packer(objects);
+      auto [width, length] = p.pack();
+      CHECK(objects[0]->width() + objects[1]->width() == doctest::Approx(width));
+      CHECK(objects[0]->length() == doctest::Approx(length));
+
+      p.arrange(0, 0);
+      gp_Pnt corner1{0, 0, 0};
+      CHECK(corner1.IsEqual(objects[0]->get_bound_box().CornerMin(), TEST_PRECISION));
+
+      gp_Pnt corner2{objects[0]->width(), 0, 0};
+      CHECK(corner2.IsEqual(objects[1]->get_bound_box().CornerMin(), TEST_PRECISION));
+    }
+
+    SUBCASE("Can Grow Up") {
+      // two identical rectangles, test packer should_grow_right
+      BRepPrimAPI_MakeBox rectangle{20, 10, 10};
+      auto r = rectangle.Shape();
+      objects.push_back(std::make_shared<sse::Object>(r));
+      rectangle = BRepPrimAPI_MakeBox{10, 20, 10};
+      r = rectangle.Shape();
+      objects.push_back(std::make_shared<sse::Object>(r));
+
+      auto p = sse::Packer(objects);
+      auto [width, length] = p.pack();
     }
 
     SUBCASE("Double Pack") {
