@@ -38,16 +38,12 @@ jobs:
       id: occt
       run: |
         echo "::set-output name=pkgs::$(apt-cache search libocct | cut -d ' ' -f1)"
-
-    - name: tmp
-      id: tmp
-      run: |
-        echo "::set-output name=deps::${apt-cach depends ${{ steps.occt.outputs.pkgs }}}
+        echo "::set-output name=deps::${apt-cache depends ${{ steps.occt.outputs.pkgs }}}"
 
     - name: Print Env
       run: |
         echo ${{ steps.occt.outputs.pkgs }}
-        echo ${{ steps.tmp.outputs.deps }}
+        echo ${{ steps.occt.outputs.deps }}
 
     - name: Cache OCCT
       id: cache_occt
@@ -73,5 +69,5 @@ jobs:
         done
 
     - name: Install Dependencies
-      run: sudo apt-get install -y ${{ steps.tmp.outputs.pkgs }}
+      run: sudo apt-get install -y ${{ steps.occt.outputs.pkgs }}
 
