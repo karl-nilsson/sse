@@ -3,13 +3,13 @@
 #
 # You may wish to alter this file to override the set of languages analyzed,
 # or to provide custom queries or build logic.
-name: "Build"
+name: "Coverage"
 
 on:
   push:
   pull_request:
     # The branches below must be a subset of the branches above
-    branches: [master]
+    branches: [master, devel]
 
 jobs:
 
@@ -23,16 +23,9 @@ jobs:
                 - {
                     name: "Ubuntu_Focal_GCC",
                     os: ubuntu-20.04,
-                    build_type: "Release",
+                    build_type: "Debug",
                     cc: "gcc",
                     cxx: "g++"
-                  }
-                - {
-                    name: "Ubuntu_Focal_Clang",
-                    os: ubuntu-20.04,
-                    build_type: "Release",
-                    cc: "clang",
-                    cxx: "clang++"
                   }
 
     steps:
@@ -49,9 +42,9 @@ jobs:
       run: |
           echo github.event.action ${{ github.event.action }}
           echo github.event_name ${{ github.event_name }}
-    
+
     - name: Install Dependencies
-      run: sudo apt-get install -y libocct-* occt-misc doxygen graphviz libtbb-dev libxi-dev
+      run: sudo apt-get install -y libocct-* occt-misc doxygen graphviz libtbb-dev libxi-dev lcov
 
     # If this run was triggered by a pull request event, then checkout
     # the head of the pull request instead of the merge commit.
@@ -63,13 +56,35 @@ jobs:
           cmake \
             -S . \
             -B build \
-            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
+            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
+            -DBUILD_TESTING=ON \
+            -DCODE_COVERAGE=ON
 
     - name: Build
-      run: cmake --build build -j$(nproc)
+      run: |
+        cmake \
+        --build build \
+        --config Debug \
+        -j$(nproc)
 
+    # run unit test
     - name: Test
       run: |
           cd build
-          ctest -j$(nproc)
+          ctest -j$(nproc) --output-on-failure
+
+    # generate coverage report
+    # remove system libraries, downloaded dependencies, and unit tests
+    - name: Generate Coverage Report
+      run: |
+          lcov --capture --directory . --output-file coverage.info
+          lcov --remove coverage.info --output-file coverage.info '/usr/*' '*/_deps/*' '*/tests/*'
+          lcov --list coverage.info
+
+    # upload coverage report to codecov
+    - name: Upload Coverage Report
+      uses: codecov/codecov-action@v1
+      with:
+        file: ./coverage.info
+        verbose: true
 

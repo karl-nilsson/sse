@@ -16,11 +16,7 @@ endif()
 # List of commandline options
 option(ENABLE_LTO "Enable link time optimization" OFF)
 option(BUILD_DOC "Build library documentation" OFF)
-
-# require c++17
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+option(CODE_COVERAGE "Enable coverage reporting" OFF)
 
 # global settings
 set(CMAKE_VERBOSE_MAKEFILE ON)
@@ -145,8 +141,24 @@ add_subdirectory(libsse)
 # add executable
 add_subdirectory(app)
 
+
+add_library(coverage_config INTERFACE)
+# code coverage switch
+if(CODE_COVERAGE)
+  target_compile_options(coverage_config
+    INTERFACE
+    -O0         # disable optimizations
+    -g          # add debug info
+    --coverage  # set coverage flags
+  )
+
+  target_link_options(coverage_config INTERFACE --coverage)
+endif()
+
+
 # tests switch
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
+    # enable code coverage
     # add tests
     add_subdirectory(tests)
 endif()

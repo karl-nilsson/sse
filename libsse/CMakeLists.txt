@@ -52,8 +52,9 @@ target_include_directories(${PROJECT_NAME} BEFORE
 # link library dependencies
 target_link_libraries(${PROJECT_NAME}
     PUBLIC
-        stdc++fs
-        ${OpenCASCADE_USED_LIBS}
+        coverage_config           # interface library used to generate coverage data
+        stdc++fs                  # filesystem
+        ${OpenCASCADE_USED_LIBS}  # opencascade
 #        clipper
         toml11::toml11
         spdlog::spdlog_header_only
