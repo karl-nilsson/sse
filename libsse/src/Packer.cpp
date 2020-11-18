@@ -46,9 +46,11 @@ Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
         o->get_bound_box().IsOpenYmin() || o->get_bound_box().IsOpenYmax() ||
         o->get_bound_box().IsOpenZmin() || o->get_bound_box().IsOpenZmax()) {
     // clang-format on
+      spdlog::error("Binpack: Error: object with infinite dimension");
       throw std::runtime_error("Binpack: object has infinite volume");
     }
     if (o->get_bound_box().IsVoid()) {
+      spdlog::error("Binpack: Error: empty object");
       throw std::runtime_error("Binpack: object is empty");
     }
   }
@@ -105,6 +107,9 @@ std::pair<double, double> Packer::pack() {
         result = grow_up(o->length());
       } else {
         // if we can't determine which direction to grow, throw an error
+        // this is only possible if the object is changed underneath us
+        // set root node null, to prevent a call to arrange()
+        root = nullptr;
         spdlog::error(
             "BinPack Error: Can't determine correct growth direction of bin");
         throw std::runtime_error(
