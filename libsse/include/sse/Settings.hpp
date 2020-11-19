@@ -39,7 +39,6 @@ namespace sse {
 class Settings {
 
 public:
-  toml::value config;
 
   /**
    * @brief Parse toml file
@@ -50,7 +49,7 @@ public:
   template <typename T> T get_nested_setting(const char* setting, ...) {
     va_list args;
     va_start(args, setting);
-    auto result = toml::find<T>(config, args);
+    auto result = toml::find<T>(root, args);
     va_end(args);
     return result;
   }
@@ -60,10 +59,9 @@ public:
    * @param setting Setting name
    * @param fallback Fallback value
    * @return return Setting if it exists, fallback otherwise
-   *
    */
   template <typename T> T get_setting_fallback(const std::string& setting, const T& fallback) {
-    return toml::find_or(config, setting, fallback);
+    return toml::find_or(root, setting, fallback);
   }
 
   /**
@@ -72,7 +70,17 @@ public:
    * @return return Setting
    */
   template <typename T> T get_setting(const std::string& setting) {
-    return toml::find<T>(config, setting);
+    return toml::find<T>(root, setting);
+  }
+
+  /**
+   * @brief Set a setting
+   * @param name Setting name
+   * @param value Setting value
+   * FIXME: unfinished
+   */
+  template <typename T> void set_setting(const std::string& name, const T& value) {
+    root.at(name) = value;
   }
 
   /**
@@ -101,8 +109,10 @@ public:
 
 private:
   Settings() {}
-
-  fs::path file;  //! input file
+  //! input file
+  fs::path file;
+  //! root node
+  toml::value root;
 };
 
 } // namespace sse

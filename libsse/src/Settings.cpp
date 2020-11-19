@@ -34,9 +34,9 @@ void Settings::parse(fs::path _file) {
   spdlog::debug("Reading config file: " + file.string());
 
   // parse settings file
-  config = toml::parse<toml::preserve_comments>(file);
+  root = toml::parse<toml::preserve_comments>(file);
 
-  auto printer = toml::find(config, "printer");
+  auto printer = toml::find(root, "printer");
 
   spdlog::debug("Printer: " + toml::find<std::string>(printer, "name"));
 
@@ -51,7 +51,7 @@ void Settings::parse(fs::path _file) {
 }
 
 std::string Settings::dump() const {
-  return toml::format(config);
+  return toml::format(root);
 }
 
 void Settings::save() {
