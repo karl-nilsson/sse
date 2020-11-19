@@ -3,6 +3,8 @@ set(TEST_NAMES
   test_main.cpp
   test_binpack.cpp
   test_object.cpp
+  test_settings.cpp
+  test_slice.cpp
 )
 
 
@@ -14,6 +16,14 @@ target_link_libraries(unit_test
   PRIVATE
     doctest::doctest
     libsse::libsse
+)
+
+# copy the files necessary to run the tests
+add_custom_command(
+  TARGET unit_test
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND}
+  ARGS -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/resources ${PROJECT_BINARY_DIR}/tests/resources
 )
 
 add_test(NAME UnitTests COMMAND unit_test)
