@@ -11,6 +11,3 @@ jobs:
         with:
           check_filenames: true
           skip: ./.git/, ./external/, *.FCStd
-
-
-

@@ -3,7 +3,7 @@ name: "CodeQL"
 on:
   push:
     branches:
-        - main
+        - master
         - devel
   pull_request:
     # The branches below must be a subset of the branches above
@@ -36,21 +36,21 @@ jobs:
     # If this run was triggered by a pull request event, then checkout
     # the head of the pull request instead of the merge commit.
     - run: git checkout HEAD^2
-      if: ${{ github.event_name == 'pull_request' }}
+      if: ${{github.event_name == 'pull_request'}}
 
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v1
       with:
-        languages: ${{ matrix.language }}
+        languages: ${{matrix.language}}
         queries: security-and-quality
 
     - name: Configure
       run: cmake -S . -B build
 
     - name: Build
-      run: cmake --build build -j$(nproc)
+      run: cmake --build build -j $(nproc)
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1

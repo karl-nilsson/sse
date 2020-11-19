@@ -9,8 +9,8 @@ on:
 jobs:
 
   build:
-    name: ${{ matrix.config.name }}
-    runs-on: ${{ matrix.config.os }}
+    name: ${{matrix.config.name}}
+    runs-on: ${{matrix.config.os}}
     strategy:
         fail-fast: false
         matrix:
@@ -32,54 +32,54 @@ jobs:
         # a pull request then we can checkout the head.
         fetch-depth: 2
 
-    # print environment
-    - name: Print Environment
-      run: |
-          echo github.event.action ${{ github.event.action }}
-          echo github.event_name ${{ github.event_name }}
-
     - name: Install Dependencies
       run: sudo apt-get install -y libocct-* occt-misc doxygen graphviz libtbb-dev libxi-dev lcov
 
     # If this run was triggered by a pull request event, then checkout
     # the head of the pull request instead of the merge commit.
     - run: git checkout HEAD^2
-      if: ${{ github.event_name == 'pull_request' }}
+      if: ${{github.event_name == 'pull_request'}}
 
     - name: Configure
       run: |
           cmake \
             -S . \
             -B build \
-            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
+            -DCMAKE_BUILD_TYPE=${{matrix.config.build_type}} \
             -DBUILD_TESTING=ON \
             -DCODE_COVERAGE=ON
 
     - name: Build
       run: |
         cmake \
-        --build build \
-        --config Debug \
-        -j$(nproc)
+          --build build \
+          --parallel $(nproc) \
+          --config ${{matrix.config.build_type}}
 
     # run unit test
     - name: Test
+      working-directory: ${{github.workspace}}/build
       run: |
-          cd build
-          ctest -j$(nproc) --output-on-failure
+        pwd
+        ctest \
+          --build-config ${{matrix.config.build_type}} \
+          --parallel $(nproc) \
+          --output-on-failure
 
     # generate coverage report
     # remove system libraries, downloaded dependencies, and unit tests
     - name: Generate Coverage Report
+      working-directory: ${{github.workspace}}/build
       run: |
-          lcov --capture --directory . --output-file coverage.info
-          lcov --remove coverage.info --output-file coverage.info '/usr/*' '*/_deps/*' '*/tests/*'
-          lcov --list coverage.info
+        pwd
+        lcov --capture --directory . --output-file coverage.info
+        lcov --remove coverage.info --output-file coverage.info '/usr/*' '*/_deps/*' '*/tests/*'
+        lcov --list coverage.info
 
     # upload coverage report to codecov
     - name: Upload Coverage Report
       uses: codecov/codecov-action@v1
       with:
-        file: ./coverage.info
+        file: ${{github.workspace}}/coverage.info
         verbose: true
 
