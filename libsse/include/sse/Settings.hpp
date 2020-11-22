@@ -74,16 +74,6 @@ public:
   }
 
   /**
-   * @brief Set a setting
-   * @param name Setting name
-   * @param value Setting value
-   * FIXME: unfinished
-   */
-  template <typename T> void set_setting(const std::string& name, const T& value) {
-    root.at(name) = value;
-  }
-
-  /**
    * @brief Dump settings to string
    * @return List of strings
    */

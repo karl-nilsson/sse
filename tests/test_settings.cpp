@@ -3,7 +3,17 @@
 #include <sse/Settings.hpp>
 #include <iostream>
 #include <fstream>
+#include <string>
 
+
+/**
+ * TODO: Figure out a better way to deal with loading files
+ * currently, cmake copies example files to the build dir.
+ * This works, but is fragile, because the unit test program searches
+ * for files relative to the current directory. That is, if you run
+ * the unit_test program outside of build/tests, it will fail to find
+ * the files, and the unit tests will fail
+ */
 
 TEST_SUITE("Settings") {
 
@@ -58,11 +68,6 @@ TEST_SUITE("Settings") {
 
     SUBCASE("Get Nested Setting") {
       // settings.get_nested_setting<int>("level1", "level2", "level3");
-    }
-
-    SUBCASE("Set Setting") {
-      settings.set_setting<int>("test_value", 100);
-      CHECK_EQ(settings.get_setting<int>("test_value"), 100);
     }
 
 
