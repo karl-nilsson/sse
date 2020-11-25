@@ -26,6 +26,8 @@
 
 #include <sse/Object.hpp>
 
+#include <BRepBuilderAPI_Copy.hxx>
+
 namespace sse {
 
 Object::Object(TopoDS_Shape &shape, const std::string &fname) : shape(std::make_unique<TopoDS_Shape>(shape)), filename(fname) {
@@ -34,6 +36,31 @@ Object::Object(TopoDS_Shape &shape, const std::string &fname) : shape(std::make_
   bounding_box = Bnd_Box();
   footprint = Bnd_Box2d();
   generate_bounds();
+}
+
+Object::Object(const Object& o): filename(o.filename) {
+  spdlog::debug("Object: copying object");
+  // copy underlying shape from unique_ptr
+  BRepBuilderAPI_Copy b{*o.shape};
+  shape = std::make_unique<TopoDS_Shape>(b.Shape());
+  // calculate AABB
+  bounding_box = Bnd_Box();
+  footprint = Bnd_Box2d();
+  generate_bounds();
+}
+
+Object& Object::operator =(const Object& o) {
+  spdlog::debug("Object: copying object");
+  filename = o.filename;
+  // copy underlying shape from unique_ptr
+  BRepBuilderAPI_Copy b{*o.shape};
+  shape = std::make_unique<TopoDS_Shape>(b.Shape());
+  // calculate AABB
+  bounding_box = Bnd_Box();
+  footprint = Bnd_Box2d();
+  generate_bounds();
+
+  return *this;
 }
 
 void Object::generate_bounds(bool optimal, double gap) {

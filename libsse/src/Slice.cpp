@@ -128,7 +128,7 @@ void Slice::generate_infill(double percent, double angle, double line_width) {
 
 bool Slice::operator<(const Slice &rhs) const {
   // compare lowest Z coordinate of both bounding boxes
-  return get_bound_box().CornerMin().Z() < rhs.get_bound_box().CornerMin().Z();
+  return get_bound_box().CornerMin().Z() <= rhs.get_bound_box().CornerMin().Z();
 }
 
 } // namespace sse

@@ -68,6 +68,10 @@ public:
    */
   explicit Object(TopoDS_Shape &shape, const std::string &fname = "");
 
+  Object(const Object& o);
+
+  Object& operator =(const Object& o);
+
   /**
    * @brief Generate the bounding box
    * @param optimal Flag to generate optimal bounding box
@@ -216,12 +220,12 @@ public:
    * @brief get_shape
    * @return
    */
-  inline TopoDS_Shape &get_shape() { return *shape; }
+  inline TopoDS_Shape &get_shape() const { return *shape; }
 
 
 private:
   std::unique_ptr<TopoDS_Shape> shape;
-  const std::string filename;
+  std::string filename;
   Bnd_Box bounding_box;
   Bnd_Box2d footprint;
   std::string name;
