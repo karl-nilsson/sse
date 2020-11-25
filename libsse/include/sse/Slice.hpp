@@ -25,31 +25,10 @@
  */
 
 #pragma once
-
-#include <TCollection.hxx>
-#include <TCollection_AsciiString.hxx>
-#include <TopExp.hxx>
-#include <TopExp_Explorer.hxx>
-#include <TopTools_IndexedMapOfShape.hxx>
-#include <TopTools_MapOfShape.hxx>
+// OCCT headers
 #include <TopTools_HSequenceOfShape.hxx>
-#include <TopoDS.hxx>
-#include <TopoDS_Face.hxx>
-#include <TopoDS_Shape.hxx>
-#include <TopoDS_Wire.hxx>
-
-#include <BRepTools.hxx>
-#include <BRepTools_WireExplorer.hxx>
-#include <BRepAdaptor_Surface.hxx>
-#include <BRepOffsetAPI_MakeOffset.hxx>
-
-#include <GeomAbs_SurfaceType.hxx>
-
-#include <map>
-#include <unordered_map>
-#include <vector>
-#include <memory>
-
+#include <TopTools_ListOfShape.hxx>
+// project headers
 #include <sse/Object.hpp>
 
 namespace sse {

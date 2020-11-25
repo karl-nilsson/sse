@@ -24,7 +24,21 @@
  *
  */
 
+
+// std headers
+#include <ctype.h>
+#include <algorithm>
+#include <stdexcept>
+// OCCT headers
+#include <BRepTools.hxx>
+#include <BRep_Builder.hxx>
+#include <IFSelect_PrintCount.hxx>
+#include <IFSelect_ReturnStatus.hxx>
+#include <IGESControl_Reader.hxx>
+#include <STEPControl_Reader.hxx>
+// project headers
 #include <sse/Importer.hpp>
+
 
 namespace sse {
 

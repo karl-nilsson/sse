@@ -1,15 +1,18 @@
+// std headers
 #include <algorithm>
 #include <filesystem>
 #include <iostream>
 #include <string>
 #include <vector>
-
+// external headers
+#include <cxxopts.hpp>
+#include <spdlog/spdlog.h>
+// project headers
 #include <sse/Importer.hpp>
 #include <sse/Object.hpp>
 #include <sse/slicer.hpp>
 #include <sse/version.hpp>
 
-#include <cxxopts.hpp>
 
 namespace fs = std::filesystem;
 using namespace std;

@@ -22,6 +22,23 @@
  * @author Karl Nilsson
  */
 
+// OCCT headers
+#include <TopExp_Explorer.hxx>
+#include <TopoDS.hxx>
+#include <TopoDS_Face.hxx>
+#include <TopoDS_Shape.hxx>
+#include <TopoDS_Wire.hxx>
+#include <BRep_Tool.hxx>
+#include <BRepTools.hxx>
+#include <BRepTools_WireExplorer.hxx>
+#include <BRepAdaptor_Surface.hxx>
+#include <BRepOffsetAPI_MakeOffset.hxx>
+#include <StdFail_NotDone.hxx>
+#include <GeomLProp_SLProps.hxx>
+// external headers
+#include <spdlog/spdlog.h>
+// project headers
+#include <sse/Object.hpp>
 #include <sse/Slice.hpp>
 
 namespace sse {
@@ -69,7 +86,7 @@ Slice::Slice(TopoDS_Shape &s) : Object(s) {
     // (gp::DZ().IsOpposite(props.Normal(), 0.01) && fabs(props.Value().Z() - get_bound_box().CornerMin().Z()) < pow(10, -6)) {
     if (gp::DZ().IsOpposite(normal, 0.01)) {
       // add face to the list of faces for the slice
-      spdlog::debug("adding face");
+      spdlog::debug("Sice: adding face");
       // faces.push_back(Face(f));
       faces.Append(f);
     }
@@ -95,7 +112,7 @@ void Slice::generate_shells(int num, double width) {
       }
 
     } catch (StdFail_NotDone &e) {
-      spdlog::error("offset failure");
+      spdlog::error("Slice: offset failure");
       // catch build error
       e.Print(std::cerr);
     }

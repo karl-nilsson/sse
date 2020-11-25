@@ -18,15 +18,11 @@
 
 #pragma once
 
+// std headers
 #include <filesystem>
-#include <iostream>
-#include <map>
-#include <vector>
 #include <cstdarg>
-
+// external headers
 #include <toml.hpp>
-
-#include <spdlog/spdlog.h>
 
 namespace fs = std::filesystem;
 

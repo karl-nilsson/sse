@@ -6,6 +6,8 @@
 #include <BRepBuilderAPI_Transform.hxx>
 
 #include <random>
+#include <vector>
+#include <algorithm>
 
 
 TEST_SUITE("Slice") {

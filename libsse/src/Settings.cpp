@@ -16,8 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <sse/Settings.hpp>
+// std headers
 #include <utility>
+// external headers
+#include <spdlog/spdlog.h>
+// project headers
+#include <sse/Settings.hpp>
 
 namespace sse {
 

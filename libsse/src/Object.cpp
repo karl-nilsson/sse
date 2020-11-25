@@ -24,9 +24,30 @@
  * @bug TODO: consider changing transform to TopoDS_Shape.Location()
  */
 
+
+// OCCT headers
+#include <BRepBndLib.hxx>
+#include <BRepBuilderAPI.hxx>
+#include <BRepBuilderAPI_GTransform.hxx>
+#include <BRepBuilderAPI_MakeFace.hxx>
+#include <BRepBuilderAPI_Transform.hxx>
+#include <BRepGProp.hxx>
+#include <BRepTools.hxx>
+#include <BRep_Tool.hxx>
+#include <GProp_GProps.hxx>
+#include <BRepBuilderAPI_Copy.hxx>
+#include <StdFail_NotDone.hxx>
+#include <GeomLProp_SLProps.hxx>
+#include <Standard_ConstructionError.hxx>
+#include <Standard_Handle.hxx>
+#include <gp_Pln.hxx>
+#include <TCollection.hxx>
+#include <TCollection_AsciiString.hxx>
+// external headers
+#include <spdlog/spdlog.h>
+// project headers
 #include <sse/Object.hpp>
 
-#include <BRepBuilderAPI_Copy.hxx>
 
 namespace sse {
 

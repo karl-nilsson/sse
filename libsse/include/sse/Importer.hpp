@@ -18,24 +18,12 @@
 
 #pragma once
 
-#include <IGESControl_Reader.hxx>
-#include <STEPControl_Reader.hxx>
-#include <STEPCAFControl_Reader.hxx>
-#include <IFSelect.hxx>
-#include <IFSelect_PrintCount.hxx>
-#include <Standard.hxx>
-#include <Standard_CString.hxx>
-#include <TopTools_HSequenceOfShape.hxx>
-#include <TopTools_ListOfShape.hxx>
-#include <Interface_Static.hxx>
-#include <BRepBuilderAPI.hxx>
-#include <BRep_Builder.hxx>
-#include <BRepTools.hxx>
-
-
-#include <iostream>
+// std headers
 #include <string>
 #include <algorithm>
+// OCCT headers
+#include <TopoDS_Shape.hxx>
+
 
 namespace sse {
 

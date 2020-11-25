@@ -4,6 +4,9 @@
 
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <BRepPrimAPI_MakeHalfSpace.hxx>
+#include <BRepBuilderAPI_MakeFace.hxx>
+#include <gp.hxx>
+#include <gp_Pln.hxx>
 
 #include <cmath>
 #include <iostream>

@@ -18,39 +18,18 @@
 
 #pragma once
 
-#include <BRepBndLib.hxx>
-#include <BRepBuilderAPI.hxx>
-#include <BRepBuilderAPI_GTransform.hxx>
-#include <BRepBuilderAPI_MakeFace.hxx>
-#include <BRepBuilderAPI_Transform.hxx>
-#include <BRepGProp.hxx>
-#include <BRepTools.hxx>
-#include <BRep_Tool.hxx>
-#include <GProp_GProps.hxx>
 
-#include <BndLib.hxx>
-#include <Bnd_Box.hxx>
-#include <Bnd_Box2d.hxx>
-#include <TopoDS_Face.hxx>
-#include <TopoDS_Shape.hxx>
-#include <gp.hxx>
-#include <gp_Pln.hxx>
-#include <gp_Trsf.hxx>
-
-#include <TCollection.hxx>
-#include <TCollection_AsciiString.hxx>
-
-#include <AIS_Shape.hxx>
-#include <GeomLProp_SLProps.hxx>
-#include <Standard_ConstructionError.hxx>
-#include <Standard_Handle.hxx>
-#include <StdFail_NotDone.hxx>
-
-#include <math.h>
+// std headers
 #include <memory>
 #include <iostream>
-
-#include <spdlog/spdlog.h>
+// OCCT headers
+#include <Bnd_Box.hxx>
+#include <Bnd_Box2d.hxx>
+#include <TopoDS_Shape.hxx>
+#include <TopoDS_Face.hxx>
+#include <gp.hxx>
+#include <gp_Trsf.hxx>
+#include <gp_Ax2.hxx>
 
 namespace sse {
 

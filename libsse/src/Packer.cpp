@@ -26,6 +26,12 @@
  * @author Karl Nilsson
  */
 
+// std headers
+#include <algorithm>
+#include <exception>
+// external headers
+#include <spdlog/spdlog.h>
+// project headers
 #include <sse/Packer.hpp>
 
 namespace sse {

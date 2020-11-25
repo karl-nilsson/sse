@@ -28,15 +28,13 @@
 
 #pragma once
 
-#include <algorithm>
-#include <exception>
+// std headers
 #include <memory>
 #include <utility>
 #include <vector>
-
+// OCCT headers
 #include <sse/Object.hpp>
 
-#include <spdlog/spdlog.h>
 
 /**
  * TODO:
@@ -156,17 +154,6 @@ private:
      * @return Whether node is a leaf
      */
     inline bool leaf() const { return up == nullptr; }
-
-    /**
-     * @brief Stream overload
-     * @param out Out stream
-     * @param node Target node
-     * @return stream
-     */
-    friend std::ostream& operator<<(std::ostream& out, Node& node) {
-      out << fmt::format("({},{}) {}x{}", node.x, node.y, node.width, node.length);
-      return out;
-    }
 
   }; // end Node definition
 

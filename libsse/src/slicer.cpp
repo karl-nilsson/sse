@@ -16,8 +16,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <sse/slicer.hpp>
+// std headers
+#include <math.h>
+#include <algorithm>
+#include <iostream>
 #include <utility>
+// OCCT headers
+#include <gp_Pln.hxx>
+#include <gp_Lin2d.hxx>
+#include <Standard_Handle.hxx>
+#include <Geom_CylindricalSurface.hxx>
+#include <BRepOffsetAPI_MakePipeShell.hxx>
+#include <BRepBuilderAPI_MakeFace.hxx>
+#include <BRepBuilderAPI_MakeEdge.hxx>
+#include <BRepBuilderAPI_MakeWire.hxx>
+#include <BRepBuilderAPI_Copy.hxx>
+#include <BRepAlgoAPI_Splitter.hxx>
+#include <GCE2d_MakeSegment.hxx>
+#include <TopoDS_Iterator.hxx>
+#include <TopoDS_Edge.hxx>
+#include <TopoDS_Wire.hxx>
+#include <BOPAlgo_Section.hxx>
+#include <TopExp_Explorer.hxx>
+// external headers
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+// project headers
+#include <sse/slicer.hpp>
+#include <sse/Object.hpp>
+#include <sse/Packer.hpp>
 
 namespace sse {
 

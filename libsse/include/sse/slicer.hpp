@@ -17,66 +17,22 @@
  */
 
 #pragma once
-// OCCT headers
-#include <TopAbs.hxx>
-#include <TopExp.hxx>
-#include <TopExp_Explorer.hxx>
-#include <TopTools.hxx>
-#include <TopTools_HSequenceOfShape.hxx>
-#include <TopTools_ListOfShape.hxx>
-#include <TopoDS.hxx>
-#include <TopoDS_Iterator.hxx>
 
-#include <IFSelect.hxx>
-#include <STEPCAFControl_Reader.hxx>
-#include <STEPControl_Reader.hxx>
-#include <Standard.hxx>
-#include <TDF.hxx>
-#include <TDF_Attribute.hxx>
-
-#include <Geom2d_Line.hxx>
-#include <GeomFill_Pipe.hxx>
-#include <Geom_CylindricalSurface.hxx>
-
-#include <GCE2d_MakeSegment.hxx>
-
-#include <gp.hxx>
-#include <gp_Lin2d.hxx>
-#include <gp_Pln.hxx>
-#include <gp_Pnt2d.hxx>
-
-#include <BOPAlgo_Section.hxx>
-#include <BOPAlgo_Tools.hxx>
-#include <BRepAlgo.hxx>
-#include <BRepAlgoAPI_Splitter.hxx>
-#include <BRepBuilderAPI.hxx>
-#include <BRepBuilderAPI_Copy.hxx>
-#include <BRepBuilderAPI_MakeEdge.hxx>
-#include <BRepBuilderAPI_MakeFace.hxx>
-#include <BRepBuilderAPI_MakeWire.hxx>
-#include <BRepOffsetAPI_MakePipe.hxx>
-#include <BRepOffsetAPI_MakePipeShell.hxx>
-#include <BRepTools.hxx>
-#include <BRepTools_WireExplorer.hxx>
-#include <BRep_Tool.hxx>
-// STL headers
-#include <fstream>
-#include <iostream>
-#include <map>
-#include <optional>
+// std includes
+#include <filesystem>
+#include <memory>
 #include <string>
 #include <vector>
-// SSE headers
-#include <sse/Importer.hpp>
-#include <sse/Object.hpp>
-#include <sse/Settings.hpp>
-#include <sse/Slice.hpp>
-#include <sse/version.hpp>
-#include <sse/Packer.hpp>
-#include <sse/GCodeWriter.hpp>
-// external headers
-#include <spdlog/sinks/stdout_color_sinks.h>
+// OCCT includes
+#include <TopTools_ListOfShape.hxx>
+#include <TopoDS_Shape.hxx>
+// external includes
 #include <spdlog/spdlog.h>
+// project includes
+#include <sse/Slice.hpp>
+#include <sse/Settings.hpp>
+
+namespace fs = std::filesystem;
 
 namespace sse {
 
