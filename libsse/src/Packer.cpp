@@ -29,6 +29,8 @@
 // std headers
 #include <algorithm>
 #include <exception>
+// OCCT headers
+#include <Standard_Version.hxx>
 // external headers
 #include <spdlog/spdlog.h>
 // project headers
@@ -45,12 +47,14 @@ Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
   // check for invalid objects (infinite or zero volume)
   // TODO: consider using c++20 ranges
   for (const auto &o : objects) {
-    // TODO: occt v7.4.0, replace with IsOpen
-    // if(o->get_bound_box().IsOpen()) {
+#if OCC_VERSION_HEX >= 0x070400
+    if(o->get_bound_box().IsOpen()) {
+#else
     // clang-format off
     if (o->get_bound_box().IsOpenXmin() || o->get_bound_box().IsOpenXmax() ||
         o->get_bound_box().IsOpenYmin() || o->get_bound_box().IsOpenYmax() ||
         o->get_bound_box().IsOpenZmin() || o->get_bound_box().IsOpenZmax()) {
+#endif
     // clang-format on
       spdlog::error("Binpack: Error: object with infinite dimension");
       throw std::runtime_error("Binpack: object has infinite volume");
