@@ -31,7 +31,7 @@ jobs:
         fetch-depth: 2
     
     - name: Install Dependencies
-      run: sudo apt-get install -y libocct-* occt-misc doxygen graphviz libtbb-dev libxi-dev
+      run: sudo apt-get install -y libocct-* occt-misc doxygen graphviz libtbb-dev libxi-dev libpolyclipping-dev
 
     # If this run was triggered by a pull request event, then checkout
     # the head of the pull request instead of the merge commit.

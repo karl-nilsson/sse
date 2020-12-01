@@ -55,7 +55,7 @@ target_link_libraries(${PROJECT_NAME}
         coverage_config           # interface library used to generate coverage data
         stdc++fs                  # filesystem
         ${OpenCASCADE_USED_LIBS}  # opencascade
-#        clipper
+        PkgConfig::CLIPPER        # polyclipping
         toml11::toml11
         spdlog::spdlog_header_only
     PRIVATE
