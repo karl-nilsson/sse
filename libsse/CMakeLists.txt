@@ -53,7 +53,6 @@ target_include_directories(${PROJECT_NAME} BEFORE
 target_link_libraries(${PROJECT_NAME}
     PUBLIC
         coverage_config           # interface library used to generate coverage data
-        stdc++fs                  # filesystem
         ${OpenCASCADE_USED_LIBS}  # opencascade
         PkgConfig::CLIPPER        # polyclipping
         toml11::toml11

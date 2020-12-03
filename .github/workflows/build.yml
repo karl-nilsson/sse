@@ -34,6 +34,18 @@ jobs:
                     cc: "clang",
                     cxx: "clang++"
                   }
+                - {
+                    name: "MacOS_Clang",
+                    os: macos-latest,
+                    build_type: "Release",
+                    cc: "clang",
+                    cxx: "clang++",
+                  }
+                - {
+                    name: "Win10",
+                    os: windows-latest,
+                    build_type: "Release",
+                  }
 
     steps:
     # checkout repo at $GITHUB_WORKSPACE
@@ -44,9 +56,34 @@ jobs:
         # a pull request then we can checkout the head.
         fetch-depth: 2
 
-    
-    - name: Install Dependencies
-      run: sudo apt-get install -y libocct-* occt-misc doxygen graphviz libtbb-dev libxi-dev libpolyclipping-dev
+    - name: Install Dependencies (Linux)
+      if: ${{matrix.config.os == 'ubuntu-20.04'}}
+      run: >-
+        sudo apt-get install -y
+        libocct-*
+        occt-misc
+        doxygen
+        graphviz
+        libtbb-dev
+        libxi-dev
+        libpolyclipping-dev
+
+    - name: Install Dependencies (Mac OS)
+      if: ${{matrix.config.os == 'macos-latest'}}
+      run: |
+        brew install opencascade
+        vcpkg install polyclipping
+        vcpkg integrate install
+        echo "CMAKE_TOOLCHAIN_FILE=/usr/local/share/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+
+    - name: Install Dependencies (Windows)
+      if: ${{matrix.config.os == 'windows-latest'}}
+      run: |
+        vcpkg install opencascade[tbb] polyclipping
+        vcpkg integrate install
+        echo "CMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+      env:
+        VCPKG_DEFAULT_TRIPLET: x64-windows # force vcpkg to build x64
 
     # If this run was triggered by a pull request event, then checkout
     # the head of the pull request instead of the merge commit.
@@ -54,27 +91,27 @@ jobs:
       if: ${{github.event_name == 'pull_request'}}
 
     - name: Configure
-      run: |
-        cmake \
-          -S . \
-          -B build \
-          -DCMAKE_BUILD_TYPE=${{matrix.config.build_type}} \
-          -DBUILD_TESTING=ON
+      run: >-
+        cmake
+        -S .
+        -B build
+        -DCMAKE_BUILD_TYPE=${{matrix.config.build_type}}
+        -DBUILD_TESTING=ON
+        -DCMAKE_TOOLCHAIN_FILE=$CMAKE_TOOLCHAIN_FILE
 
     - name: Build
-      run: |
-        cmake \
-          --build ./build \
-          --parallel $(nproc) \
-          --config ${{matrix.config.build_type}}
+      run: >-
+        cmake
+        --build ./build
+        --parallel $(nproc)
+        --config ${{matrix.config.build_type}}
 
 
     - name: Test
       working-directory: ${{github.workspace}}/build
-      run: |
-        pwd
-        ctest \
-          --build-config ${{matrix.config.build_type}} \
-          --verbose \
-          --parallel $(nproc) \
-          --output-on-failure
+      run: >-
+        ctest
+        --build-config ${{matrix.config.build_type}}
+        --verbose
+        --parallel $(nproc)
+        --output-on-failure
