@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.15)
 
 # project basics
-project(stepslicerengine
+project(
+    stepslicerengine
     VERSION 0.0.0
     DESCRIPTION "Slicer Engine"
     LANGUAGES CXX
@@ -9,9 +10,8 @@ project(stepslicerengine
 
 # enable testing
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-  include(CTest)
+    include(CTest)
 endif()
-
 
 # List of commandline options
 option(ENABLE_LTO "Enable link time optimization" OFF)
@@ -28,7 +28,7 @@ set(LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 if(NOT APPLE)
-  set(CMAKE_INSTALL_RPATH $ORIGIN)
+    set(CMAKE_INSTALL_RPATH $ORIGIN)
 endif()
 
 # get git revision information
@@ -55,26 +55,29 @@ enable_sanitizers(project_options)
 include(cmake/StaticAnalyzers.cmake)
 
 if(FALSE)
-if(ENABLE_LTO)
-    # Check if we can enable Link Time Optimization
-    include(CheckIPOSupported)
-    check_ipo_supported(RESULT supported OUTPUT error)
-    if(supported)
-        message(STATUS "IPO / LTO supported, enabling")
-        set_target_properties(${PROJECT_NAME} PROPERTIES INTERPROCEDURAL_OPTIMIZATION ON)
-    else()
-        message(STATUS "IPO / LTO not supported: <${error}>, disabled")
+    if(ENABLE_LTO)
+        # Check if we can enable Link Time Optimization
+        include(CheckIPOSupported)
+        check_ipo_supported(RESULT supported OUTPUT error)
+        if(supported)
+            message(STATUS "IPO / LTO supported, enabling")
+            set_target_properties(
+                ${PROJECT_NAME}
+                PROPERTIES INTERPROCEDURAL_OPTIMIZATION ON
+            )
+        else()
+            message(STATUS "IPO / LTO not supported: <${error}>, disabled")
+        endif()
     endif()
-endif()
 endif()
 
 # enable ccache
 find_program(CCACHE ccache)
 if(CCACHE)
-  message(STATUS "ccache enabled")
-  set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE})
+    message(STATUS "ccache enabled")
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE})
 else()
-  message(STATUS "ccache not found, disabled")
+    message(STATUS "ccache not found, disabled")
 endif()
 
 # search for OpenCASCADE
@@ -84,51 +87,51 @@ message(STATUS "OpenCASCADE v${OpenCASCADE_VERSION} found")
 # list of all OCCT libs: OpenCASCADE_LIBRARIES
 # trim to only used libs
 set(OpenCASCADE_USED_LIBS
-  "TKernel"
-  "TKMath"
-  "TKG2d"
-  "TKG3d"
-  "TKGeomBase"
-  "TKBRep"
-  "TKGeomAlgo"
-  "TKTopAlgo"
-  "TKPrim"
-  "TKBO"
-# "TKShHealing"
-  "TKBool"
-  "TKHLR"
-  "TKOffset"
-  "TKFeat"
-  "TKMesh"
-  "TKXMesh"
-  "TKCDF"
-# "TKLCAF"
-# "TKCAF"
-  "TKBinL"
-  "TKXmlL"
-  "TKBin"
-  "TKXml"
-  "TKStdL"
-  "TKStd"
-  "TKTObj"
-  "TKBinTObj"
-# "TKXmlTObj"
-# "TKVCAF"
-  "TKXSBase"
-  "TKSTEPBase"
-  "TKSTEPAttr"
-  "TKSTEP209"
-  "TKSTEP"
-  "TKIGES"
-# "TKXCAF"
-  "TKXDEIGES"
-  "TKXDESTEP"
-  "TKSTL"
-# "TKXmlXCAF"
-# "TKBinXCAF"
-# "TKRWMesh"
-# "TKTopTest"
-# "TKDCAF"
+    "TKernel"
+    "TKMath"
+    "TKG2d"
+    "TKG3d"
+    "TKGeomBase"
+    "TKBRep"
+    "TKGeomAlgo"
+    "TKTopAlgo"
+    "TKPrim"
+    "TKBO"
+    # "TKShHealing"
+    "TKBool"
+    "TKHLR"
+    "TKOffset"
+    "TKFeat"
+    "TKMesh"
+    "TKXMesh"
+    "TKCDF"
+    # "TKLCAF"
+    # "TKCAF"
+    "TKBinL"
+    "TKXmlL"
+    "TKBin"
+    "TKXml"
+    "TKStdL"
+    "TKStd"
+    "TKTObj"
+    "TKBinTObj"
+    # "TKXmlTObj"
+    # "TKVCAF"
+    "TKXSBase"
+    "TKSTEPBase"
+    "TKSTEPAttr"
+    "TKSTEP209"
+    "TKSTEP"
+    "TKIGES"
+    # "TKXCAF"
+    "TKXDEIGES"
+    "TKXDESTEP"
+    "TKSTL"
+    # "TKXmlXCAF"
+    # "TKBinXCAF"
+    # "TKRWMesh"
+    # "TKTopTest"
+    # "TKDCAF"
 )
 
 # search for clipper
@@ -139,27 +142,25 @@ pkg_check_modules(CLIPPER REQUIRED IMPORTED_TARGET polyclipping)
 # add external dependencies
 add_subdirectory(external)
 
-
 # add library
 add_subdirectory(libsse)
 
 # add executable
 add_subdirectory(app)
 
-
 add_library(coverage_config INTERFACE)
 # code coverage switch
 if(CODE_COVERAGE)
-  target_compile_options(coverage_config
-    INTERFACE
-    -O0         # disable optimizations
-    -g          # add debug info
-    --coverage  # set coverage flags
-  )
+    target_compile_options(
+        coverage_config
+        INTERFACE
+            -O0 # disable optimizations
+            -g # add debug info
+            --coverage # set coverage flags
+    )
 
-  target_link_options(coverage_config INTERFACE --coverage)
+    target_link_options(coverage_config INTERFACE --coverage)
 endif()
-
 
 # tests switch
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
@@ -167,7 +168,3 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
     # add tests
     add_subdirectory(tests)
 endif()
-
-
-
-
