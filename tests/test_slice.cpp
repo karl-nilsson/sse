@@ -48,7 +48,6 @@ TEST_SUITE("Slice") {
     SUBCASE("Sort Simple Values") {
 
       auto slices = std::vector<sse::Slice>();
-          // std::vector<std::reference_wrapper<sse::Slice>>();
       auto b = BRepPrimAPI_MakeBox(10, 10, 10);
 
       for(int i = 10; i >= -10; --i) {
