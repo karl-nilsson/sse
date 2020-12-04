@@ -60,6 +60,7 @@ target_link_libraries(
         # interface library used to generate coverage data
         coverage_config
         ${OpenCASCADE_USED_LIBS}
+        CavalierContours
         toml11::toml11
         spdlog::spdlog_header_only
     PRIVATE

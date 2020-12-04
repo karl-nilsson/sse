@@ -26,11 +26,22 @@ set(CXXOPTS_BUILD_EXAMPLES OFF CACHE STRING "Omit cxxopts examples")
 set(CXXOPTS_BUILD_TESTS OFF CACHE STRING "Omit cxxopts tests")
 set(CXXOPTS_ENABLE_INSTALL OFF CACHE STRING "Disable cxxopts install")
 
+# CavalierContours
+FetchContent_Declare(
+  CavalierContours
+  GIT_REPOSITORY https://github.com/karl-nilsson/CavalierContours
+#  GIT_TAG fb7ad8d90fdb
+)
+
+# force header-only
+set(CAVC_HEADER_ONLY ON)
+
 # add libraries
 FetchContent_MakeAvailable(
   toml11
   spdlog
   cxxopts
+  CavalierContours
 )
 
 
