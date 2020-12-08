@@ -21,7 +21,10 @@
  *
  * @author Karl Nilsson
  */
-
+// system headers
+#include <cmath>
+#include <algorithm>
+#include <map>
 // OCCT headers
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
@@ -31,15 +34,25 @@
 #include <BRep_Tool.hxx>
 #include <BRepTools.hxx>
 #include <BRepTools_WireExplorer.hxx>
+#include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepAdaptor_Surface.hxx>
+#include <BRepAdaptor_Curve.hxx>
 #include <BRepOffsetAPI_MakeOffset.hxx>
 #include <StdFail_NotDone.hxx>
 #include <GeomLProp_SLProps.hxx>
+#include <Geom_BezierCurve.hxx>
+#include <Geom_TrimmedCurve.hxx>
+#include <gp_Lin.hxx>
+#include <gp_Circ.hxx>
+#include <gp_Elips.hxx>
+#include <Geom_BezierCurve.hxx>
 // external headers
 #include <spdlog/spdlog.h>
 // project headers
 #include <sse/Object.hpp>
 #include <sse/Slice.hpp>
+
+#include "cavc/polylineoffset.hpp"
 
 namespace sse {
 
@@ -50,6 +63,9 @@ Slice::Slice(TopoDS_Shape &s) : Object(s) {
 
   faces = TopTools_HSequenceOfShape();
   wires = TopTools_ListOfShape();
+
+
+  auto faces_map = std::map<int,TopTools_HSequenceOfShape>();
 
   // search the slice for faces parallel and coincident with slicing plane
   // TODO: optimize! this is extremely inefficient
@@ -74,23 +90,149 @@ Slice::Slice(TopoDS_Shape &s) : Object(s) {
     auto props = GeomLProp_SLProps(BRep_Tool::Surface(f), (umin + umax) / 2,
                                    (vmin + vmax) / 2, 1, 1e-6);
     auto normal = props.Normal();
+
+    // take orientation into account
     if (f.Orientation() == TopAbs_REVERSED) {
       normal.Reverse();
     }
+
     // if normal isn't the same (opposite) as slicing plane, short-circuit
     // TODO: verify floating point equality, low epsilon
-    // spdlog::debug("Face z: {}  Bounds z: {}", props.Value().Z(), get_bound_box().CornerMin().Z());
-    // std::cout << "Face z: " << props.Value().Z() << " Bounds z: " << get_bound_box().CornerMin().Z() << std::endl;
-    // TODO: bounding box bottom face isn't the same as the slicing plane. Need
-    // to pass in slicing plane to get the correct faces if
-    // (gp::DZ().IsOpposite(props.Normal(), 0.01) && fabs(props.Value().Z() - get_bound_box().CornerMin().Z()) < pow(10, -6)) {
+    spdlog::debug("Face z: {:.3f}  Bounds z: {:.3f}", props.Value().Z(), get_bound_box().CornerMin().Z());
+    // only need downward-facing planes
     if (gp::DZ().IsOpposite(normal, 0.01)) {
       // add face to the list of faces for the slice
-      spdlog::debug("Sice: adding face");
-      // faces.push_back(Face(f));
-      faces.Append(f);
+      spdlog::debug("Sice: adding face {:.3f}", props.Value().Z());
+      // store faces by z-value, round to avoid problems
+      // TODO: figure out better epsilon/round value
+      long long rounded_z = floor(props.Value().Z() * 100000);
+      faces_map[rounded_z].Append(f);
     }
   }
+
+  // the first (lowest) face(s) are what we want
+  faces = faces_map.begin()->second;
+
+}
+
+cavc::Polyline<double> process_wire(TopoDS_Wire w) {
+  cavc::Polyline<double> result;
+  // we only care about closed wires
+  result.isClosed() = true;
+
+  if(!w.Closed()) {
+    spdlog::debug("Wire is open, skipping");
+    return result;
+  }
+
+  // reverse wire if necessary
+  if(w.Orientation() == TopAbs_REVERSED) {
+    spdlog::debug("Reversing wire");
+    w.Reverse();
+  }
+
+  // loop over edges in wire
+  auto exp = BRepTools_WireExplorer(w);
+
+  while (exp.More()) {
+    auto curve = BRepAdaptor_Curve(exp.Current());
+    Standard_Real first, last;
+    auto c2 = BRep_Tool::Curve(exp.Current(), first, last);
+    // trim the curve
+    auto trim = Geom_TrimmedCurve(c2, first, last);
+
+    // if the geometry is reversed from the topology, reverse the former
+    auto start_vertex = BRepBuilderAPI_MakeVertex(trim.StartPoint());
+    if(exp.Current().Orientation() == TopAbs_REVERSED) {
+      spdlog::debug("Geometry of trimmed curve is opposite of Topology, reversing geom_curve");
+      trim.Reverse();
+    }
+
+    auto start_point = trim.StartPoint();
+
+    // for now, assume everything is a line
+    result.addVertex(start_point.X(), start_point.Y(), 0);
+
+
+    /*
+    switch (curve.GetType()) {
+    case GeomAbs_Line: {
+      result.addVertex(start_point.X(), start_point.Y(), 0);
+      break;
+    }
+
+    case GeomAbs_Circle: {
+      auto circle = curve.Circle();
+      auto radius = circle.Radius();
+      auto center_point = circle.Location();
+      auto angle = abs(last - first);
+      auto clockwise = last > first;
+      auto bulge = 0;
+
+      // anything over a semicircle must be split
+      if (angle > M_PI) {
+        auto end_point = curve.FirstParameter() + M_PI;
+        // TODO: figure out +/- bulge value
+        result.addVertex(start_point.X(), start_point.Y(), 1);
+
+        // move to the start of the next arc
+        first += M_PI;
+        // last parameter is guaranteed to be larger than the first
+        angle = last - first;
+        start_point = trim.Value(first);
+      }
+
+      bulge = tan(angle / 4);
+
+      result.addVertex(start_point.X(), start_point.Y(), bulge);
+      break;
+    }
+
+    case GeomAbs_Ellipse: {
+      // flatten the ellipse into arcs
+      auto ellipse = curve.Ellipse();
+      auto major_radius = ellipse.MajorRadius();
+      auto minor_radius = ellipse.MinorRadius();
+      auto center_point = ellipse.Location();
+      auto angle = curve.LastParameter();
+      auto bulge = 0;
+
+      for (int i = 0; i < 1; ++i) {
+        result.addVertex(start_point.X(), start_point.Y(), bulge);
+      }
+
+      break;
+    }
+    case GeomAbs_BezierCurve: {
+      // flatten the bezier into lines and arcs
+      curve.Bezier();
+      break;
+    }
+    case GeomAbs_BSplineCurve:
+        result.addVertex(start_point.X(), start_point.Y(), 0);
+      break;
+    case GeomAbs_Hyperbola:
+        result.addVertex(start_point.X(), start_point.Y(), 0);
+      break;
+    case GeomAbs_Parabola:
+        result.addVertex(start_point.X(), start_point.Y(), 0);
+      break;
+    case GeomAbs_OffsetCurve:
+        result.addVertex(start_point.X(), start_point.Y(), 0);
+      break;
+    case GeomAbs_OtherCurve:
+        result.addVertex(start_point.X(), start_point.Y(), 0);
+      break;
+    default:
+        // something is wrong, throw an error
+
+      break;
+    }*/
+
+    exp.Next();
+  }
+
+  return result;
 }
 
 // TODO: better API, i.e. list of offset dimensions
@@ -100,30 +242,15 @@ void Slice::generate_shells(int num, double width) {
   for (const auto &f : faces) {
     // cast from TopoDS_Shape to TopoDS_Face
     const TopoDS_Face &face = TopoDS::Face(f);
-    // adding face automatically adds all wires
-    auto b = BRepOffsetAPI_MakeOffset(face, GeomAbs_Arc);
+    // process wires
+    for(auto exp = TopExp_Explorer(face, TopAbs_WIRE); exp.More(); exp.Next()) {
+      process_wire(TopoDS::Wire(exp.Current()));
 
-    try {
-      // for each offset
-      for (int i = 1; i <= num; ++i) {
-        // make the offset
-        // TODO: allow for both outward and inward offsets
-        b.Perform(-1 * i * width);
-      }
+      //exp.Current().DumpJson(std::cout);
 
-    } catch (StdFail_NotDone &e) {
-      spdlog::error("Slice: offset failure");
-      // catch build error
-      e.Print(std::cerr);
+
     }
 
-    // get all the generated offsets
-    // FIXME: currently returns empty list
-    auto tmp = b.Generated(f);
-    for (const auto &s : tmp) {
-      spdlog::debug(TopAbs::ShapeTypeToString(s.ShapeType()));
-    }
-    wires.Append(tmp);
   }
 }
 
