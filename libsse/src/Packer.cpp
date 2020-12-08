@@ -85,7 +85,7 @@ std::pair<double, double> Packer::pack() {
 
   // create the root node, with dimensions equal to the first object
   // this is essential, to avoid growing the bin in two dimensions simultaneously
-  spdlog::debug("BinPack: creating root node: {}x{} @ ({},{})", objects.front()->width(), objects.front()->height(), 0, 0);
+  spdlog::debug("BinPack: creating root node: {:.3f}x{:.3f} @ ({:.3f},{:.3f})", objects.front()->width(), objects.front()->length(), 0.0, 0.0);
   root = std::make_unique<Node>(0, 0, objects.front()->width(),
                                 objects.front()->length());
 
@@ -127,7 +127,7 @@ std::pair<double, double> Packer::pack() {
       }
     }
     // print object dimensions and location in bin
-    spdlog::debug("BinPack: adding object to bin: {}x{} @ ({},{})",
+    spdlog::debug("BinPack: adding object to bin: {:.3f}x{:.3f} @ ({:.3f},{:.3f})",
                   o->width(), o->length(), result->x, result->y);
     // add object to suitable node
     result->add_object(o.get());
@@ -191,7 +191,7 @@ void Packer::translate(const Node &node, const double offset_x,
                        const double offset_y) const {
   // only translate if the node has an object
   if (node.full()) {
-    spdlog::debug("BinPack: moving object to ({},{})", node.x + offset_x, node.y + offset_y);
+    spdlog::debug("BinPack: moving object to ({:.3f},{:.3f})", node.x + offset_x, node.y + offset_y);
     // perform translation (only in XY direction)
     node.object->translate(
         gp_Pnt(node.x + offset_x, node.y + offset_y,
