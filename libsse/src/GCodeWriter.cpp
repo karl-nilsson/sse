@@ -34,22 +34,7 @@ GCodeWriter::GCodeWriter() : config(sse::Settings::getInstance()) {
 }
 
 void GCodeWriter::create_header() {
-  // a list of settings to include in the comment header
-  auto settings_list = std::vector{"printer name", "layer_height"};
 
-  // get the current date and time
-  auto now =
-      std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  // first line of gcode program contains meta-information
-  add_comment(
-      fmt::format("Sliced by StepSlicerEngine on {0}", std::ctime(&now)));
-
-  // FIXME
-  for (auto s : settings_list) {
-    // format settings: "key = value"
-    // 10 digit precision, force inlining
-    add_comment(toml::format(toml::find(config.config, s), 0, 10, true, true));
-  }
 }
 
 void GCodeWriter::add_rapid(double x, double y, double z) {
@@ -79,38 +64,6 @@ std::string GCodeWriter::add_line(Geom_Line c) {
       fmt::format("G1 X{} Y{} Z{} E{} F{}\n;", x, y, z, distance, feedrate);
 
   return move;
-}
-
-std::string GCodeWriter::add_line(Handle(Geom_Line) l) {
-
-  auto start = l->Value(l->FirstParameter());
-  auto end = l->Value(l->LastParameter());
-
-  auto distance = end.Distance(start);
-
-  auto feedrate = config.get_setting<uint>("E0.print_speed");
-
-  return fmt::format("G1 X{} Y{} Z{} E{} F{}\n", end.X(), end.Y(), end.Z(), distance, feedrate);
-}
-
-std::string GCodeWriter::add_line(gp_Lin l) { return ""; }
-
-std::string GCodeWriter::add_arc(Handle(Geom_Circle) c) {
-  // TODO: figure out whether CW or CCW
-  std::string move = fmt::format("G2 X{} Y{} Z{} I{} J{} P{} E{}\n");
-  return move;
-}
-
-void GCodeWriter::add_nurbs() {}
-
-void GCodeWriter::add_bezier(Geom_BezierCurve b) {}
-
-void GCodeWriter::add_bslpine(Geom_BSplineCurve b) {
-  for(auto i = 0; i < b.NbPoles(); ++i) {
-      auto a = b.Pole(i);
-    }
-
-
 }
 
 void GCodeWriter::add_wire(TopoDS_Wire w) {

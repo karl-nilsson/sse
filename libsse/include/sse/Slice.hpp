@@ -28,56 +28,101 @@
 // OCCT headers
 #include <TopTools_HSequenceOfShape.hxx>
 #include <TopTools_ListOfShape.hxx>
+#include <TopoDS_Face.hxx>
+#include <TopoDS_Wire.hxx>
 // project headers
 #include <sse/Object.hpp>
+// stl headers
+#include <vector>
+
+#include <spdlog/spdlog.h>
+// external headers
+#include "cavc/polylineoffsetislands.hpp"
 
 namespace sse {
+
+  // this struct simply cuts out the spatial index from the offsetloopset, becuase the former has a unique_ptr, thus can't be copied
+  // TODO: figure out a better solution to this problem
+  struct Shell {
+    Shell(cavc::OffsetLoopSet<double> &loopset) {
+      if(loopset.ccwLoops.size() != 1) {
+        spdlog::error("Shell: Expected 1 outer polyline. received: {}", loopset.ccwLoops.size());
+        throw std::invalid_argument("Shell: only 1 outer pline allowed");
+      }
+
+      outer = loopset.ccwLoops.front().polyline;
+
+      islands.reserve(loopset.cwLoops.size());
+      for(auto &loop: loopset.cwLoops) {
+        islands.push_back(loop.polyline);
+      }
+    };
+
+    cavc::Polyline<double> outer;
+    std::vector<cavc::Polyline<double>> islands;
+  };
 
 /**
  * @brief The Slice class
  */
-class Slice : public Object {
+class Slice {
 
 public:
 
   /**
-   * @brief Create a slice, and generate child faces that are parallel to the XY plane and coincident with the z point specified
-   * @param shape Underlying shape
-   * @param z_pos Z height to generate child faces
+   * @brief Create a slice out of one planar face
+   * @param face
+   * @throw invalid_argument if face is null
    */
-  explicit Slice(TopoDS_Shape &shape);
+  explicit Slice(const Object *parent, TopoDS_Face face, double thickness);
 
-  /**
-   * @brief Return all the bottom faces of the slice
-   * @return list of faces
-   */
-  inline TopTools_HSequenceOfShape& get_faces() { return faces;}
 
   /**
    * @brief Generate shells for the slice
-   * @param num
-   * @param width
+   * @param offsets vector of offsets, positive = outward facing, negative = inward
    */
-  void generate_shells(int num, double width);
-
-  // TODO: configurable infill pattern
-  /**
-   * @brief generate_infill
-   * @param percent
-   */
-  void generate_infill(double percent, double angle, double line_width);
+  void generate_shells(std::vector<double>& offsets_list);
 
   /**
-   * @brief operator < Comparator t
-   * @param rhs Other slice to compare against
-   * @return Whether the lowest point of this bounding box is above the lowest point in the other bounding box
+   * @brief Generate infill for the slice
+   *
+   * Use polyline intersect and subtract to create infill within the face
+   *
+   * @param infill_pattern Polyline of the infill pattern to use
    */
-  bool operator <(const Slice& rhs) const;
+  void generate_infill(cavc::Polyline<double> infill_pattern);
+
+  /**
+   * @brief z_position Return Z position
+   * @return Z position
+   */
+  [[nodiscard]] inline double z_position() const noexcept {
+    return z;
+  }
+
+  /**
+   * @brief gcode
+   * @return GCode representation of moves
+   */
+  [[nodiscard]] std::string gcode() const;
 
 private:
-  //! list of faces
-  TopTools_HSequenceOfShape faces;
+  //! Parent object, from which this slice was created
+  const Object *parent;
+  //! face
+  TopoDS_Face face;
+  //! list of wires
   TopTools_ListOfShape wires;
+  //! list of offsets
+  std::vector<Shell> shells;
+  //! innermost polyline(s)
+  Shell *innermost_shell = nullptr;
+  //! infill
+  std::vector<cavc::Polyline<double>> infill_polylines;
+  //! z height
+  double z;
+  //! thickness, same as layer height
+  double thickness;
 };
 
 } // namespace sse

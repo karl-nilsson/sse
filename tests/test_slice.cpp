@@ -2,8 +2,15 @@
 
 #include <sse/Slice.hpp>
 
-#include <BRepPrimAPI_MakeBox.hxx>
-#include <BRepBuilderAPI_Transform.hxx>
+#include <BRepBuilderAPI_MakeFace.hxx>
+#include <BRepBuilderAPI_MakeWire.hxx>
+#include <BRepBuilderAPI_MakeEdge.hxx>
+
+#include <gp.hxx>
+#include <gp_Pln.hxx>
+#include <gp_Pnt.hxx>
+#include <gp_Dir.hxx>
+#include <gp_Circ.hxx>
 
 #include <random>
 #include <vector>
@@ -11,82 +18,56 @@
 
 
 TEST_SUITE("Slice") {
+  std::random_device d;
+  std::default_random_engine engine(d());
+  std::uniform_real_distribution<double> dist(-1000.0, 1000.0);
+
+  double layer_height = 0.2;
+
+  auto s = TopoDS_Shape();
 
   TEST_CASE("Invalid Ops") {
     auto shape = TopoDS_Shape();
 
+    SUBCASE("Empty Shape") {
+      TopoDS_Face f;
 
+      CHECK_THROWS_AS(sse::Slice(nullptr, f, layer_height), std::invalid_argument);
+    }
   }
 
   TEST_CASE("Valid Ops") {
-    auto shape = TopoDS_Shape();
+    auto shape = TopoDS_Face();
 
-    SUBCASE("Empty Shape") {
-      auto s = TopoDS_Shape();
-      auto slice = sse::Slice(s);
 
-      REQUIRE_EQ(slice.get_faces().Size(), 0);
+    SUBCASE("Test random z location") {
+      auto random_z = dist(engine);
+
+      auto p = gp_Pnt(0, 0, random_z);
+      auto wire = BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(gp_Circ(gp_Ax2(p, gp::DZ()), 1)));
+      CHECK_EQ(wire.IsDone(), true);
+      const auto face_maker = BRepBuilderAPI_MakeFace(wire.Wire(), true);
+      CHECK_EQ(face_maker.IsDone(), true);
+      TopoDS_Face f = face_maker.Face();
+      const auto slice = sse::Slice(nullptr, f, layer_height);
+      CHECK_EQ(slice.z_position(), doctest::Approx(random_z));
     }
 
-    SUBCASE("< Operator") {
-      //
+    SUBCASE("Test z value: incremental") {
+      for(int i = 0; i < 10; ++i) {
+        auto p = gp_Pnt(0, 0, i);
+        // create a circle with radius 1
+        auto wire = BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(gp_Circ(gp_Ax2(p, gp::DZ()), 1)));
+        CHECK_EQ(wire.IsDone(), true);
+        // create face from circle
+        auto face_maker = BRepBuilderAPI_MakeFace(wire.Wire(), true);
+        CHECK_EQ(face_maker.IsDone(), true);
 
-      auto b = BRepPrimAPI_MakeBox(10, 10, 10);
-      // create a box at (0,0,0)
-      auto box1 = b.Shape();
-      auto slice1 = sse::Slice(box1);
-      // create a second box at (0,0,10)
-      auto transform = gp_Trsf();
-      transform.SetTranslation(gp_Vec(0,0,1));
-      auto box2 = BRepBuilderAPI_Transform(b.Shape(), transform).Shape();
-      auto slice2 = sse::Slice(box2);
+        TopoDS_Face f = face_maker.Face();
+        auto slice = sse::Slice(nullptr, f, layer_height);
 
-      CHECK_LT(slice1, slice2);
-
-    }
-
-    SUBCASE("Sort Simple Values") {
-
-      auto slices = std::vector<sse::Slice>();
-      auto b = BRepPrimAPI_MakeBox(10, 10, 10);
-
-      for(int i = 10; i >= -10; --i) {
-          auto z = b.Shape();
-          auto s = sse::Slice(z);
-          slices.push_back(s);
-          slices.back().translate(0, 0, i * 10);
-      }
-
-      std::sort(slices.begin(), slices.end(), [](const std::reference_wrapper<sse::Slice> &lhs, const std::reference_wrapper<sse::Slice> &rhs){
-          return lhs.get().get_bound_box().CornerMin().Z() <= rhs.get().get_bound_box().CornerMin().Z();
-        });
-
-      // ensure the vector is sorted correctly
-      auto prev = slices.front().get_bound_box().CornerMin().Z();
-      for(const auto &s: slices) {
-          CHECK_LE(prev, s.get_bound_box().CornerMin().Z());
-          prev = s.get_bound_box().CornerMin().Z();
-      }
-    }
-
-    SUBCASE("Sort Random Values") {
-      auto slices = std::vector<sse::Slice>();
-      auto b = BRepPrimAPI_MakeBox(10, 10, 10);
-
-      std::default_random_engine gen;
-      auto r = std::uniform_int_distribution(-100, 100);
-      for(int i = 50; i >= 0; --i) {
-          auto z = b.Shape();
-          slices.push_back(sse::Slice(z));
-          slices.back().translate(0, 0, r(gen));
-      }
-      std::sort(slices.begin(), slices.end());
-
-      // ensure the vector is sorted correctly
-      auto prev = slices.front().get_bound_box().CornerMin().Z();
-      for(size_t i = 0; i < slices.size(); ++i) {
-          CHECK_LE(prev, slices[i].get_bound_box().CornerMin().Z());
-          prev = slices[i].get_bound_box().CornerMin().Z();
+        // check computed Z value to original location
+        REQUIRE(slice.z_position() == doctest::Approx(i));
       }
     }
   }

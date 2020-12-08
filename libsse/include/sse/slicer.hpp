@@ -32,14 +32,30 @@
 #include <sse/Slice.hpp>
 #include <sse/Settings.hpp>
 
+
+
+#define FALLBACK_LAYER_HEIGHT 0.2
+#define FALLBACK_NUM_SHELLS 3
+#define FALLBACK_EXTRUSION_WIDTH 0.6
+
+
 namespace fs = std::filesystem;
 
 namespace sse {
 
+  /**
+   * @brief collate_gcode Combine all gcode text into one string
+   * @return
+   */
+  [[nodiscard]] std::string collate_gcode(std::vector<Slice> &slices);
+
+
+void setup_logger(spdlog::level::level_enum loglevel = spdlog::level::info);
+
 class Slicer {
 public:
-  Slicer(const fs::path& configfile,
-         const spdlog::level::level_enum loglevel = spdlog::level::info);
+  Slicer(const fs::path& configfile);
+
 
   /**
    * @brief init_settings
@@ -47,15 +63,46 @@ public:
    */
   void init_settings(fs::path configfile);
 
-  void generate_infill(double infill_percent, double line_width);
+
+  /**
+   * @brief generate_infill
+   * @param slice
+   * @param infill_percent
+   * @param line_width
+   */
+  void generate_infill(Slice &slice, const double infill_percent, const double line_width = FALLBACK_EXTRUSION_WIDTH);
+
+  /**
+   * @brief generate_shells Generate shells (offsets) for a slice's wiresa
+   * use the
+   * @param slice
+   */
+  void generate_shells(Slice &slice);
+
+  /**
+   * @brief generate_shells
+   * @param slice
+   * @param line_width
+   * @param count
+   */
+  void generate_shells(Slice &slice, const double line_width, const int count);
 
   /**
    * @brief Slice a list of solids using the splitter algorithm
    * @param objects Objects to split
-   * @return the resulting shape(s)
+   * @return list of Slices
    */
   [[nodiscard]] std::vector<std::unique_ptr<Slice>>
   slice(const std::vector<std::unique_ptr<Object> > &objects);
+
+  /**
+   * @brief slice_object Slice an object using the common algorithm
+   * @param object Object to slice
+   * @return list of slices
+   */
+  [[nodiscard]] std::vector<Slice>
+  slice_object(const Object * const object);
+
 
   /**
    * @brief Create a list of slicing planes
@@ -107,6 +154,21 @@ private:
                                   const double object_height);
 
   [[nodiscard]] std::string dump_recurse(const TopoDS_Shape &shape);
+
+  /**
+   * @brief generate_gcode_header Generate header section of gcode file
+   *
+   * @param dump_settings Flag to include slicer settings in the header
+   *
+   * @return
+   */
+  [[nodiscard]] std::string generate_gcode_header(bool dump_settings = true);
+
+  /**
+   * @brief generate_gcode_footer
+   * @return
+   */
+  [[nodiscard]] std::string generate_gcode_footer();
 };
 
 } // namespace sse

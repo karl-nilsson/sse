@@ -20,6 +20,7 @@
 
 #include <spdlog/spdlog.h>
 #include <chrono>
+#include <map>
 
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>

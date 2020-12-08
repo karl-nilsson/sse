@@ -2,8 +2,10 @@
 #include <algorithm>
 #include <filesystem>
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
+#include <limits.h>
 // external headers
 #include <cxxopts.hpp>
 #include <spdlog/spdlog.h>
@@ -31,6 +33,8 @@ int main(int argc, char **argv) {
   fs::path profile_filename;
   vector<string> files;
   bool autoplace = false;
+  fs::path outfile;
+
 
   cxxopts::Options opts(argv[0], " - Slice CAD files for 3D printing");
   opts.positional_help("[optional args]").show_positional_help();
@@ -65,7 +69,6 @@ int main(int argc, char **argv) {
       // positional, i.e. files to slice
       ("positional", "Positional arguments", cxxopts::value<vector<string>>());
   // clang-format on
-
   try {
     opts.parse_positional("positional");
     auto result = opts.parse(argc, argv);
@@ -89,8 +92,8 @@ int main(int argc, char **argv) {
 
     // load profile
     if (result.count("p")) {
-      cout << "profile: " << result["profile"].as<string>() << '\n';
       profile_filename = fs::path(result["profile"].as<string>());
+      cout << "profile: " << profile_filename << '\n';
     }
 
     // positional args, i.e. files to slice
@@ -101,6 +104,11 @@ int main(int argc, char **argv) {
       cerr << "Error: no files provided\n";
     }
 
+    if (result.count("o")) {
+      outfile = fs::path(result["output"].as<string>());
+      cout << "output file: " << outfile << '\n';
+    }
+
   } catch (const cxxopts::OptionException &e) {
     // no files to slice, error and exit
     cerr << "ERROR PARSING OPTIONS: " << e.what() << '\n';
@@ -109,7 +117,8 @@ int main(int argc, char **argv) {
 
   // TODO: configurable log level
   // int loglevel = result.count("verbose");
-  auto s = sse::Slicer(profile_filename, spdlog::level::debug);
+  auto s = sse::Slicer(profile_filename);
+  sse::setup_logger(spdlog::level::debug);
 
   auto imp = sse::Importer{};
   auto objects = vector<unique_ptr<sse::Object>>();
@@ -136,17 +145,33 @@ int main(int argc, char **argv) {
   if (autoplace) {
     s.arrange_objects(objects);
   }
-  // slice the objects
-  auto result = s.slice(objects);
-  // generate gcode
-  for (auto &slice : result) {
-    // print Z height
-    // cout << *slice << endl;
-    //
-    // slice->generate_shells(0,0);
-    //
-    // slice->generate_infill(0,0,0);
+
+  std::vector<sse::Slice> slices;
+  slices.reserve(objects.size() * 100);
+
+  // cut the objects into slices
+  for(const auto &o: objects) {
+    auto result = s.slice_object(o.get());
+    for(auto &slice: result) {
+      s.generate_shells(slice);
+      s.generate_infill(slice, 0, 0.6);
+    }
+    slices.insert(slices.end(), result.begin(), result.end());
   }
+
+  // turn the slices into gcode
+  auto gcode = sse::collate_gcode(slices);
+
+  ofstream outstream;
+  outstream.open(outfile);
+
+  if(!outstream) {
+    cerr << "file: " << outfile << "could not be opened\n";
+    return 1;
+  }
+
+  outstream << gcode << std::endl;
+  outstream.close();
 
   return 0;
 }

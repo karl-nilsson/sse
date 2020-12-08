@@ -21,6 +21,11 @@
 #include <algorithm>
 #include <iostream>
 #include <utility>
+#include <exception>
+#include <stdexcept>
+#include <chrono>
+#include <set>
+#include <vector>
 // OCCT headers
 #include <gp_Pln.hxx>
 #include <gp_Lin2d.hxx>
@@ -38,34 +43,53 @@
 #include <TopoDS_Iterator.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Wire.hxx>
+#include <TopoDS.hxx>
 #include <BOPAlgo_Section.hxx>
 #include <TopExp_Explorer.hxx>
 // external headers
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <cavc/polyline.hpp>
+#include <spdlog/cfg/env.h>
 // project headers
 #include <sse/slicer.hpp>
 #include <sse/Object.hpp>
 #include <sse/Packer.hpp>
+#include <sse/version.hpp>
+
+using namespace fmt::literals;
 
 namespace sse {
 
-Slicer::Slicer(const fs::path& configfile,
-               const spdlog::level::level_enum loglevel)
-    : settings(Settings::getInstance()) {
-  // setup loggels
+Slicer::Slicer(const fs::path& configfile) : settings(Settings::getInstance()) {
+
+  spdlog::debug("Initializing settings");
+  if(! configfile.empty()) {
+    spdlog::debug("Initializing settings");
+          settings.parse(configfile);
+  }
+
+}
+
+void setup_logger(spdlog::level::level_enum loglevel) {
+  if(spdlog::get("console")) {
+    spdlog::warn("Logger already exists");
+    return;
+  }
+
+  // setup loggers
   auto console_logger = spdlog::stdout_color_mt("console");
-  // auto error_logger = spdlog::stderr_color_mt("stderr");
   spdlog::set_default_logger(console_logger);
-  // TODO: maybe unnecessary
-  spdlog::flush_on(spdlog::level::info);
   // set log level
   spdlog::set_level(loglevel);
   spdlog::debug("Logger initialized");
-  // parse settings
-  spdlog::debug("Initializing settings");
-  settings.parse(configfile);
+
+  // environment variable overrides provided log level
+  spdlog::cfg::load_env_levels();
+  spdlog::debug("Logger initialized, level: {}", console_logger->level());
+
 }
+
 
 const char* gce_ErrorString(const gce_ErrorType &e) {
   switch(e) {
@@ -135,73 +159,253 @@ TopoDS_Shape make_spiral_face(const double height, const double layer_height) {
   return result.FirstShape();
 }
 
-std::vector<std::unique_ptr<Slice>>
-Slicer::slice(const std::vector<std::unique_ptr<Object>> &objects) {
-  // find the highest z point of all objects
-  double z = 0;
-  auto obj = TopTools_ListOfShape();
-  // FIXME: optimize, we copy the shape to another list
-  for (const auto& o : objects) {
-    z = std::max(z, o->get_bound_box().CornerMax().Z());
-    obj.Append(o->get_shape());
+cavc::Polyline<double> generate_infill_pattern(const double infill_percent, const double line_width, const double bed_width, const double bed_length) {
+  cavc::Polyline<double> infill_pattern;
+  infill_pattern.isClosed() = false;
+  auto xmin = 0.0, ymin = 0.0;
+  // for rectilinear infill, infill% = num lines * line width / face width
+  int num_lines = infill_percent * bed_width / line_width;
+  // calculate offset between lines;
+  double offset = bed_width / num_lines;
+
+  // vertical zig-zag pattern
+  double x = xmin, y = bed_length;
+  int i = 0;
+  while(x < bed_width) {
+    infill_pattern.addVertex(x, y, 0);
+    x += offset;
+    infill_pattern.addVertex(x, y, 0);
+    y = (i % 2) ? ymin : bed_length;
+    ++i;
   }
 
+  // end with a line segment back to the origin
+  infill_pattern.addVertex(x, ymin - 10, 0);
+  infill_pattern.addVertex(0, 0, 0);
+
+  return infill_pattern;
+}
+
+void Slicer::generate_infill(Slice &slice, const double infill_percent, const double line_width) {
+  // TODO: replace these values with bounds of printer bed
+  auto bed_width = settings.get_setting_fallback<double>("printer.build_plate.Width", 1000);
+  auto bed_length = settings.get_setting_fallback<double>("printer.build_plate.length", 1000);
+
+  auto infill_pattern = generate_infill_pattern(infill_percent, line_width, bed_width, bed_length);
+
+  slice.generate_infill(infill_pattern);
+
+}
+
+
+void Slicer::generate_shells(Slice &slice) {
+
+  // TODO: better shells/extrusion width selection
+  int num_shells = settings.get_setting_fallback<int>("shells", FALLBACK_NUM_SHELLS);
+  auto line_width =
+      settings.get_setting_fallback<double>("extrusion_width", FALLBACK_EXTRUSION_WIDTH);
+
+  generate_shells(slice, line_width, num_shells);
+}
+
+void Slicer::generate_shells(Slice& slice, const double line_width, const int count) {
+  if(line_width <= 0) {
+    throw std::invalid_argument("Line width, must be > 0");
+  }
+
+  if(count < 0) {
+    throw std::invalid_argument("Shell count must be >= 0");
+  }
+
+  spdlog::debug("generating shells");
+  std::vector<double> offsets;
+  offsets.reserve((size_t)count);
+
+  // the first shell is always half an extrusion width inside
+  auto first_offset = -0.5 * line_width;
+  offsets.emplace_back(first_offset);
+
+  for(int i = 0; i < count; ++i) {
+    auto offset = first_offset + (-1 * i * line_width);
+    offsets.emplace_back(offset);
+  }
+
+  slice.generate_shells(offsets);
+
+}
+
+std::vector<Slice>
+Slicer::slice_object(const Object * const object) {
+  // find the z max
+  double z = object->get_bound_box().CornerMax().Z();
+
+  TopTools_ListOfShape args;
+  args.Append(object->get_shape());
+
   // FIXME more sane layer height fallback mechanism
-  auto layer_height = settings.get_setting_fallback<double>("layer_height", 0.2);
+  auto layer_height = settings.get_setting_fallback<double>("layer_height", FALLBACK_LAYER_HEIGHT);
   spdlog::info("Layer Height: {}", layer_height);
-  // create the slicing planes
-  spdlog::info("creating slicing planes");
   auto tools = make_tools(layer_height, z);
-  auto splitter = BRepAlgoAPI_Splitter{};
-  // TODO: progress indicator using BRepAlgoAPI_Splitter::SetProgressIndicator
+  BRepAlgoAPI_Common common;
+  // TODO: progress indicator using BRepAlgoAPI_Common::SetProgressIndicator
 
   // set the arguments
-  splitter.SetArguments(obj);
-  splitter.SetTools(tools);
+  common.SetArguments(args);
+  common.SetTools(tools);
   // run in parallel
-  splitter.SetRunParallel(true);
+  common.SetRunParallel(true);
   // TODO: configurabe fuzzy value
-  splitter.SetFuzzyValue(0.001);
+  common.SetFuzzyValue(0.001);
   // run the algorithm
-  splitter.Build();
+  common.Build();
   // check error status
-  if (splitter.HasErrors()) {
-    const auto& report = splitter.GetReport();
+  if (common.HasErrors()) {
+    const auto& report = common.GetReport();
     report->Dump(std::cerr);
     // TODO: dump error to spdlog
     spdlog::error("Error while splitting shape: ");
-    splitter.DumpErrors(std::cerr);
+    common.DumpErrors(std::cerr);
     // throw error
     throw std::runtime_error("Error splitting shapes");
   }
 
-  auto slices = std::vector<std::unique_ptr<Slice>>();
+  std::vector<Slice> slices;
+  slices.reserve((size_t)(z / layer_height));
   auto it = TopExp_Explorer();
-  BRepBuilderAPI_Copy copy;
-  // splitter.Shape() is a TopoDS compound, so iterate over it
-  for (it.Init(splitter.Shape(), TopAbs_SOLID); it.More(); it.Next()) {
-    // TODO: I don't like having to make a copy of the shape
-    // iterator returns a const ref, so can't directly construct Slice
-    // TODO: simplify
-    copy.Perform(it.Current());
-    auto a = copy.Shape();
-    slices.push_back(std::make_unique<Slice>(a));
+  // disregard non-face (i.e. point, wire, edge) entities
+  for (it.Init(common.Shape(), TopAbs_FACE); it.More(); it.Next()) {
+    try {
+      slices.emplace_back(object, TopoDS::Face(it.Current()), layer_height);
+    }  catch (const Standard_TypeMismatch &e) {
+      e.Print(std::cerr);
+      spdlog::error("Error creating a TopoAbs_Face out of slice object");
+    }
   }
 
-  // sort the slices by height, ascending
-  std::sort(slices.begin(), slices.end());
-  // debug output
   spdlog::debug("number of slices: {}", slices.size());
 
-  int num_shells = settings.get_setting_fallback<int>("shells", 3);
-  auto extrusion_width =
-      settings.get_setting_fallback<double>("extrusion_width", 0.4);
-  spdlog::debug("generating shells");
-  for (auto &s : slices) {
-    s->generate_shells(num_shells, 1.0);
+  return slices;
+}
+
+std::string generate_gcode_header(bool dump_settings) {
+  std::string result;
+  result.reserve(100);
+
+  std::string short_sha = GIT_SHA1;
+  short_sha = short_sha.substr(0,8);
+  auto now =
+      std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  result += fmt::format(";Sliced by StepSlicerEngine v{:s} r{:s}, on {}\n", VERSION, short_sha, std::ctime(&now));
+
+  result += ";FLAVOR:Marlin\n"
+            ";Layer height:{layer_height}\n"
+            ";LAYER_COUNT:{layer_count}\n"
+            "M104 S{hotend_temp:f}; Set hotend temp\n"
+            "M190 S{bed_temp:f}; Set bed temp and wait\n"
+            "M105\n"
+            "M109; wait for hotend temp\n"
+            "M105\n"
+            "M82; Absolute extrusion\n"
+            "G92 E0; Reset extruder position\n"
+            "G28; Home all axes\n"
+            "M106 S{fan_speed:d}; set fan speed\n";
+
+
+  return result;
+
+}
+
+std::string generate_gcode_footer() {
+
+  std::string result;
+
+  result += "G1 X0 Y235 ;Present print\n"
+            "M104 S0 ;Turn off hotend\n"
+            "M140 S0 ;Turn off bed\n"
+            "M106 S0 ;Turn off fan\n"
+            "M84 X Y E ;Disable all steppers except Z\n";
+
+
+  return result;
+
+}
+
+std::string collate_gcode(std::vector<Slice> &slices) {
+  std::string result;
+
+  if(slices.empty()) {
+    spdlog::warn("Slicer: no slices provided");
+    return result;
   }
 
-  return slices;
+  // reserve 10MiB
+  result.reserve((size_t)(10 << 20));
+  // kill when gcode file exceeds 1GiB
+  // TODO: consider preprocessor/env var
+  constexpr size_t max_string_size = 1 << 30;
+
+
+
+  // TODO: implement better ordering
+  // currently, this simply sorts the slices by z-position, ascending
+  spdlog::debug("sorting slices");
+  std::sort(slices.begin(), slices.end(),
+    [](const Slice& lhs, const Slice& rhs){
+      return lhs.z_position() < rhs.z_position();
+  });
+
+  std::set<double> layers_set;
+
+  for(const auto& slice: slices) {
+    layers_set.insert(slice.z_position());
+  }
+
+  auto layer_count = layers_set.size();
+  double layer_height = 0.2;
+  double hotend_temp = 225;
+  double bed_temp = 65;
+  int fan_speed = 255;
+
+
+  spdlog::trace("adding gcode header");
+  result += fmt::format(generate_gcode_header(true),
+                        "layer_height"_a = layer_height,
+                        "layer_count"_a = layer_count,
+                        "hotend_temp"_a = hotend_temp,
+                        "bed_temp"_a = bed_temp,
+                        "fan_speed"_a = fan_speed);
+
+  int current_layer_number = -1;
+  double current_layer = -1;
+
+
+  for(const auto& slice: slices) {
+    auto slice_gcode = slice.gcode();
+
+    if(result.size() + slice_gcode.size() > max_string_size) {
+      spdlog::error("GCode string size {:d}MiB exceeded maximum size: {:d}MiB",
+                    (result.size() + slice_gcode.size()) >> 20 ,
+                    max_string_size >> 20
+                    );
+      throw std::runtime_error("GCode getting too big, bailing");
+    }
+
+    // add comment and move command on layer change
+    if(slice.z_position() > current_layer) {
+      current_layer = slice.z_position();
+      current_layer_number++;
+      result += fmt::format(";LAYER: {}: {:.6f}\n", current_layer_number, current_layer);
+      // TODO: layer hop, configurable feedrate
+      result += (fmt::format("G0 Z{:.6f} F5000\n", current_layer));
+    }
+
+    result.append(slice_gcode);
+  }
+
+  result += generate_gcode_footer();
+
+
+  return result;
 }
 
 void Slicer::dump_shapes(const std::vector<TopoDS_Shape> &shapes) {
