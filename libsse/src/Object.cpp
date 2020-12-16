@@ -132,7 +132,7 @@ void Object::lay_flat(const TopoDS_Face &face) {
 
   auto normal = props.Normal();
   // TODO: better log messages
-  spdlog::debug("Face normal: {:f},{:f},{:f}", normal.X(), normal.Y(),
+  spdlog::debug("Face normal: {:.3f},{:.3f},{:.3f}", normal.X(), normal.Y(),
                 normal.Z());
   // get the coordinate of the face at (u,v)
   auto point = props.Value();
@@ -147,8 +147,8 @@ void Object::lay_flat(const TopoDS_Face &face) {
   if (!normal.IsOpposite(gp::DZ(), 0.0001)) {
     // the axis of rotation is the cross product of the two vectors
     auto unit_vector = normal.Crossed(gp::DZ());
-    spdlog::debug("Axis: {:f},{:f},{:f}");
-    spdlog::debug("Angle: {:f}°");
+    spdlog::debug("Axis: {:.3f},{:.3f},{:.3f}");
+    spdlog::debug("Angle: {:.3f}°");
     // rotate the object, so that the specified normal is opposite the +Z unit
     // vector
     // TODO: verify center point is correct/good idea
@@ -182,7 +182,7 @@ void Object::mirror(gp_Ax2 mirror_plane) {
 }
 
 void Object::rotate(const gp_Ax1 axis, const double angle) {
-  spdlog::debug("Object: Rotating {}°", angle);
+  spdlog::debug("Object: Rotating {:.3f}°", angle);
   auto rotate = gp_Trsf();
   rotate.SetRotation(axis, angle * M_PI / 180);
   transform(rotate);
@@ -193,7 +193,7 @@ void Object::translate(const double x, const double y, const double z) {
 }
 
 void Object::translate(const gp_Vec v) {
-  spdlog::debug("Object: Translating vector: {},{},{}", static_cast<double>(v.X()),
+  spdlog::debug("Object: Translating vector: {:.3f},{:.3f},{:.3f}", static_cast<double>(v.X()),
                 static_cast<double>(v.Y()), static_cast<double>(v.Z()));
   auto translate = gp_Trsf();
   translate.SetTranslation(v);
@@ -201,7 +201,7 @@ void Object::translate(const gp_Vec v) {
 }
 
 void Object::translate(const gp_Pnt destination) {
-  spdlog::debug("Object: Translating to ({},{},{})", static_cast<double>(destination.X()),
+  spdlog::debug("Object: Translating to ({:.3f},{:.3f},{:.3f})", static_cast<double>(destination.X()),
                 static_cast<double>(destination.Y()), static_cast<double>(destination.Z()));
   auto translate = gp_Trsf();
   translate.SetTranslation(bounding_box.CornerMin(), destination);
