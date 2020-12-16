@@ -85,7 +85,7 @@ std::pair<double, double> Packer::pack() {
 
   // create the root node, with dimensions equal to the first object
   // this is essential, to avoid growing the bin in two dimensions simultaneously
-  spdlog::debug("BinPack: creating root node: {:.3f}x{:.3f} @ ({:.3f},{:.3f})", objects.front()->width(), objects.front()->height(), 0.0, 0.0);
+  spdlog::debug("BinPack: creating root node: {:.3f}x{:.3f} @ ({:.3f},{:.3f})", objects.front()->width(), objects.front()->length(), 0.0, 0.0);
   root = std::make_unique<Node>(0, 0, objects.front()->width(),
                                 objects.front()->length());
 
