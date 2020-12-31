@@ -145,19 +145,19 @@ public:
    * @brief Get the bounding box, aligned to the cartesian axes
    * @return bounding box
    */
-  const Bnd_Box &get_bound_box() const { return this->bounding_box; }
+  [[nodiscard]] const Bnd_Box &get_bound_box() const { return this->bounding_box; }
 
   /**
    * @brief Get the bottom rectangle of the bounding box
    * @return
    */
-  const Bnd_Box2d &get_footprint() { return this->footprint; }
+  [[nodiscard]] const Bnd_Box2d &get_footprint() { return this->footprint; }
 
   /**
    * @brief Get the X dimension of the bounding box
    * @return width
    */
-  double width() const {
+  [[nodiscard]] double width() const {
     return bounding_box.IsVoid() ? 0 : bounding_box.CornerMax().X() - bounding_box.CornerMin().X();
   }
 
@@ -165,7 +165,7 @@ public:
    * @brief Get the Y dimension of the bounding box
    * @return length
    */
-  double length() const {
+  [[nodiscard]] double length() const {
     return bounding_box.IsVoid() ? 0 : bounding_box.CornerMax().Y() - bounding_box.CornerMin().Y();
   }
 
@@ -173,7 +173,7 @@ public:
    * @brief Get the Z dimension of the bounding box
    * @return height
    */
-  double height() const {
+  [[nodiscard]] double height() const {
     return bounding_box.IsVoid() ? 0 : bounding_box.CornerMax().Z() - bounding_box.CornerMin().Z();
   }
 
@@ -181,25 +181,25 @@ public:
    * @brief maxZ
    * @return
    */
-  double maxZ() const { return bounding_box.CornerMax().Z(); }
+  [[nodiscard]] double maxZ() const { return bounding_box.CornerMax().Z(); }
 
   /**
    * @brief center_point
    * @return
    */
-  gp_Pnt center_point() const;
+  [[nodiscard]] gp_Pnt center_point() const;
 
   /**
    * @brief get_volume
    * @return
    */
-  double get_volume() const;
+  [[nodiscard]] double get_volume() const;
 
   /**
    * @brief get_shape
    * @return
    */
-  inline TopoDS_Shape &get_shape() const { return *shape; }
+  [[nodiscard]] inline TopoDS_Shape &get_shape() const { return *shape; }
 
 
 private:

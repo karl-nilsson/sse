@@ -47,12 +47,14 @@ public:
    */
   void init_settings(fs::path configfile);
 
+  void generate_infill(double infill_percent, double line_width);
+
   /**
    * @brief Slice a list of solids using the splitter algorithm
    * @param objects Objects to split
    * @return the resulting shape(s)
    */
-  std::vector<std::unique_ptr<Slice>>
+  [[nodiscard]] std::vector<std::unique_ptr<Slice>>
   slice(const std::vector<std::shared_ptr<Object>> &objects);
 
   /**
@@ -61,7 +63,7 @@ public:
    * @param objectHeight Total height
    * @return A list of tools (planar faces) to slice an object
    */
-  TopTools_ListOfShape makeTools(const double layerHeight,
+  [[nodiscard]] TopTools_ListOfShape makeTools(const double layerHeight,
                                  const double objectHeight);
 
   /**
@@ -70,7 +72,7 @@ public:
    * @param radius
    * @return
    */
-  TopoDS_Shape make_spiral_face(const double height, const double layer_height);
+  [[nodiscard]] TopoDS_Shape make_spiral_face(const double height, const double layer_height);
 
   /**
    * @brief Recursively dump shape info to log
@@ -101,10 +103,10 @@ public:
 private:
   Settings &settings;
 
-  TopTools_ListOfShape make_tools(const double layer_height,
+  [[nodiscard]] TopTools_ListOfShape make_tools(const double layer_height,
                                   const double object_height);
 
-  std::string dump_recurse(const TopoDS_Shape &shape);
+  [[nodiscard]] std::string dump_recurse(const TopoDS_Shape &shape);
 };
 
 } // namespace sse

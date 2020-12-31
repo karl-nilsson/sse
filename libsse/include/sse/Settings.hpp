@@ -42,7 +42,7 @@ public:
    */
   void parse(fs::path _file);
 
-  template <typename T> T get_nested_setting(const char* setting, ...) {
+  template <typename T> [[nodiscard]] T get_nested_setting(const char* setting, ...) {
     va_list args;
     va_start(args, setting);
     auto result = toml::find<T>(root, args);
@@ -56,7 +56,7 @@ public:
    * @param fallback Fallback value
    * @return return Setting if it exists, fallback otherwise
    */
-  template <typename T> T get_setting_fallback(const std::string& setting, const T& fallback) {
+  template <typename T> [[nodiscard]] T get_setting_fallback(const std::string& setting, const T& fallback) {
     return toml::find_or(root, setting, fallback);
   }
 
@@ -65,7 +65,7 @@ public:
    * @param setting Setting name
    * @return return Setting
    */
-  template <typename T> T get_setting(const std::string& setting) {
+  template <typename T> [[nodiscard]] T get_setting(const std::string& setting) {
     return toml::find<T>(root, setting);
   }
 
@@ -73,7 +73,7 @@ public:
    * @brief Dump settings to string
    * @return List of strings
    */
-  std::string dump() const;
+  [[nodiscard]] std::string dump() const;
 
   /**
    * @brief Save settings to file
@@ -85,7 +85,7 @@ public:
    * @brief getInstance Get instance of settings
    * @return Settings instance
    */
-  static Settings &getInstance() {
+  [[nodiscard]] static Settings &getInstance() {
     static Settings instance;
     return instance;
   }

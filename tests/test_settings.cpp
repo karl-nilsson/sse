@@ -30,11 +30,11 @@ TEST_SUITE("Settings") {
     }
 
     SUBCASE("Get Invalid Setting") {
-      CHECK_THROWS_AS(settings.get_setting<int>("absent_value"), toml::exception);
+      CHECK_THROWS_AS(static_cast<void>(settings.get_setting<int>("absent_value")), toml::exception);
     }
 
     SUBCASE("Get Incorrect Setting Type") {
-      CHECK_THROWS_AS(settings.get_setting<std::string>("layer_height"), toml::type_error);
+      CHECK_THROWS_AS(static_cast<void>(settings.get_setting<std::string>("layer_height")), toml::type_error);
     }
 
 
@@ -49,7 +49,7 @@ TEST_SUITE("Settings") {
     }
 
     SUBCASE("Dump") {
-      CHECK_NOTHROW(settings.dump());
+      CHECK_NOTHROW(static_cast<void>(settings.dump()));
     }
 
     SUBCASE("Save") {
@@ -58,7 +58,7 @@ TEST_SUITE("Settings") {
 
     SUBCASE("Get Setting") {
       settings.parse("resources/profile.toml");
-      CHECK_NOTHROW(settings.get_setting<int>("shells"));
+      CHECK_NOTHROW(static_cast<void>(settings.get_setting<int>("shells")));
     }
 
     SUBCASE("Get Setting w/Fallback") {
