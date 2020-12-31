@@ -31,29 +31,29 @@ class Importer {
 public:
 //  Importer();
 
-  TopoDS_Shape import(const std::string &filename);
+  [[nodiscard]] TopoDS_Shape import(const std::string &filename);
 
   /**
    * @brief Import STEP file
    * @param filename
    * @return TopoDS_Shape if successful
    */
-  TopoDS_Shape
+  [[nodiscard]] TopoDS_Shape
   importSTEP(const std::string &filename);
 
 
-  TopoDS_Shape importIGES(const std::string &filename);
+  [[nodiscard]] TopoDS_Shape importIGES(const std::string &filename);
 
-  TopoDS_Shape importSolid(const std::string &filename, const bool STEP);
+  [[nodiscard]] TopoDS_Shape importSolid(const std::string &filename, const bool STEP);
 
-  TopoDS_Shape importMesh(const std::string &filename);
+  [[nodiscard]] TopoDS_Shape importMesh(const std::string &filename);
 
   /**
    * @brief importBREP
    * @param filename
    * @return
    */
-  TopoDS_Shape importBREP(const std::string &filename);
+  [[nodiscard]] TopoDS_Shape importBREP(const std::string &filename);
 };
 
 

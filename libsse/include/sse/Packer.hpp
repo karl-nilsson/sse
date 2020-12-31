@@ -74,7 +74,7 @@ public:
    * @return Dimensions of resulting bin: width, length
    * @throws std::runtime Thrown if unable to grow bin properly
    */
-  std::pair<double, double> pack();
+  [[nodiscard]] std::pair<double, double> pack();
 
   /**
    * @brief Move all objects to their new position on the buildplate
@@ -139,7 +139,7 @@ private:
      * @param o Target object
      * @return Whether object fits in node
      */
-    inline bool fits(const Object *o) const {
+    [[nodiscard]] inline bool fits(const Object *o) const {
       return (o->length() <= length) && (o->width() <= width);
     }
 
@@ -147,13 +147,13 @@ private:
      * @brief Does this node contain an object?
      * @return Whether node contains an object
      */
-    inline bool full() const { return object != nullptr; }
+    [[nodiscard]] inline bool full() const { return object != nullptr; }
 
     /**
      * @brief Is this node a leaf?
      * @return Whether node is a leaf
      */
-    inline bool leaf() const { return up == nullptr; }
+    [[nodiscard]] inline bool leaf() const { return up == nullptr; }
 
   }; // end Node definition
 
@@ -162,7 +162,7 @@ private:
    * @param o The object to insert
    * @return pointer to a suitable node, nullptr otherwise
    */
-  Node *insert_search(Node &node, const Object *o) const;
+  [[nodiscard]] Node *insert_search(Node &node, const Object *o) const;
 
   /**
    * @brief Grow the bin in the +Y direction
