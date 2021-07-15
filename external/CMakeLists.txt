@@ -4,7 +4,7 @@ include(FetchContent)
 FetchContent_Declare(
   toml11
   GIT_REPOSITORY https://github.com/ToruNiina/toml11
-  GIT_TAG v3.6.0
+  GIT_TAG v3.7.0
 )
 # toml11 built options
 set(toml11_BUILD_TEST OFF CACHE STRING "Omit toml tests" FORCE)
@@ -13,7 +13,7 @@ set(toml11_BUILD_TEST OFF CACHE STRING "Omit toml tests" FORCE)
 FetchContent_Declare(
   spdlog
   GIT_REPOSITORY https://github.com/gabime/spdlog
-  GIT_TAG v1.8.1
+  GIT_TAG v1.9.0
 )
 # cxxopts
 FetchContent_Declare(
@@ -47,7 +47,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
   FetchContent_Declare(
     doctest
     GIT_REPOSITORY https://github.com/onqtam/doctest
-    GIT_TAG 2.4.1
+    GIT_TAG 2.4.6
   )
   # disable doctests' internal tests
   set(DOCTEST_WITH_TESTS OFF CACHE STRING "Omit doctest tests" FORCE)
