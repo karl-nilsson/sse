@@ -8,6 +8,10 @@ on:
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [master]
+    # ignore text files
+    paths-ignore:
+        - '**/*.md'
+        - '**/*.txt'
   schedule:
     - cron: '0 22 * * 2'
 
@@ -32,11 +36,6 @@ jobs:
     
     - name: Install Dependencies
       run: sudo apt-get install -y libocct-* occt-misc doxygen graphviz libtbb-dev libxi-dev libpolyclipping-dev
-
-    # If this run was triggered by a pull request event, then checkout
-    # the head of the pull request instead of the merge commit.
-    - run: git checkout HEAD^2
-      if: ${{github.event_name == 'pull_request'}}
 
 
     # Initializes the CodeQL tools for scanning.
