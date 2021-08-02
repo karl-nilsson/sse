@@ -13,7 +13,7 @@ set(toml11_BUILD_TEST OFF CACHE STRING "Omit toml tests" FORCE)
 FetchContent_Declare(
   spdlog
   GIT_REPOSITORY https://github.com/gabime/spdlog
-  GIT_TAG v1.9.0
+  GIT_TAG v1.9.1
 )
 # cxxopts
 FetchContent_Declare(
