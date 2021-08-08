@@ -55,7 +55,7 @@ public:
    * @return the resulting shape(s)
    */
   [[nodiscard]] std::vector<std::unique_ptr<Slice>>
-  slice(const std::vector<std::shared_ptr<Object>> &objects);
+  slice(const std::vector<std::unique_ptr<Object> > &objects);
 
   /**
    * @brief Create a list of slicing planes
@@ -87,7 +87,7 @@ public:
    * @param objects List of objects
    * @throws
    */
-  void arrange_objects(std::vector<std::shared_ptr<Object>> objects);
+  void arrange_objects(std::vector<std::unique_ptr<Object> > &objects);
 
   void make_build_volume();
 

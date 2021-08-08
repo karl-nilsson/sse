@@ -136,7 +136,7 @@ TopoDS_Shape make_spiral_face(const double height, const double layer_height) {
 }
 
 std::vector<std::unique_ptr<Slice>>
-Slicer::slice(const std::vector<std::shared_ptr<Object>> &objects) {
+Slicer::slice(const std::vector<std::unique_ptr<Object>> &objects) {
   // find the highest z point of all objects
   double z = 0;
   auto obj = TopTools_ListOfShape();
@@ -264,7 +264,7 @@ void Slicer::section(const TopTools_ListOfShape &objects,
   }
 }
 
-void Slicer::arrange_objects(std::vector<std::shared_ptr<Object>> objects) {
+void Slicer::arrange_objects(std::vector<std::unique_ptr<Object>> &objects) {
   spdlog::debug("Creating Bin Packer");
   auto packer = Packer(objects);
   // pack the objects, get dimensions of resulting bin

@@ -64,10 +64,10 @@ public:
   /**
    * @brief Packer constructor
    * @param objects List of objects to pack
-   * @throws std::runtime If argument size exceeds MAXIMUM_OBJECTS
-   *  std::runtime If any object has infinite or zero volume
+   * @throws std::invalid_argument If argument size exceeds MAXIMUM_OBJECTS
+   *  std::invalid_argument If any object has infinite or zero volume
    */
-  explicit Packer(std::vector<std::shared_ptr<Object>> objects);
+  explicit Packer(std::vector<std::unique_ptr<Object>> &objects);
 
   /**
    * @brief Calculate an optimized rectangular bin for the objects
@@ -93,7 +93,7 @@ private:
    * bin. For the purposes of this class, width is a dimension in the X axis,
    * and length in the Y axis.
    */
-  struct Node {
+  struct [[nodiscard]] Node {
     // shorthand for unique_ptr<Node>
     using node_ptr = std::unique_ptr<Node>;
     //! X position
@@ -188,7 +188,7 @@ private:
                  const double offset_y) const;
 
   //! list of objects to pack
-  std::vector<std::shared_ptr<Object>> objects;
+  std::vector<std::unique_ptr<Object>> &objects;
   //! root node of binary tree
   Node::node_ptr root = nullptr;
 };

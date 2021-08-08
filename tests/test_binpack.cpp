@@ -12,7 +12,7 @@
 #include <iostream>
 #include <memory>
 
-using Objects = std::vector<std::shared_ptr<sse::Object>>;
+using Objects = std::vector<std::unique_ptr<sse::Object>>;
 
 // precision for comparing values within OCCT
 #define TEST_PRECISION 0.000001
@@ -27,8 +27,8 @@ TEST_SUITE("Bin Packer") {
     SUBCASE("Empty object") {
       // add object with zero volume
       auto a = TopoDS_Shape();
-      objects.push_back(std::make_shared<sse::Object>(a));
-      CHECK_THROWS_AS(auto p = sse::Packer(objects), std::runtime_error);
+      objects.push_back(std::make_unique<sse::Object>(a));
+      CHECK_THROWS_AS(auto p = sse::Packer(objects), std::invalid_argument);
     }
 
     SUBCASE("Infinite volume object") {
@@ -37,10 +37,10 @@ TEST_SUITE("Bin Packer") {
       // create a halfspace
       auto halfspace = BRepPrimAPI_MakeHalfSpace(face, gp_Pnt(0, 0, -1));
       auto s = halfspace.Shape();
-      auto o = std::make_shared<sse::Object>(s);
+      auto o = std::make_unique<sse::Object>(s);
       objects.push_back(std::move(o));
       // attempt to pack object
-      CHECK_THROWS_AS(auto p = sse::Packer(objects), std::runtime_error);
+      CHECK_THROWS_AS(auto p = sse::Packer(objects), std::invalid_argument);
     }
 
     SUBCASE("Too many objects") {
@@ -49,9 +49,9 @@ TEST_SUITE("Bin Packer") {
       // MAXIMUM_OBJECTS is defined in Packer.hpp
       for (auto i = 0; i <= MAXIMUM_OBJECTS; ++i) {
         auto a = box.Shape();
-        objects.push_back(std::make_shared<sse::Object>(a));
+        objects.push_back(std::make_unique<sse::Object>(a));
       }
-      CHECK_THROWS_AS(auto p = sse::Packer(objects), std::runtime_error);
+      CHECK_THROWS_AS(auto p = sse::Packer(objects), std::invalid_argument);
     }
 
   }
@@ -62,7 +62,7 @@ TEST_SUITE("Bin Packer") {
     BRepPrimAPI_MakeBox box_maker{10, 10, 10};
     auto a = box_maker.Shape();
     for(auto i = 0; i < num; ++i) {
-        o.push_back(std::make_shared<sse::Object>(a));
+        o.push_back(std::make_unique<sse::Object>(a));
     }
 
     auto p = sse::Packer{o};
@@ -126,7 +126,7 @@ TEST_SUITE("Bin Packer") {
     }
 
     SUBCASE("One Cube") {
-      objects.push_back(std::make_shared<sse::Object>(a));
+      objects.push_back(std::make_unique<sse::Object>(a));
       REQUIRE(objects.size() == 1);
       auto p = sse::Packer(objects);
       auto [width, length] = p.pack();
@@ -143,10 +143,10 @@ TEST_SUITE("Bin Packer") {
       // two identical rectangles, test packer should_grow_right
       BRepPrimAPI_MakeBox rectangle{10, 20, 10};
       auto r = rectangle.Shape();
-      objects.push_back(std::make_shared<sse::Object>(r));
+      objects.push_back(std::make_unique<sse::Object>(r));
       rectangle = BRepPrimAPI_MakeBox{9, 19, 10};
       r = rectangle.Shape();
-      objects.push_back(std::make_shared<sse::Object>(r));
+      objects.push_back(std::make_unique<sse::Object>(r));
 
       auto p = sse::Packer(objects);
       auto [width, length] = p.pack();
@@ -165,17 +165,17 @@ TEST_SUITE("Bin Packer") {
       // two identical rectangles, test packer should_grow_right
       BRepPrimAPI_MakeBox rectangle{20, 10, 10};
       auto r = rectangle.Shape();
-      objects.push_back(std::make_shared<sse::Object>(r));
+      objects.push_back(std::make_unique<sse::Object>(r));
       rectangle = BRepPrimAPI_MakeBox{10, 20, 10};
       r = rectangle.Shape();
-      objects.push_back(std::make_shared<sse::Object>(r));
+      objects.push_back(std::make_unique<sse::Object>(r));
 
       auto p = sse::Packer(objects);
       auto [width, length] = p.pack();
     }
 
     SUBCASE("Double Pack") {
-      objects.push_back(std::make_shared<sse::Object>(a));
+      objects.push_back(std::make_unique<sse::Object>(a));
       REQUIRE(objects.size() == 1);
       auto p = sse::Packer(objects);
       // attempt to pack twice, this should work
@@ -188,10 +188,10 @@ TEST_SUITE("Bin Packer") {
     }
 
     SUBCASE("Double Arrange") {
-      objects.push_back(std::make_shared<sse::Object>(a));
+      objects.push_back(std::make_unique<sse::Object>(a));
       auto p = sse::Packer{objects};
 
-      p.pack();
+      auto tmp = p.pack();
       gp_Pnt corner{0,0,0};
       gp_Pnt corner2{100,100,0};
 

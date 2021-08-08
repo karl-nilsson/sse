@@ -38,12 +38,13 @@
 
 namespace sse {
 
-Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
+Packer::Packer(std::vector<std::unique_ptr<Object>> &objects)
     : objects(objects) {
   // check for excessive input size
   if(objects.size() > MAXIMUM_OBJECTS) {
-    throw std::runtime_error("Binpack: Too many objects");
+    throw std::invalid_argument("Binpack: Too many objects");
   }
+
   // check for invalid objects (infinite or zero volume)
   // TODO: consider using c++20 ranges
   for (const auto &o : objects) {
@@ -57,11 +58,11 @@ Packer::Packer(std::vector<std::shared_ptr<Object>> objects)
 #endif
     // clang-format on
       spdlog::error("Binpack: Error: object with infinite dimension");
-      throw std::runtime_error("Binpack: object has infinite volume");
+      throw std::invalid_argument("Binpack: object has infinite volume");
     }
     if (o->get_bound_box().IsVoid()) {
       spdlog::error("Binpack: Error: empty object");
-      throw std::runtime_error("Binpack: object is empty");
+      throw std::invalid_argument("Binpack: object is empty");
     }
   }
 
@@ -85,18 +86,19 @@ std::pair<double, double> Packer::pack() {
 
   // create the root node, with dimensions equal to the first object
   // this is essential, to avoid growing the bin in two dimensions simultaneously
-  spdlog::debug("BinPack: creating root node: {:.3f}x{:.3f} @ ({:.3f},{:.3f})", objects.front()->width(), objects.front()->length(), 0.0, 0.0);
+  spdlog::debug("BinPack: creating root node: {:.3f}x{:.3f} @ ({:.3f},{:.3f})",
+                objects.front()->width(), objects.front()->length(), 0.0, 0.0);
   root = std::make_unique<Node>(0, 0, objects.front()->width(),
                                 objects.front()->length());
 
   spdlog::debug("BinPack: packing");
   // insert all objects into the tree
   for (const auto &o : objects) {
-    spdlog::debug("BinPack: searching for suitable node");
     // attempt to find a suitable node for the object
+    spdlog::debug("BinPack: searching for suitable node");
     auto *result = insert_search(*root, o.get());
     // no node found, grow the bin
-    if (!result) {
+    if (result == nullptr) {
       spdlog::debug("BinPack: insufficient space; growing bin");
       // determine which direction to grow
       auto can_grow_up = o->width() <= root->width;
@@ -151,7 +153,7 @@ Packer::Node *Packer::insert_search(Node &node, const Object *o) const {
   }
   // node is not a leaf, search children
   auto *n = insert_search(*node.right, o);
-  return (n ? n : insert_search(*node.up, o));
+  return (n != nullptr ? n : insert_search(*node.up, o));
 }
 
 Packer::Node *Packer::grow_up(double length) {

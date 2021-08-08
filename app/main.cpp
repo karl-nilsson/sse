@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
   auto s = sse::Slicer(profile_filename, spdlog::level::debug);
 
   auto imp = sse::Importer{};
-  auto objects = vector<shared_ptr<sse::Object>>();
+  auto objects = vector<unique_ptr<sse::Object>>();
 
   for (const auto &f : files) {
     cout << "Loading file: " << f << '\n';
@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
     try {
       // import the object, then add it to the list
       TopoDS_Shape shape = imp.import(f);
-      objects.push_back(make_shared<sse::Object>(shape));
+      objects.push_back(make_unique<sse::Object>(shape));
     } catch (std::runtime_error &e) {
       cerr << e.what() << endl;
       continue;
