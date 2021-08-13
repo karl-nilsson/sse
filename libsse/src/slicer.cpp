@@ -32,6 +32,8 @@
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepAlgoAPI_Splitter.hxx>
+#include <BRepAlgoAPI_Common.hxx>
+#include <gce_ErrorType.hxx>
 #include <GCE2d_MakeSegment.hxx>
 #include <TopoDS_Iterator.hxx>
 #include <TopoDS_Edge.hxx>
@@ -65,6 +67,26 @@ Slicer::Slicer(const fs::path& configfile,
   settings.parse(configfile);
 }
 
+const char* gce_ErrorString(const gce_ErrorType &e) {
+  switch(e) {
+    case gce_Done: return "completed";
+    case gce_ConfusedPoints: return "coincident points";
+    case gce_NegativeRadius: return "negative radius";
+    case gce_ColinearPoints: return "colinear points";
+    case gce_IntersectionError: return "invalid intersection";
+    case gce_NullAxis:  return "undefined axis";
+    case gce_NullAngle: return "undefined angle";
+    case gce_NullRadius: return "undefined radius";
+    case gce_InvertAxis: return "inverted axis";
+    case gce_BadAngle: return "invalid angle";
+    case gce_InvertRadius: return "inverted radius";
+    case gce_NullVector: return "undefined vector";
+    case gce_NullFocusLength: return "undefined focal distance";
+    case gce_BadEquation: return "invalid equation";
+    default: return "unknown error type";
+  }
+}
+
 TopTools_ListOfShape Slicer::make_tools(const double layer_height,
                                         const double object_height) {
   spdlog::info("Creating splitter tools");
@@ -90,10 +112,14 @@ TopoDS_Shape make_spiral_face(const double height, const double layer_height) {
       new Geom_CylindricalSurface(gp_Ax2(center_point, gp::DZ()), 1.0);
   // TODO: center helix axis should be the central print axis
   auto line = gp_Lin2d(gp::Origin2d(), gp_Dir2d(layer_height, 1.0));
-  Handle_Geom2d_TrimmedCurve segment = GCE2d_MakeSegment(line, 0.0, M_PI * 2.0);
-  // make the helixcal edge
+  auto segment = GCE2d_MakeSegment(line, 0.0, M_PI * 2.0);
+  if(segment.Status() != gce_Done) {
+    spdlog::error("Trimming segment failed: {}", gce_ErrorString(segment.Status()));
+    throw std::runtime_error(gce_ErrorString(segment.Status()));
+  }
+  // make the helical edge
   auto helixEdge =
-      BRepBuilderAPI_MakeEdge(segment, cylinder, 0.0, 6.0 * M_PI).Edge();
+      BRepBuilderAPI_MakeEdge(segment.Value(), cylinder, 0.0, 6.0 * M_PI).Edge();
   auto path = BRepBuilderAPI_MakeWire(helixEdge).Wire();
   // make line to sweep
   auto profile = BRepBuilderAPI_MakeEdge(gp_Ax1(center_point, gp_Dir(1,0,0))).Edge();
