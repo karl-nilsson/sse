@@ -1,0 +1,15 @@
+[requires]
+opencascade/7.5.0
+
+[build_requires]
+opencascade/7.5.0
+
+
+[options]
+# opencascade:with_tbb=True
+# freeimage recipe not yet available
+# opencascade:with_freeimage=True
+# opencascade:with_rapidjson=True
+
+[generators]
+cmake_find_package

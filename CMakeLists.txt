@@ -134,11 +134,6 @@ set(OpenCASCADE_USED_LIBS
     # "TKDCAF"
 )
 
-# search for clipper
-# BUG: can't specify clipper version, because ubuntu's pkg-config file doesn't have that info
-include(FindPkgConfig)
-pkg_check_modules(CLIPPER REQUIRED IMPORTED_TARGET polyclipping)
-
 # add external dependencies
 add_subdirectory(external)
 
