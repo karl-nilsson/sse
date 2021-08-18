@@ -76,18 +76,18 @@ jobs:
       if: ${{matrix.config.os == 'macos-latest'}}
       run: |
         brew install opencascade
-        vcpkg install polyclipping
-        vcpkg integrate install
-        echo "CMAKE_TOOLCHAIN_FILE=/usr/local/share/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+
+    - name: Install Conan (Windows)
+      if: ${{matrix.config.os == 'windows-latest'}}
+      uses: turtlebrowser/get-conan@main
 
     - name: Install Dependencies (Windows)
       if: ${{matrix.config.os == 'windows-latest'}}
       run: |
-        vcpkg install opencascade[tbb] polyclipping
-        vcpkg integrate install
-        echo "CMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
-      env:
-        VCPKG_DEFAULT_TRIPLET: x64-windows # force vcpkg to build x64
+        choco install ninja
+        conan config init
+        conan install .
+        mv Find*.cmake cmake/
 
     # If this run was triggered by a pull request event, then checkout
     # the head of the pull request instead of the merge commit.

@@ -26,13 +26,6 @@ set(CXXOPTS_BUILD_EXAMPLES OFF CACHE STRING "Omit cxxopts examples")
 set(CXXOPTS_BUILD_TESTS OFF CACHE STRING "Omit cxxopts tests")
 set(CXXOPTS_ENABLE_INSTALL OFF CACHE STRING "Disable cxxopts install")
 
-# clipperlib
-FetchContent_Declare(
-  clipperlib
-  GIT_REPOSITORY https://github.com/karl-nilsson/clipperlib
-  GIT_TAG v6.5.0
-)
-
 # add libraries
 FetchContent_MakeAvailable(
   toml11
