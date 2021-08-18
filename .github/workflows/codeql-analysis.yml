@@ -35,8 +35,15 @@ jobs:
         fetch-depth: 2
     
     - name: Install Dependencies
-      run: sudo apt-get install -y libocct-* occt-misc doxygen graphviz libtbb-dev libxi-dev libpolyclipping-dev
-
+      run: >-
+        sudo apt-get update &&
+        sudo apt-get install -y
+        libocct-*
+        occt-misc
+        doxygen
+        graphviz
+        libtbb-dev
+        libxi-dev
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
