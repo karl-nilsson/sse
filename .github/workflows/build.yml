@@ -89,7 +89,6 @@ jobs:
     - name: Install Dependencies (Windows)
       if: ${{matrix.config.os == 'windows-latest'}}
       run: |
-        choco install ninja
         conan config init
         conan install .
         mv Find*.cmake cmake/
