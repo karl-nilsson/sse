@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
   // verbosity level
   int verbose = 0;
   double layerheight, linewidth = 0.0;
-  string profile_filename;
+  fs::path profile_filename;
   vector<string> files;
   bool autoplace = false;
 
