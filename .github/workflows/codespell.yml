@@ -1,6 +1,6 @@
 name: "Codespell"
 
-on: [push, pull_request]
+on: pull_request
 jobs:
   codespell:
     name: Check for spelling errors
@@ -10,4 +10,6 @@ jobs:
       - uses: codespell-project/actions-codespell@master
         with:
           check_filenames: true
-          skip: ./.git/, ./external/, *.FCStd
+          check_hidden: true
+          skip: ./.git,./external,*.FCStd
+          only_warn: 1
