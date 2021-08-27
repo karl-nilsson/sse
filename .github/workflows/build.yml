@@ -3,7 +3,7 @@
 #
 # You may wish to alter this file to override the set of languages analyzed,
 # or to provide custom queries or build logic.
-name: "Build"
+name: "Build/Test"
 
 on:
   push:
@@ -29,14 +29,16 @@ jobs:
                     os: ubuntu-20.04,
                     build_type: "Release",
                     cc: "gcc",
-                    cxx: "g++"
+                    cxx: "g++",
+                    generator: "Ninja"
                   }
                 - {
                     name: "Ubuntu_Focal_Clang",
                     os: ubuntu-20.04,
                     build_type: "Release",
                     cc: "clang",
-                    cxx: "clang++"
+                    cxx: "clang++",
+                    generator: "Ninja"
                   }
                 - {
                     name: "MacOS_Clang",
@@ -44,11 +46,13 @@ jobs:
                     build_type: "Release",
                     cc: "clang",
                     cxx: "clang++",
+                    generator: "Ninja"
                   }
                 - {
                     name: "Win10",
                     os: windows-latest,
                     build_type: "Release",
+                    generator: "Visual Studio 16 2019"
                   }
 
     steps:
@@ -65,6 +69,7 @@ jobs:
       run: >-
         sudo apt-get update &&
         sudo apt-get install -y
+        ninja-build
         libocct-*
         occt-misc
         doxygen
@@ -75,7 +80,7 @@ jobs:
     - name: Install Dependencies (Mac OS)
       if: ${{matrix.config.os == 'macos-latest'}}
       run: |
-        brew install opencascade
+        brew install opencascade ninja
 
     - name: Install Conan (Windows)
       if: ${{matrix.config.os == 'windows-latest'}}
@@ -99,6 +104,7 @@ jobs:
         cmake
         -S .
         -B build
+        -G "${{matrix.config.generator}}"
         -DCMAKE_BUILD_TYPE=${{matrix.config.build_type}}
         -DBUILD_TESTING=ON
         -DCMAKE_TOOLCHAIN_FILE=$CMAKE_TOOLCHAIN_FILE
