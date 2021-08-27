@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.16)
 
 # project basics
 project(
@@ -81,11 +81,16 @@ else()
 endif()
 
 # search for OpenCASCADE
-# TODO: specify OCCT version
+# n.b. OpenCASCADConfigVersion.cmake compatibility = ExactVersion
+# therefore, version range won't work
 find_package(OpenCASCADE REQUIRED)
 message(STATUS "OpenCASCADE v${OpenCASCADE_VERSION} found")
+if(OpenCASCADE_VERSION VERSION_LESS "7.3.0")
+    message(FATAL_ERROR "OpenCASCADE version mismatch, expected >= 7.3.0")
+endif()
+
 # list of all OCCT libs: OpenCASCADE_LIBRARIES
-# trim to only used libs
+# TODO: trim to only used libs
 set(OpenCASCADE_USED_LIBS
     "TKernel"
     "TKMath"
