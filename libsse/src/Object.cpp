@@ -52,7 +52,7 @@
 namespace sse {
 
 Object::Object(TopoDS_Shape &shape, const std::string &fname) : shape(std::make_unique<TopoDS_Shape>(shape)), filename(fname) {
-  spdlog::debug("Object: Initializing object with shape");
+  spdlog::trace("Object: Initializing object with shape");
   // calculate the axis-aligned bounding box
   bounding_box = Bnd_Box();
   footprint = Bnd_Box2d();
@@ -60,7 +60,7 @@ Object::Object(TopoDS_Shape &shape, const std::string &fname) : shape(std::make_
 }
 
 Object::Object(const Object& o): filename(o.filename) {
-  spdlog::debug("Object: copying object");
+  spdlog::trace("Object: copying object");
   // copy underlying shape from unique_ptr
   BRepBuilderAPI_Copy b{*o.shape};
   shape = std::make_unique<TopoDS_Shape>(b.Shape());
@@ -71,7 +71,7 @@ Object::Object(const Object& o): filename(o.filename) {
 }
 
 Object& Object::operator =(const Object& o) {
-  spdlog::debug("Object: copying object");
+  spdlog::trace("Object: copying object");
   filename = o.filename;
   // copy underlying shape from unique_ptr
   BRepBuilderAPI_Copy b{*o.shape};
@@ -99,7 +99,7 @@ void Object::generate_bounds(bool optimal, double gap) {
     BRepBndLib::Add(*shape, bounding_box);
   }
 
-  spdlog::debug("Object: generating footprint");
+  spdlog::trace("Object: generating footprint");
   // clear footprint
   footprint.SetVoid();
   // add corner points to footprint
@@ -115,7 +115,7 @@ void Object::generate_bounds(bool optimal, double gap) {
 }
 
 void Object::lay_flat(const TopoDS_Face &face) {
-  spdlog::info("Object: laying object flat");
+  spdlog::debug("Object: laying object flat");
   // get the u,v bounds of selected surface
   Standard_Real umin, umax, vmin, vmax;
   BRepTools::UVBounds(face, umin, umax, vmin, vmax);
@@ -132,7 +132,7 @@ void Object::lay_flat(const TopoDS_Face &face) {
 
   auto normal = props.Normal();
   // TODO: better log messages
-  spdlog::debug("Face normal: {:.3f},{:.3f},{:.3f}", normal.X(), normal.Y(),
+  spdlog::trace("Face normal: {:.3f},{:.3f},{:.3f}", normal.X(), normal.Y(),
                 normal.Z());
   // get the coordinate of the face at (u,v)
   auto point = props.Value();
@@ -147,8 +147,8 @@ void Object::lay_flat(const TopoDS_Face &face) {
   if (!normal.IsOpposite(gp::DZ(), 0.0001)) {
     // the axis of rotation is the cross product of the two vectors
     auto unit_vector = normal.Crossed(gp::DZ());
-    spdlog::debug("Axis: {:.3f},{:.3f},{:.3f}");
-    spdlog::debug("Angle: {:.3f}°");
+    spdlog::trace("Axis: {:.3f},{:.3f},{:.3f}");
+    spdlog::trace("Angle: {:.3f}°");
     // rotate the object, so that the specified normal is opposite the +Z unit
     // vector
     // TODO: verify center point is correct/good idea

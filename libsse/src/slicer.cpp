@@ -54,7 +54,6 @@
 // project headers
 #include <sse/slicer.hpp>
 #include <sse/Object.hpp>
-#include <sse/Packer.hpp>
 #include <sse/version.hpp>
 
 using namespace fmt::literals;
@@ -63,10 +62,9 @@ namespace sse {
 
 Slicer::Slicer(const fs::path& configfile) : settings(Settings::getInstance()) {
 
-  spdlog::debug("Initializing settings");
   if(! configfile.empty()) {
     spdlog::debug("Initializing settings");
-          settings.parse(configfile);
+    settings.parse(configfile);
   }
 
 }
@@ -82,16 +80,13 @@ void setup_logger(spdlog::level::level_enum loglevel) {
   spdlog::set_default_logger(console_logger);
   // set log level
   spdlog::set_level(loglevel);
-  spdlog::debug("Logger initialized");
-
   // environment variable overrides provided log level
   spdlog::cfg::load_env_levels();
   spdlog::debug("Logger initialized, level: {}", console_logger->level());
 
 }
 
-
-const char* gce_ErrorString(const gce_ErrorType &e) {
+constexpr const char* gce_ErrorString(const gce_ErrorType &e) {
   switch(e) {
     case gce_Done: return "completed";
     case gce_ConfusedPoints: return "coincident points";
@@ -468,24 +463,14 @@ void Slicer::section(const TopTools_ListOfShape &objects,
   }
 }
 
-void Slicer::arrange_objects(std::vector<std::unique_ptr<Object>> &objects) {
-  spdlog::debug("Creating Bin Packer");
-  auto packer = Packer(objects);
-  // pack the objects, get dimensions of resulting bin
-  auto [width, length] = packer.pack();
-  // check to see if the pack fit within the build plate
-  // FIXME: get actual buildplate volume/dimensions
-  double build_plate_x = 200, build_plate_y = 200;
-  spdlog::debug("BinPack: comparing resulting bin to build plate size");
-  if (width > build_plate_x || length > build_plate_y) {
-    spdlog::debug("BinPack error: packed volume exceeds build plate");
-    throw std::runtime_error("Bin Packing error: bin exceeds build plate");
-  }
-  // calculate the offset necessary for centering the pack on the build plate
-  double offset_x = (build_plate_x - width) / 2;
-  double offset_y = (build_plate_y - length) / 2;
-  // translate the objects
-  packer.arrange(offset_x, offset_y);
+void rearrange_objects(std::vector<std::unique_ptr<Object>> &objects) {
+  auto &settings = Settings::getInstance();
+  // TODO: finalize settings schema
+  auto bed_width = settings.get_setting_fallback("printer.bed.width", 300);
+  auto bed_length = settings.get_setting_fallback("printer.bed.length", 300);
+
+  rearrange_objects(objects, bed_width, bed_length);
+
 }
 
 void Slicer::make_build_volume() {

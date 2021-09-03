@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
 
   // auto arrange objects
   if (autoplace) {
-    s.arrange_objects(objects);
+    sse::rearrange_objects(objects, 500.0, 500.0);
   }
 
   std::vector<sse::Slice> slices;

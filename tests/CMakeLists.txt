@@ -4,7 +4,7 @@ target_sources(
     unit_test
     PRIVATE
         test_main.cpp
-        test_binpack.cpp
+        test_rearrange.cpp
         test_object.cpp
         test_settings.cpp
         test_slice.cpp

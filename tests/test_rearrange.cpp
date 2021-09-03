@@ -1,6 +1,6 @@
 #include <doctest/doctest.h>
 
-#include <sse/Packer.hpp>
+#include "sse/slicer.hpp"
 
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <BRepPrimAPI_MakeHalfSpace.hxx>
@@ -17,7 +17,7 @@ using Objects = std::vector<std::unique_ptr<sse::Object>>;
 // precision for comparing values within OCCT
 #define TEST_PRECISION 0.000001
 
-TEST_SUITE("Bin Packer") {
+TEST_SUITE("Rearrange Objects") {
 
   TEST_CASE("Invalid tests") {
     // create list of objects to pack
@@ -28,7 +28,7 @@ TEST_SUITE("Bin Packer") {
       // add object with zero volume
       auto a = TopoDS_Shape();
       objects.push_back(std::make_unique<sse::Object>(a));
-      CHECK_THROWS_AS(auto p = sse::Packer(objects), std::invalid_argument);
+      CHECK_THROWS_AS(sse::rearrange_objects(objects, 500, 500), std::invalid_argument);
     }
 
     SUBCASE("Infinite volume object") {
@@ -40,18 +40,44 @@ TEST_SUITE("Bin Packer") {
       auto o = std::make_unique<sse::Object>(s);
       objects.push_back(std::move(o));
       // attempt to pack object
-      CHECK_THROWS_AS(auto p = sse::Packer(objects), std::invalid_argument);
+      CHECK_THROWS_AS(sse::rearrange_objects(objects, 500, 500), std::invalid_argument);
     }
 
     SUBCASE("Too many objects") {
       // create excessive objects objects
       BRepPrimAPI_MakeBox box{1, 1, 1};
-      // MAXIMUM_OBJECTS is defined in Packer.hpp
+      // MAXIMUM_OBJECTS is defined in Packer.cc
+      // #FIXME: consider placing this in a more visible place
+      #define MAXIMUM_OBJECTS 1000
       for (auto i = 0; i <= MAXIMUM_OBJECTS; ++i) {
         auto a = box.Shape();
         objects.push_back(std::make_unique<sse::Object>(a));
       }
-      CHECK_THROWS_AS(auto p = sse::Packer(objects), std::invalid_argument);
+      CHECK_THROWS_AS(sse::rearrange_objects(objects, 500, 500), std::invalid_argument);
+    }
+
+    SUBCASE("Invalid build plate dimensions") {
+      BRepPrimAPI_MakeBox b{1, 1, 1};
+      auto box = b.Shape();
+      objects.push_back(std::make_unique<sse::Object>(box));
+      CHECK_THROWS_AS(sse::rearrange_objects(objects, 0, 0), std::invalid_argument);
+    }
+
+    SUBCASE("Single object too large for build volume") {
+      BRepPrimAPI_MakeBox b{10, 10, 10};
+      auto box = b.Shape();
+      objects.push_back(std::make_unique<sse::Object>(box));
+
+      CHECK_THROWS_AS(sse::rearrange_objects(objects, 1, 1), std::invalid_argument);
+    }
+
+    SUBCASE("Rearranged objects too large for build plate") {
+      BRepPrimAPI_MakeBox b{10, 10, 10};
+      auto box = b.Shape();
+      objects.push_back(std::make_unique<sse::Object>(box));
+      objects.push_back(std::make_unique<sse::Object>(box));
+
+      CHECK_THROWS_AS(sse::rearrange_objects(objects, 11, 11), std::runtime_error);
     }
 
   }
@@ -65,8 +91,6 @@ TEST_SUITE("Bin Packer") {
         o.push_back(std::make_unique<sse::Object>(a));
     }
 
-    auto p = sse::Packer{o};
-
     // dimensions of one box
     auto box_width = o[0]->width();
     auto box_length = o[0]->length();
@@ -74,12 +98,9 @@ TEST_SUITE("Bin Packer") {
     // is ceil(sqrt(x)) x round(sqrt(x))
     auto correct_width = ceil(sqrt(num)) * box_width;
     auto correct_length = round(sqrt(num)) * box_length;
-    auto [width, length] = p.pack();
-    // check bin dimensions
-    CHECK(width == doctest::Approx(correct_width));
-    CHECK(length == doctest::Approx(correct_length));
-    // arrange cubes
-    p.arrange(0, 0);
+
+    CHECK_NOTHROW(sse::rearrange_objects(o, correct_width, correct_length));
+
     // check location of each moved cube
     auto x = 0;
     auto y = 0;
@@ -117,30 +138,18 @@ TEST_SUITE("Bin Packer") {
     REQUIRE(!a.IsNull());
 
     SUBCASE("Empty argument list") {
-      auto p = sse::Packer(objects);
-      auto result = p.pack();
-      CHECK(result.first == doctest::Approx(0.0));
-      CHECK(result.second == doctest::Approx(0.0));
-
-      CHECK_NOTHROW(p.arrange(0, 0));
+      CHECK_NOTHROW(sse::rearrange_objects(objects, 1, 1));
     }
 
     SUBCASE("One Cube") {
       objects.push_back(std::make_unique<sse::Object>(a));
-      REQUIRE(objects.size() == 1);
-      auto p = sse::Packer(objects);
-      auto [width, length] = p.pack();
-      CHECK(objects[0]->width() == doctest::Approx(width));
-      CHECK(objects[0]->length() == doctest::Approx(length));
-      p.arrange(0, 0);
+      CHECK_NOTHROW(sse::rearrange_objects(objects, objects[0]->width(), objects[0]->length()));
       // calculate the correct move location
       gp_Pnt corner{0, 0, 0};
-      // FIXME: currently broken
       CHECK(corner.IsEqual(objects[0]->get_bound_box().CornerMin(), TEST_PRECISION));
     }
 
     SUBCASE("Should Grow Right") {
-      // two identical rectangles, test packer should_grow_right
       BRepPrimAPI_MakeBox rectangle{10, 20, 10};
       auto r = rectangle.Shape();
       objects.push_back(std::make_unique<sse::Object>(r));
@@ -148,12 +157,11 @@ TEST_SUITE("Bin Packer") {
       r = rectangle.Shape();
       objects.push_back(std::make_unique<sse::Object>(r));
 
-      auto p = sse::Packer(objects);
-      auto [width, length] = p.pack();
-      CHECK(objects[0]->width() + objects[1]->width() == doctest::Approx(width));
-      CHECK(objects[0]->length() == doctest::Approx(length));
+      auto w = objects[0]->width() + objects[1]->width();
+      auto l = objects[0]->length();
 
-      p.arrange(0, 0);
+      CHECK_NOTHROW(sse::rearrange_objects(objects, w, l));
+
       gp_Pnt corner1{0, 0, 0};
       CHECK(corner1.IsEqual(objects[0]->get_bound_box().CornerMin(), TEST_PRECISION));
 
@@ -162,7 +170,7 @@ TEST_SUITE("Bin Packer") {
     }
 
     SUBCASE("Can Grow Up") {
-      // two identical rectangles, test packer should_grow_right
+      // have to exhaust should_grow_* and can_grow_right in order to hit this codepath
       BRepPrimAPI_MakeBox rectangle{20, 10, 10};
       auto r = rectangle.Shape();
       objects.push_back(std::make_unique<sse::Object>(r));
@@ -170,35 +178,16 @@ TEST_SUITE("Bin Packer") {
       r = rectangle.Shape();
       objects.push_back(std::make_unique<sse::Object>(r));
 
-      auto p = sse::Packer(objects);
-      auto [width, length] = p.pack();
-    }
+      auto w = objects[0]->width();
+      auto l = objects[0]->length() + objects[1]->length();
 
-    SUBCASE("Double Pack") {
-      objects.push_back(std::make_unique<sse::Object>(a));
-      REQUIRE(objects.size() == 1);
-      auto p = sse::Packer(objects);
-      // attempt to pack twice, this should work
-      auto [w1, l1] = p.pack();
-      auto [w2, l2] = p.pack();
+      CHECK_NOTHROW(sse::rearrange_objects(objects, w, l));
 
-      CHECK(w1 == doctest::Approx(w2));
-      CHECK(l1 == doctest::Approx(l2));
-      p.arrange(0,0);
-    }
+      gp_Pnt corner1{0, 0, 0};
+      CHECK(corner1.IsEqual(objects[0]->get_bound_box().CornerMin(), TEST_PRECISION));
 
-    SUBCASE("Double Arrange") {
-      objects.push_back(std::make_unique<sse::Object>(a));
-      auto p = sse::Packer{objects};
-
-      auto tmp = p.pack();
-      gp_Pnt corner{0,0,0};
-      gp_Pnt corner2{100,100,0};
-
-      p.arrange(0,0);
-      CHECK(corner.IsEqual(objects[0]->get_bound_box().CornerMin(), TEST_PRECISION));
-      p.arrange(100, 100);
-      CHECK(corner2.IsEqual(objects[0]->get_bound_box().CornerMin(), TEST_PRECISION));
+      gp_Pnt corner2{0, objects[0]->length(), 0};
+      CHECK(corner2.IsEqual(objects[1]->get_bound_box().CornerMin(), TEST_PRECISION));
     }
 
     SUBCASE("List of identical cubes:") {

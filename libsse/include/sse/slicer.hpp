@@ -52,6 +52,29 @@ namespace sse {
 
 void setup_logger(spdlog::level::level_enum loglevel = spdlog::level::info);
 
+/**
+ * @brief rearrange Rearrange objects to fit the smallest footprint, centered on the bed
+ *
+ * Side effect: the list of objects will be sorted, largest to smallest, in terms of footprint dimensions
+ *
+ * @param objects List of objects to rearrange
+ * @param bed_width X dimension of bed
+ * @param bed_length Y dimension of bed
+ *
+ *
+ * @throws std::invalid_argument
+ * - bed dimensions <= 0
+ * - too many objects
+ * - object footprint is larger than bed dimensions
+ * - object has zero footprint
+ *
+ * @throws std::runtime_error
+ * - aggregate footprint of rearranged objects is larger than the bed
+ * - can't determine correct growth direction of bin
+ */
+
+void rearrange_objects(std::vector<std::unique_ptr<Object> > &objects, const double bed_width, const double bed_length);
+
 class Slicer {
 public:
   Slicer(const fs::path& configfile);
@@ -129,12 +152,6 @@ public:
 
   void dump_shapes(const TopoDS_Shape &shape);
 
-  /**
-   * @brief Rearrange objects so that they are centered on the buildplate
-   * @param objects List of objects
-   * @throws
-   */
-  void arrange_objects(std::vector<std::unique_ptr<Object> > &objects);
 
   void make_build_volume();
 

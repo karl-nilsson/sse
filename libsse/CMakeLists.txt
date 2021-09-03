@@ -30,14 +30,13 @@ target_sources(
         src/Object.cpp
         src/Settings.cpp
         src/Support.cpp
-        src/Packer.cpp
+        src/Rearrange.cpp
         include/sse/Importer.hpp
         include/sse/slicer.hpp
         include/sse/Slice.hpp
         include/sse/Object.hpp
         include/sse/Settings.hpp
         include/sse/Support.hpp
-        include/sse/Packer.hpp
 )
 
 target_include_directories(
