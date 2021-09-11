@@ -82,16 +82,22 @@ jobs:
       run: |
         brew install opencascade ninja
 
-    - name: Install Conan (Windows)
+    - name: Restore vcpkg cache (Windows)
       if: ${{matrix.config.os == 'windows-latest'}}
-      uses: turtlebrowser/get-conan@main
+      uses: actions/cache@v2
+      with:
+        path: ~\AppData\Local\vcpkg\archives\
+        key: occt-7.5.0_1
+        restore-keys: occt-
 
     - name: Install Dependencies (Windows)
       if: ${{matrix.config.os == 'windows-latest'}}
       run: |
-        conan config init
-        conan install .
-        mv Find*.cmake cmake/
+        vcpkg install opencascade[tbb]
+        vcpkg integrate install
+        echo "CMAKE_TOOLCHAIN_FILE=${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+      env:
+        VCPKG_DEFAULT_TRIPLET: x64-windows # force vcpkg to build x64
 
     # If this run was triggered by a pull request event, then checkout
     # the head of the pull request instead of the merge commit.

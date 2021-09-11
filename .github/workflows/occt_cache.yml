@@ -1,0 +1,44 @@
+# This workflow maintains the vcpkg cache of opencascade binaries (& dependencies)
+
+name: "Cache OCCT build (Windows)"
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+
+  build:
+    name: Build & Cache OCCT
+    runs-on: windows-latest
+
+    steps:
+
+      # unfortunately, the vcpkg program doesn't provide an easy way to fetch the program version,
+      # so we have to parse the control file directly
+      - name: Fetch OCCT Version
+        id: occt_version
+        run: |
+          OCCT_VERSION=$(grep "^Version" $VCPKG_INSTALLATION_ROOT/ports/opencascade/CONTROL | cut -d" " -f2)
+          OCCT_PORT_REVISION=$(grep "^Port-Version" $VCPKG_INSTALLATION_ROOT/ports/opencascade/CONTROL | cut -d" " -f2)
+          OCCT_NAME_VERSION=occt-${OCCT_VERSION}_${OCCT_PORT_REVISION}
+          echo "::set-output name=occt_version_revision::$OCCT_NAME_VERSION"
+
+      - name: Restore OCCT cached build
+        id: cache
+        uses: actions/cache@v2
+        with:
+          path: ~\AppData\Local\vcpkg\archives\
+          key: ${{steps.occt_version.outputs.occt_version_revision}}
+
+      - name: Build/Install OCCT
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          vcpkg install opencascade[tbb]
+        env:
+          VCPKG_DEFAULT_TRIPLET: x64-windows # force vcpkg to build x64
+
