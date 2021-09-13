@@ -88,5 +88,8 @@ CMakeLists.txt.user*
 # build directory
 /build
 
+# vscode settings
+/.vscode
+
 # freecad backup files
 *.FCStd1

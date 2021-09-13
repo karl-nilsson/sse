@@ -41,7 +41,7 @@
 
 namespace sse {
 
-  // this struct simply cuts out the spatial index from the offsetloopset, becuase the former has a unique_ptr, thus can't be copied
+  // this struct simply cuts out the spatial index from the offsetloopset, because the former has a unique_ptr, thus can't be copied
   // TODO: figure out a better solution to this problem
   struct Shell {
     Shell(cavc::OffsetLoopSet<double> &loopset) {
