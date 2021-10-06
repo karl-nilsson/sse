@@ -237,6 +237,10 @@ void sse::rearrange_objects(std::vector<std::unique_ptr<sse::Object>> &objects,
     throw std::invalid_argument("Rearrange: Too many objects");
   }
 
+  // need to sort the input, so make a copy (avoid side effects)
+  auto objects_list = std::vector<Object*>();
+  objects_list.reserve(objects.size());
+
   // check for invalid objects
   for (const auto &o : objects) {
 #if OCC_VERSION_HEX >= 0x070400
@@ -263,12 +267,14 @@ void sse::rearrange_objects(std::vector<std::unique_ptr<sse::Object>> &objects,
                     o->width(), o->length(), bed_width, bed_length);
       throw std::invalid_argument("Rearrange: object too large for bed");
     }
+
+    objects_list.push_back(o.get());
   }
 
   // sort the objects, largest to smallest, in terms of footprint
   // specifically, compare the largest dimension (X or Y) of each object
   spdlog::trace("Rearrange: sorting object list");
-  std::sort(objects.begin(), objects.end(),
+  std::sort(objects_list.begin(), objects_list.end(),
             [](const auto &lhs, const auto &rhs) {
               return std::max(lhs->length(), lhs->width()) >
                      std::max(rhs->length(), rhs->width());
@@ -279,16 +285,16 @@ void sse::rearrange_objects(std::vector<std::unique_ptr<sse::Object>> &objects,
   // simultaneously
   spdlog::trace(
       "Rearrange: creating root node: {:.3f}x{:.3f} @ ({:.3f},{:.3f})",
-      objects.front()->width(), objects.front()->length(), 0.0, 0.0);
-  node_ptr root = std::make_unique<Node>(0, 0, objects.front()->width(),
-                                         objects.front()->length());
+      objects_list.front()->width(), objects_list.front()->length(), 0.0, 0.0);
+  node_ptr root = std::make_unique<Node>(0, 0, objects_list.front()->width(),
+                                         objects_list.front()->length());
 
   spdlog::trace("Rearrange: packing");
   // insert all objects into the tree
-  for (const auto &o : objects) {
+  for (const auto o : objects_list) {
     // attempt to find a suitable node for the object
     spdlog::trace("Rearrange: searching for suitable node");
-    auto *result = insert_search(*root, o.get());
+    auto *result = insert_search(*root, o);
     // if no node found, grow the bin
     if (result == nullptr) {
       spdlog::trace("Rearrange: insufficient space; growing bin");
@@ -322,7 +328,7 @@ void sse::rearrange_objects(std::vector<std::unique_ptr<sse::Object>> &objects,
     spdlog::trace(
         "Rearrange: adding object to bin: {:.3f}x{:.3f} @ ({:.3f},{:.3f})",
         o->width(), o->length(), result->x, result->y);
-    result->add_object(o.get());
+    result->add_object(o);
   }
 
   // after inserting all objects, the dimensions of the root node will encompass

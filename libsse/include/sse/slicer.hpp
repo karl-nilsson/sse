@@ -74,8 +74,6 @@ void setup_logger(spdlog::level::level_enum loglevel = spdlog::level::info);
 /**
  * @brief rearrange Rearrange objects to fit the smallest footprint, centered on the bed
  *
- * Side effect: the list of objects will be sorted, largest to smallest, in terms of footprint dimensions
- *
  * @param objects List of objects to rearrange
  * @param bed_width X dimension of bed
  * @param bed_length Y dimension of bed
