@@ -43,14 +43,33 @@ namespace fs = std::filesystem;
 
 namespace sse {
 
-  /**
-   * @brief collate_gcode Combine all gcode text into one string
-   * @return
-   */
-  [[nodiscard]] std::string collate_gcode(std::vector<Slice> &slices);
+/**
+ * @brief collate_gcode Combine all gcode text into one string
+ * @return
+ */
+[[nodiscard]] std::string collate_gcode(std::vector<Slice> &slices);
 
 
 void setup_logger(spdlog::level::level_enum loglevel = spdlog::level::info);
+
+
+/**
+ * @brief Import solid model(s) from file
+ * 
+ * @param filename Source file
+ * 
+ * Valid extensions:
+ *  - step
+ *  - stepz
+ *  - iges
+ *  - brep
+ *  - stl
+ *  - obj
+ * 
+ * @return TopoDS_Shape 
+ * @throws std::invalid_argument when invalid file is provided
+ */
+[[nodiscard]] TopoDS_Shape import(const std::string &filename);
 
 /**
  * @brief rearrange Rearrange objects to fit the smallest footprint, centered on the bed

@@ -31,7 +31,6 @@ target_sources(
         src/Settings.cpp
         src/Support.cpp
         src/Rearrange.cpp
-        include/sse/Importer.hpp
         include/sse/slicer.hpp
         include/sse/Slice.hpp
         include/sse/Object.hpp

@@ -10,7 +10,6 @@
 #include <cxxopts.hpp>
 #include <spdlog/spdlog.h>
 // project headers
-#include <sse/Importer.hpp>
 #include <sse/Object.hpp>
 #include <sse/slicer.hpp>
 #include <sse/version.hpp>
@@ -120,7 +119,6 @@ int main(int argc, char **argv) {
   auto s = sse::Slicer(profile_filename);
   sse::setup_logger(spdlog::level::debug);
 
-  auto imp = sse::Importer{};
   auto objects = vector<unique_ptr<sse::Object>>();
 
   for (const auto &f : files) {
@@ -132,7 +130,7 @@ int main(int argc, char **argv) {
     }
     try {
       // import the object, then add it to the list
-      TopoDS_Shape shape = imp.import(f);
+      TopoDS_Shape shape = sse::import(f);
       objects.push_back(make_unique<sse::Object>(shape));
     } catch (std::runtime_error &e) {
       cerr << e.what() << endl;

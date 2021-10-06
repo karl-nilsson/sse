@@ -37,46 +37,11 @@
 #include <IGESControl_Reader.hxx>
 #include <STEPControl_Reader.hxx>
 // project headers
-#include <sse/Importer.hpp>
+#include "sse/slicer.hpp"
 
 
-namespace sse {
 
-/**
- * @brief Importer::Importer
- */
-TopoDS_Shape Importer::import(const std::string &filename) {
-  // get the file extension
-  const auto i = filename.rfind('.', filename.length());
-  if (i == std::string::npos) {
-    throw std::runtime_error("Error: filename missing extension: " + filename);
-  }
-  std::string extension = filename.substr(i + 1, filename.length() - 1);
-  // convert extension to lowercase
-  std::transform(extension.begin(), extension.end(), extension.begin(),
-                 [](unsigned char c) { return std::tolower(c); });
-
-  // TODO: refacto, DRY
-  if (extension == "step") {
-    return importSTEP(filename);
-  } else if (extension == "iges") {
-    return importIGES(filename);
-  } else if (extension == "brep") {
-    return importBREP(filename);
-  } else if (extension == "stl") {
-    return importMesh(filename);
-  } else if (extension == "obj") {
-    return importMesh(filename);
-  } else if (extension == "stepz") {
-    // unzip file
-    // process temporary file
-    return importSTEP("");
-  } else {
-    throw std::runtime_error("Error: invalid file: " + filename);
-  }
-}
-
-TopoDS_Shape Importer::importSTEP(const std::string &filename) {
+static TopoDS_Shape importSTEP(const std::string &filename) {
 
   auto reader = STEPControl_Reader();
   auto status = reader.ReadFile(filename.c_str());
@@ -103,7 +68,7 @@ TopoDS_Shape Importer::importSTEP(const std::string &filename) {
   return reader.OneShape();
 }
 
-TopoDS_Shape Importer::importIGES(const std::string &filename) {
+static TopoDS_Shape importIGES(const std::string &filename) {
   auto reader = IGESControl_Reader();
   auto status = reader.ReadFile(filename.c_str());
   // debug info
@@ -118,7 +83,7 @@ TopoDS_Shape Importer::importIGES(const std::string &filename) {
   return reader.OneShape();
 }
 
-TopoDS_Shape Importer::importSolid(const std::string &filename, const bool STEP) {
+static TopoDS_Shape importSolid(const std::string &filename, const bool STEP) {
   // FIXME
   auto reader = STEPControl_Reader();
   auto status = reader.ReadFile(filename.c_str());
@@ -145,15 +110,53 @@ TopoDS_Shape Importer::importSolid(const std::string &filename, const bool STEP)
   return reader.OneShape();
 }
 
-TopoDS_Shape Importer::importMesh(const std::string &filename) {
+static TopoDS_Shape importMesh(const std::string &filename) {
   return TopoDS_Shape();
 }
 
-TopoDS_Shape Importer::importBREP(const std::string &filename) {
+static TopoDS_Shape importBREP(const std::string &filename) {
   TopoDS_Shape shape;
   BRep_Builder b;
   BRepTools::Read(shape, filename.c_str(), b);
   return TopoDS_Shape();
 }
+
+namespace sse {
+
+/**
+ * @brief Importer::Importer
+ */
+TopoDS_Shape import(const std::string &filename) {
+  // get the file extension
+  const auto i = filename.rfind('.', filename.length());
+  if (i == std::string::npos) {
+    throw std::runtime_error("Error: filename missing extension: " + filename);
+  }
+  std::string extension = filename.substr(i + 1, filename.length() - 1);
+  // convert extension to lowercase
+  std::transform(extension.begin(), extension.end(), extension.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+
+  // TODO: refacto, DRY
+  if (extension == "step") {
+    return importSTEP(filename);
+  } else if (extension == "iges") {
+    return importIGES(filename);
+  } else if (extension == "brep") {
+    return importBREP(filename);
+  } else if (extension == "stl") {
+    return importMesh(filename);
+  } else if (extension == "obj") {
+    return importMesh(filename);
+  } else if (extension == "stepz") {
+    // unzip file
+    // process temporary file
+    return importSTEP("");
+  } else {
+    throw std::invalid_argument("Error: invalid file: " + filename);
+  }
+}
+
+
 
 } // namespace sse
