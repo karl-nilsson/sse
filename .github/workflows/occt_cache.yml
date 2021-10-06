@@ -23,8 +23,9 @@ jobs:
       - name: Fetch OCCT Version
         id: occt_version
         run: |
-          OCCT_VERSION=$(grep "^Version" $VCPKG_INSTALLATION_ROOT/ports/opencascade/CONTROL | cut -d" " -f2)
-          OCCT_PORT_REVISION=$(grep "^Port-Version" $VCPKG_INSTALLATION_ROOT/ports/opencascade/CONTROL | cut -d" " -f2)
+          VCPKG_OCCT_METADATA=$VCPKG_INSTALLATION_ROOT/ports/opencascade/vcpkg.json
+          OCCT_VERSION=$(jq -r '."version-string"' $VCPKG_OCCT_METADATA)
+          OCCT_PORT_REVISION=$(jq -r '."port-version"' $VCPKG_OCCT_METADATA)
           OCCT_NAME_VERSION=occt-${OCCT_VERSION}_${OCCT_PORT_REVISION}
           echo "::set-output name=occt_version_revision::$OCCT_NAME_VERSION"
 
