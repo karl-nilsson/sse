@@ -9,6 +9,13 @@ FetchContent_Declare(
 # disable doctests' internal tests
 set(DOCTEST_WITH_TESTS OFF CACHE STRING "Omit doctest tests" FORCE)
 
+# trompeloeil
+FetchContent_Declare(
+  trompeloeil
+  GIT_REPOSITORY https://github.com/rollbear/trompeloeil
+  GIT_TAG v41
+)
+
 # toml11
 FetchContent_Declare(
   toml11
@@ -50,6 +57,7 @@ set(CAVC_BUILD_SHARED_LIB OFF)
 # add libraries
 FetchContent_MakeAvailable(
   doctest
+  trompeloeil
   toml11
   spdlog
   cxxopts
