@@ -1,5 +1,5 @@
 # STEP Slicer Engine
-![Build Status](https://github.com/karl-nilsson/sse/workflows/Build/badge.svg)
+[![Build Status](https://github.com/karl-nilsson/sse/actions/workflows/build.yml/badge.svg)](https://github.com/karl-nilsson/sse/actions/workflows/build.yml)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/3ed52535476d453f97456e77e79612c2)](https://app.codacy.com/manual/karl-nilsson/sse?utm_source=github.com&utm_medium=referral&utm_content=karl-nilsson/sse&utm_campaign=Badge_Grade_Dashboard)
 [![codecov](https://codecov.io/gh/karl-nilsson/sse/branch/master/graph/badge.svg?token=DOLTWBEKR9)](https://codecov.io/gh/karl-nilsson/sse)
 
