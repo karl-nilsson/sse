@@ -20,6 +20,12 @@ set_target_properties(${PROJECT_NAME}
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
+# generate symbol export macro header
+include(GenerateExportHeader)
+generate_export_header(${PROJECT_NAME}
+  EXPORT_FILE_NAME ${PROJECT_BINARY_DIR}/include/sse/${PROJECT_NAME}_export.hpp
+)
+
 # TODO: correctly sort files into proper context
 target_sources(
     ${PROJECT_NAME}
@@ -36,6 +42,8 @@ target_sources(
         include/sse/Object.hpp
         include/sse/Settings.hpp
         include/sse/Support.hpp
+        ${PROJECT_BINARY_DIR}/include/sse/version.hpp
+        ${PROJECT_BINARY_DIR}/include/sse/${PROJECT_NAME}_export.hpp
 )
 
 target_include_directories(
@@ -44,7 +52,7 @@ target_include_directories(
     PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-        # generated headers found here
+        # generated version.hpp and libsse_export.hpp found here
         $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
         ${OpenCASCADE_INCLUDE_DIR}
     PRIVATE

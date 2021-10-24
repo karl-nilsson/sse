@@ -23,6 +23,8 @@
 #include <cstdarg>
 // external headers
 #include <toml.hpp>
+// project headers
+#include "sse/libsse_export.hpp"
 
 namespace fs = std::filesystem;
 
@@ -32,7 +34,7 @@ namespace sse {
  * @brief The Settings class
  * Singleton
  */
-class Settings {
+class LIBSSE_EXPORT Settings {
 
 public:
 

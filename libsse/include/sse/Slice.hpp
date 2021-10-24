@@ -30,20 +30,20 @@
 #include <TopTools_ListOfShape.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Wire.hxx>
-// project headers
-#include <sse/Object.hpp>
 // stl headers
 #include <vector>
-
-#include <spdlog/spdlog.h>
 // external headers
+#include <spdlog/spdlog.h>
 #include "cavc/polylineoffsetislands.hpp"
+// project headers
+#include "sse/Object.hpp"
+#include "sse/libsse_export.hpp"
 
 namespace sse {
 
   // this struct simply cuts out the spatial index from the offsetloopset, because the former has a unique_ptr, thus can't be copied
   // TODO: figure out a better solution to this problem
-  struct Shell {
+  struct LIBSSE_EXPORT Shell {
     Shell(cavc::OffsetLoopSet<double> &loopset) {
       if(loopset.ccwLoops.size() != 1) {
         spdlog::error("Shell: Expected 1 outer polyline. received: {}", loopset.ccwLoops.size());
@@ -65,7 +65,7 @@ namespace sse {
 /**
  * @brief The Slice class
  */
-class Slice {
+class LIBSSE_EXPORT Slice {
 
 public:
 
