@@ -218,10 +218,9 @@ void Slicer::generate_shells(Slice& slice, const double line_width, const int co
 
   // the first shell is always half an extrusion width inside
   auto first_offset = -0.5 * line_width;
-  offsets.emplace_back(first_offset);
 
   for(int i = 0; i < count; ++i) {
-    auto offset = first_offset + (-1 * i * line_width);
+    auto offset = first_offset + (-1 * i  * line_width);
     offsets.emplace_back(offset);
   }
 

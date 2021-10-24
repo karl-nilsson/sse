@@ -265,7 +265,7 @@ static std::string polyline_gcode(const cavc::Polyline<double> &pline, double th
   result.reserve(pline.size() * gcode_string_length);
 
   // travel to start of polyline
-  result += fmt::format("G0 X{:.6f} Y{:.6f}\n", pline[0].x(), pline[0].y());
+  result += fmt::format("G0 X{:.6f} Y{:.6f}\n", pline.lastVertex().x(), pline.lastVertex().y());
 
   auto extrusion_ratio = thickness * (0.6 * 0.6) / (1.75 * 1.75);
 
@@ -333,7 +333,7 @@ Slice::Slice(const Object *parent, TopoDS_Face face, double thickness)
 
 void Slice::generate_shells(std::vector<double> &offsets_list) {
   // sort the list of offsets
-  std::sort(offsets_list.begin(), offsets_list.end());
+  std::sort(offsets_list.begin(), offsets_list.end(), std::greater<int>());
 
   cavc::OffsetLoopSet<double> loopset;
   loopset.cwLoops.reserve(2);
@@ -375,7 +375,7 @@ void Slice::generate_infill(cavc::Polyline<double> infill_pattern) {
   // FIXME: edit CavC to allow combine ops with open pline
   return;
 
-  // intersect with outer polyline
+  // intersect with innermost polyline
   auto infill =
       cavc::combinePolylines(innermost_shell->outer,
                              infill_pattern, cavc::PlineCombineMode::Intersect);
@@ -417,9 +417,9 @@ std::string Slice::gcode() const {
 
 
   // shells first
-  for(auto shell = shells.begin(); shell != shells.end(); ++shell) {
+  for(auto shell = shells.cbegin(); shell != shells.cend(); ++shell) {
     result += ";TYPE:WALL-";
-    result += (shell == shells.begin()) ? "OUTER\n" : "INNER\n";
+    result += (shell == shells.cbegin()) ? "OUTER\n" : "INNER\n";
 
     result += polyline_gcode(shell->outer, thickness);
 
