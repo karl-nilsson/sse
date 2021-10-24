@@ -29,9 +29,9 @@
 // external includes
 #include <spdlog/spdlog.h>
 // project includes
-#include <sse/Slice.hpp>
-#include <sse/Settings.hpp>
-
+#include "sse/Slice.hpp"
+#include "sse/Settings.hpp"
+#include "sse/libsse_export.hpp"
 
 
 #define FALLBACK_LAYER_HEIGHT 0.2
@@ -47,10 +47,10 @@ namespace sse {
  * @brief collate_gcode Combine all gcode text into one string
  * @return
  */
-[[nodiscard]] std::string collate_gcode(std::vector<Slice> &slices);
+[[nodiscard]] LIBSSE_EXPORT std::string collate_gcode(std::vector<Slice> &slices);
 
 
-void setup_logger(spdlog::level::level_enum loglevel = spdlog::level::info);
+LIBSSE_EXPORT void setup_logger(spdlog::level::level_enum loglevel = spdlog::level::info);
 
 
 /**
@@ -69,7 +69,7 @@ void setup_logger(spdlog::level::level_enum loglevel = spdlog::level::info);
  * @return TopoDS_Shape 
  * @throws std::invalid_argument when invalid file is provided
  */
-[[nodiscard]] TopoDS_Shape import(const std::string &filename);
+[[nodiscard]] LIBSSE_EXPORT TopoDS_Shape import(const std::string &filename);
 
 /**
  * @brief rearrange Rearrange objects to fit the smallest footprint, centered on the bed
@@ -89,10 +89,9 @@ void setup_logger(spdlog::level::level_enum loglevel = spdlog::level::info);
  * - aggregate footprint of rearranged objects is larger than the bed
  * - can't determine correct growth direction of bin
  */
+LIBSSE_EXPORT void rearrange_objects(std::vector<std::unique_ptr<Object> > &objects, const double bed_width, const double bed_length);
 
-void rearrange_objects(std::vector<std::unique_ptr<Object> > &objects, const double bed_width, const double bed_length);
-
-class Slicer {
+class LIBSSE_EXPORT Slicer {
 public:
   Slicer(const fs::path& configfile);
 

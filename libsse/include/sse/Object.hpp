@@ -30,13 +30,15 @@
 #include <gp.hxx>
 #include <gp_Trsf.hxx>
 #include <gp_Ax2.hxx>
+// project headers
+#include "sse/libsse_export.hpp"
 
 namespace sse {
 
 /**
  * @brief The Object class
  */
-class Object {
+class LIBSSE_EXPORT Object {
 
 public:
 
