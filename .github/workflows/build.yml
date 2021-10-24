@@ -48,12 +48,12 @@ jobs:
                     cxx: "clang++",
                     generator: "Ninja"
                   }
-#                - {
-#                    name: "Win10",
-#                    os: windows-latest,
-#                    build_type: "Release",
-#                    generator: "Visual Studio 16 2019"
-#                  }
+                - {
+                    name: "Win10",
+                    os: windows-latest,
+                    build_type: "Release",
+                    generator: "Visual Studio 16 2019"
+                  }
 
     steps:
     # checkout repo at $GITHUB_WORKSPACE
@@ -121,6 +121,10 @@ jobs:
         --parallel 2
         --config ${{matrix.config.build_type}}
 
+    - name: Add libsse to path (Windows)
+      if: ${{matrix.config.os == 'windows-latest'}}
+      run: |
+        echo "${{github.workspace}}/build/libsse/${{matrix.config.build_type}}/" >> $GITHUB_PATH
 
     - name: Test
       working-directory: ${{github.workspace}}/build
