@@ -294,7 +294,6 @@ std::string generate_gcode_header(bool dump_settings) {
 
   result += ";FLAVOR:Marlin\n"
             ";Layer height:{layer_height}\n"
-            ";LAYER_COUNT:{layer_count}\n"
             "M104 S{hotend_temp:f}; Set hotend temp\n"
             "M190 S{bed_temp:f}; Set bed temp and wait\n"
             "M105\n"
@@ -303,7 +302,8 @@ std::string generate_gcode_header(bool dump_settings) {
             "M82; Absolute extrusion\n"
             "G92 E0; Reset extruder position\n"
             "G28; Home all axes\n"
-            "M106 S{fan_speed:d}; set fan speed\n";
+            "M106 S{fan_speed:d}; set fan speed\n"
+            ";LAYER_COUNT:{layer_count}\n";
 
 
   return result;
@@ -389,7 +389,7 @@ std::string collate_gcode(std::vector<Slice> &slices) {
     if(slice.z_position() > current_layer) {
       current_layer = slice.z_position();
       current_layer_number++;
-      result += fmt::format(";LAYER: {}: {:.6f}\n", current_layer_number, current_layer);
+      result += fmt::format(";LAYER: {:d}\n", current_layer_number);
       // TODO: layer hop, configurable feedrate
       result += (fmt::format("G0 Z{:.6f} F5000\n", current_layer));
     }
