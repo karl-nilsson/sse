@@ -217,10 +217,11 @@ void Slicer::generate_shells(Slice& slice, const double line_width, const int co
   offsets.reserve((size_t)count);
 
   // the first shell is always half an extrusion width inside
-  auto first_offset = -0.5 * line_width;
+  // n.b. cavc doesn't use the sign of offset values, offset direction is determined by pline orientation
+  auto first_offset = 0.5 * line_width;
 
   for(int i = 0; i < count; ++i) {
-    auto offset = first_offset + (-1 * i  * line_width);
+    auto offset = first_offset + (i  * line_width);
     offsets.emplace_back(offset);
   }
 

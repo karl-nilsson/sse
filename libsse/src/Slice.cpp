@@ -151,13 +151,13 @@ static cavc::Polyline<double> process_wire(TopoDS_Wire w) {
   result.isClosed() = true;
 
   if (!w.Closed()) {
-    spdlog::debug("Slice: Wire is open, skipping");
+    spdlog::trace("Slice: Wire is open, skipping");
     return result;
   }
 
   // reverse wire if necessary
   if (w.Orientation() == TopAbs_REVERSED) {
-    spdlog::debug("Slice: Reversing wire");
+    spdlog::trace("Slice: Reversing wire");
     w.Reverse();
   }
 
@@ -174,7 +174,7 @@ static cavc::Polyline<double> process_wire(TopoDS_Wire w) {
 
     // if the geometry is reversed from the topology, reverse the former
     if (exp.Current().Orientation() == TopAbs_REVERSED) {
-      spdlog::debug("Slice: Geometry of trimmed curve is opposite of Topology, "
+      spdlog::trace("Slice: Geometry of trimmed curve is opposite of Topology, "
                     "reversing geom_curve");
       trim.Reverse();
     }
@@ -333,7 +333,7 @@ Slice::Slice(const Object *parent, TopoDS_Face face, double thickness)
 
 void Slice::generate_shells(std::vector<double> &offsets_list) {
   // sort the list of offsets
-  std::sort(offsets_list.begin(), offsets_list.end(), std::greater<int>());
+  std::sort(offsets_list.begin(), offsets_list.end());
 
   cavc::OffsetLoopSet<double> loopset;
   loopset.cwLoops.reserve(2);
