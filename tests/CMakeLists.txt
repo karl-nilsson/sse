@@ -21,7 +21,7 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND}
     ARGS
         -E
-        create_symlink
+        copy_directory
         ${CMAKE_CURRENT_SOURCE_DIR}/resources
         ${PROJECT_BINARY_DIR}/tests/resources
 )
