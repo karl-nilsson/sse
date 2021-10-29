@@ -34,7 +34,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~\AppData\Local\vcpkg\archives\
-          key: ${{steps.occt_version.outputs.occt_version_revision}}
+          key: _${{steps.occt_version.outputs.occt_version_revision}}
 
       - name: Build/Install OCCT
         if: steps.cache.outputs.cache-hit != 'true'
