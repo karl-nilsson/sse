@@ -87,8 +87,8 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~\AppData\Local\vcpkg\archives\
-        key: occt-7.5.0_1
-        restore-keys: occt-
+        key: _occt-7.5.0_1
+        restore-keys: _occt-
 
     - name: Install Dependencies (Windows)
       if: ${{matrix.config.os == 'windows-latest'}}
