@@ -17,11 +17,9 @@
  */
 
 /**
- * @brief
+ * @brief Import files into occt TopoDS_Shape's
  *
  * @author Karl Nilsson
- * @todo refactor, DRY
- *
  */
 
 
@@ -40,7 +38,6 @@
 #include "sse/slicer.hpp"
 
 
-
 static TopoDS_Shape importSTEP(const std::string &filename) {
 
   auto reader = STEPControl_Reader();
@@ -49,8 +46,8 @@ static TopoDS_Shape importSTEP(const std::string &filename) {
   reader.PrintCheckLoad(false, IFSelect_ListByItem);
   // return error
   if (status != IFSelect_RetDone) {
-    throw std::runtime_error("Error: importing file failed: " + filename);
-    // return status;
+    spdlog::error("Importer: failed to read file: {}", filename);
+    throw std::runtime_error("Importer: failed to read file: " + filename);
   }
 
   // increase default trace level
@@ -74,7 +71,8 @@ static TopoDS_Shape importIGES(const std::string &filename) {
   // debug info
   reader.PrintCheckLoad(false, IFSelect_ListByItem);
   if (status != IFSelect_RetDone) {
-    throw std::runtime_error("Error: importing file failed: " + filename);
+    spdlog::error("Importer: failed to read file: {}", filename);
+    throw std::runtime_error("Iporter: failed to read file: " + filename);
   }
   reader.PrintCheckLoad(false, IFSelect_ItemsByEntity);
   auto nbr = reader.NbRootsForTransfer();
@@ -83,59 +81,47 @@ static TopoDS_Shape importIGES(const std::string &filename) {
   return reader.OneShape();
 }
 
-static TopoDS_Shape importSolid(const std::string &filename, const bool STEP) {
-  // FIXME
-  auto reader = STEPControl_Reader();
-  auto status = reader.ReadFile(filename.c_str());
-  // debug info
-  reader.PrintCheckLoad(false, IFSelect_ListByItem);
-  // return error
-  if (status != IFSelect_RetDone) {
-    throw std::runtime_error("Error: importing file failed: " + filename);
-    // return status;
-  }
-
-  // increase default trace level
-  // reader.WS()->MapReader()->SetTraceLevel(2);
-
-  // check the file
-  reader.PrintCheckLoad(false, IFSelect_ItemsByEntity);
-
-  // Root transfers
-  // auto nbr = reader.NbRootsForTransfer();
-  reader.PrintCheckTransfer(false, IFSelect_ItemsByEntity);
-
-  reader.TransferRoots();
-
-  return reader.OneShape();
-}
-
 static TopoDS_Shape importMesh(const std::string &filename) {
-  return TopoDS_Shape();
+  return {};
 }
 
 static TopoDS_Shape importBREP(const std::string &filename) {
   TopoDS_Shape shape;
   BRep_Builder b;
-  BRepTools::Read(shape, filename.c_str(), b);
-  return TopoDS_Shape();
+  auto status = BRepTools::Read(shape, filename.c_str(), b);
+  if(!status) {
+    spdlog::error("Importer: failed to read file: {}", filename);
+    throw std::runtime_error("Importer: failed to read file: " + filename);
+  }
+  return shape;
 }
 
 namespace sse {
 
-/**
- * @brief Importer::Importer
- */
 TopoDS_Shape import(const std::string &filename) {
+  if(filename.empty()) {
+    spdlog::error("Importer: empty filename given");
+    throw std::invalid_argument("Importer: empty filename provided");
+  }
+
+  if(!fs::exists(filename)) {
+    spdlog::error("Importer: file does not exist: {}", filename);
+    throw std::invalid_argument("Importer: file does not exist: " + filename);
+  }
+
   // get the file extension
   const auto i = filename.rfind('.', filename.length());
   if (i == std::string::npos) {
-    throw std::runtime_error("Error: filename missing extension: " + filename);
+    spdlog::error("Importer: filename missing extension: {}", filename);
+    throw std::invalid_argument("Importer: filename missing extension: " + filename);
   }
   std::string extension = filename.substr(i + 1, filename.length() - 1);
+
   // convert extension to lowercase
   std::transform(extension.begin(), extension.end(), extension.begin(),
                  [](unsigned char c) { return std::tolower(c); });
+
+  spdlog::trace("Importer: Filename: {}, Extension: {}", filename, extension);
 
   // TODO: refacto, DRY
   if (extension == "step") {
@@ -148,15 +134,14 @@ TopoDS_Shape import(const std::string &filename) {
     return importMesh(filename);
   } else if (extension == "obj") {
     return importMesh(filename);
-  } else if (extension == "stepz") {
+  } else if (extension == "stepz" || extension == "stpz") {
     // unzip file
     // process temporary file
-    return importSTEP("");
+    return {};
   } else {
-    throw std::invalid_argument("Error: invalid file: " + filename);
+    spdlog::error("Importer: invalid file extension: {}", extension);
+    throw std::invalid_argument("Invalid file extension: " + extension);
   }
 }
-
-
 
 } // namespace sse

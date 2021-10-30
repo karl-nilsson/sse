@@ -8,6 +8,8 @@
 *.moc
 *.o
 *.obj
+# manually specify the obj files we need for testing
+!box.obj
 *.orig
 *.rej
 *.so

@@ -67,7 +67,10 @@ LIBSSE_EXPORT void setup_logger(spdlog::level::level_enum loglevel = spdlog::lev
  *  - obj
  * 
  * @return TopoDS_Shape 
- * @throws std::invalid_argument when invalid file is provided
+ * @throws std::invalid_argument
+ * - empty string
+ * - file does not exist
+ * - invalid file extension
  */
 [[nodiscard]] LIBSSE_EXPORT TopoDS_Shape import(const std::string &filename);
 
