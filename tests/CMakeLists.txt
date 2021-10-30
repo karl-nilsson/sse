@@ -8,6 +8,7 @@ target_sources(
         test_object.cpp
         test_settings.cpp
         test_slice.cpp
+        test_importer.cpp
 )
 
 target_compile_features(unit_test PRIVATE cxx_std_17)
