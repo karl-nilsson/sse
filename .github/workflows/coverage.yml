@@ -2,6 +2,7 @@ name: "Coverage"
 
 on:
   push:
+    branches: master
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [master, devel]
@@ -25,7 +26,6 @@ jobs:
                   }
 
     steps:
-    # checkout repo at $GITHUB_WORKSPACE
     - name: Checkout Repository
       uses: actions/checkout@v2
       with:
@@ -90,6 +90,7 @@ jobs:
     - name: Upload Coverage Report
       uses: codecov/codecov-action@v2
       with:
-        file: ${{github.workspace}}/coverage.info
+        files: coverage.info
+        directory: ${{github.workspace}}/build
         verbose: true
 
