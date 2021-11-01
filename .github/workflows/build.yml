@@ -47,7 +47,7 @@ jobs:
                     generator: "Ninja"
                   }
                 - {
-                    name: "Win10",
+                    name: "Win10_MSVC",
                     os: windows-latest,
                     build_type: "Release",
                     generator: "Visual Studio 16 2019"

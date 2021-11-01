@@ -225,8 +225,7 @@ static cavc::Polyline<double> process_wire(TopoDS_Wire w) {
       break;
     default:
       // something is wrong, throw an error
-
-      break;
+      throw std::runtime_error("Slice: unknown curve type");
     }
 
     exp.Next();
@@ -312,12 +311,13 @@ namespace sse {
 
 Slice::Slice(const Object *parent, TopoDS_Face face, double thickness)
         : parent{parent}, face{face}, thickness{thickness} {
+          
   if (this->face.IsNull()) {
     spdlog::error("Empty face passed to Slice");
     throw std::invalid_argument("Empty face");
   }
 
-  wires = TopTools_ListOfShape();
+  wires = {};
 
   // get the parametric boundaries of the face
   Standard_Real umin, umax, vmin, vmax;
