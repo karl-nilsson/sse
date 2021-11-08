@@ -311,7 +311,7 @@ namespace sse {
 
 Slice::Slice(const Object *parent, TopoDS_Face face, double thickness)
         : parent{parent}, face{face}, thickness{thickness} {
-          
+
   if (this->face.IsNull()) {
     spdlog::error("Empty face passed to Slice");
     throw std::invalid_argument("Empty face");

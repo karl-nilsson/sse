@@ -23,7 +23,11 @@ TEST_SUITE("Settings") {
     SUBCASE("Bad Parse") {
       // parsing invalid toml file
       // FIXME: on macos, tomll throws an std::exception here, rather than a syntax_error
+      #ifdef __APPLE__
       CHECK_THROWS(settings.parse("resources/invalid_profile.toml"));
+      #else
+      CHECK_THROWS_AS(settings.parse("resources/invalid_profile.toml"), toml::syntax_error);
+      #endif
     }
 
     SUBCASE("File Does Not Exist") {
