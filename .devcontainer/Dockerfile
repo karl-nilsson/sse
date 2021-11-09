@@ -7,4 +7,4 @@ FROM mcr.microsoft.com/vscode/devcontainers/cpp:0-${VARIANT}
 # [Optional] Uncomment this section to install additional packages.
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get -y install --no-install-recommends cmake cmake-extras ninja-build libocct-* occt-misc libtbb-dev libxi-dev && apt-get dist-upgrade -y
-WORKDIR /app
+WORKDIR /workspaces
