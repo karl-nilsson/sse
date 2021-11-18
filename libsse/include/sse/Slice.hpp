@@ -45,16 +45,17 @@ namespace sse {
   // TODO: figure out a better solution to this problem
   struct LIBSSE_EXPORT Shell {
     Shell(cavc::OffsetLoopSet<double> &loopset) {
+
       if(loopset.ccwLoops.size() != 1) {
         spdlog::error("Shell: Expected 1 outer polyline. received: {}", loopset.ccwLoops.size());
         throw std::invalid_argument("Shell: only 1 outer pline allowed");
       }
 
-      outer = loopset.ccwLoops.front().polyline;
+      outer = std::move(loopset.ccwLoops.front().polyline);
 
       islands.reserve(loopset.cwLoops.size());
       for(auto &loop: loopset.cwLoops) {
-        islands.push_back(loop.polyline);
+        islands.push_back(std::move(loop.polyline));
       }
     };
 
