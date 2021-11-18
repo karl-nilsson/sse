@@ -28,13 +28,14 @@ jobs:
           OCCT_PORT_REVISION=$(jq -r '."port-version"' $VCPKG_OCCT_METADATA)
           OCCT_NAME_VERSION=occt-${OCCT_VERSION}_${OCCT_PORT_REVISION}
           echo "::set-output name=occt_version_revision::$OCCT_NAME_VERSION"
+          echo "OCCT VERSION: ${OCCT_NAME_VERSION}"
 
       - name: Restore OCCT cached build
         id: cache
         uses: actions/cache@v2
         with:
           path: ~\AppData\Local\vcpkg\archives\
-          key: _${{steps.occt_version.outputs.occt_version_revision}}
+          key: ${{steps.occt_version.outputs.occt_version_revision}}
 
       - name: Build/Install OCCT
         if: steps.cache.outputs.cache-hit != 'true'
