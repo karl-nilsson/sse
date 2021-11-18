@@ -243,7 +243,8 @@ static cavc::Polyline<double> process_wire(TopoDS_Wire w) {
  * @param pline Polyline to convert
  * @return String containing list of gcode commands
  */
-static std::string polyline_gcode(const cavc::Polyline<double> &pline, double thickness) {
+static std::string polyline_gcode(const cavc::Polyline<double> &pline, double filament_diameter,
+                                  double extrusion_width, double layer_height, double extrusion_multiplier) {
 
   // TODO: configurable extruder
   // either pull in setting here, or do a second format pass elsewhere
@@ -267,16 +268,15 @@ static std::string polyline_gcode(const cavc::Polyline<double> &pline, double th
   // travel to start of polyline
   result += fmt::format("G0 X{:.6f} Y{:.6f}\n", pline.lastVertex().x(), pline.lastVertex().y());
 
-  auto extrusion_ratio = thickness * (0.6 * 0.6) / (1.75 * 1.75);
+  // multiply this by segment length to determine extrusion value
+  // https://3dprinting.stackexchange.com/questions/6289/how-is-the-e-argument-calculated-for-a-given-g1-command
+  auto extrusion_ratio = extrusion_multiplier * layer_height * 4 / (M_PI * filament_diameter);
 
   auto segment_to_gcode = [&](std::size_t i, std::size_t j) {
     auto &source = pline[i];
     auto &destination = pline[j];
 
-    // extrusion amount = extrusion multiplier * nozzle area / filament area
-    auto l = extrusion_ratio * cavc::segLength(source, destination);
-    extrusion_total += l;
-
+    extrusion_total += (cavc::segLength(source, destination) * extrusion_ratio);
 
     // short-circuit for straight segment
     if (source.bulgeIsZero()) {
@@ -332,6 +332,11 @@ Slice::Slice(const Object *parent, TopoDS_Face face, double thickness)
 }
 
 void Slice::generate_shells(std::vector<double> &offsets_list) {
+  if(offsets_list.empty()) {
+    spdlog::warn("Slice: generating zero offsets");
+    return;
+  }
+
   // sort the list of offsets
   std::sort(offsets_list.begin(), offsets_list.end());
 
@@ -402,7 +407,7 @@ void Slice::generate_infill(cavc::Polyline<double> infill_pattern) {
 }
 
 
-std::string Slice::gcode() const {
+std::string Slice::gcode(double filament_diameter, double extrusion_width, double extrusion_multiplier) const {
   std::string result;
 
   if(shells.empty()) {
@@ -421,10 +426,10 @@ std::string Slice::gcode() const {
     result += ";TYPE:WALL-";
     result += (shell == shells.cbegin()) ? "OUTER\n" : "INNER\n";
 
-    result += polyline_gcode(shell->outer, thickness);
+    result += polyline_gcode(shell->outer, filament_diameter, extrusion_width, this->thickness, extrusion_multiplier);
 
     for(const auto &pline: shell->islands) {
-      result += polyline_gcode(pline, thickness);
+      result += polyline_gcode(pline, filament_diameter, extrusion_width, this->thickness, extrusion_multiplier);
     }
   }
 
@@ -433,7 +438,7 @@ std::string Slice::gcode() const {
     result += ";TYPE:FILL\n";
   }
   for (const auto &pline : infill_polylines) {
-    result += polyline_gcode(pline, thickness);
+    result += polyline_gcode(pline, filament_diameter, extrusion_width, this->thickness, extrusion_multiplier);
   }
 
   return result;
