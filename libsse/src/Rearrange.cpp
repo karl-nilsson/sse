@@ -50,7 +50,7 @@
 // project headers
 #include "sse/slicer.hpp"
 
-//! Maxmimum number of objects to pack/sort.
+//! Maxmimum number of objects to rearrange.
 // TODO: figure out a better way to store/represent this value
 #define MAXIMUM_OBJECTS 1000
 
@@ -64,7 +64,7 @@ using node_ptr = std::unique_ptr<Node>;
  * @brief Binary tree Node
  *
  * This struct describes a binary tree Node that corresponds to a rectangle in
- * the cartesian plane. The tree is used to pack objects into a rectangular
+ * the cartesian plane. The tree is used to rearrange objects into a rectangular
  * bin. For the purposes of this struct, width and length are the dimensions of
  * the X and Y axes, respectively
  */
@@ -220,7 +220,7 @@ void sse::rearrange_objects(std::vector<std::unique_ptr<sse::Object>> &objects,
 
   // short-circuit if no objects
   if (objects.empty()) {
-    spdlog::warn("Rearrange: attempting to pack zero objects");
+    spdlog::warn("Rearrange: attempting to rearrange zero objects");
     return;
   }
 
@@ -289,7 +289,7 @@ void sse::rearrange_objects(std::vector<std::unique_ptr<sse::Object>> &objects,
   node_ptr root = std::make_unique<Node>(0, 0, objects_list.front()->width(),
                                          objects_list.front()->length());
 
-  spdlog::trace("Rearrange: packing");
+  spdlog::trace("Rearrange: starting");
   // insert all objects into the tree
   for (const auto o : objects_list) {
     // attempt to find a suitable node for the object

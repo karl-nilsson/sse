@@ -20,7 +20,7 @@ using Objects = std::vector<std::unique_ptr<sse::Object>>;
 TEST_SUITE("Rearrange Objects") {
 
   TEST_CASE("Invalid tests") {
-    // create list of objects to pack
+    // create list of objects to rearrange
     auto objects = Objects{};
     REQUIRE(objects.empty());
 
@@ -39,14 +39,14 @@ TEST_SUITE("Rearrange Objects") {
       auto s = halfspace.Shape();
       auto o = std::make_unique<sse::Object>(s);
       objects.push_back(std::move(o));
-      // attempt to pack object
+      // attempt to rearrange object
       CHECK_THROWS_AS(sse::rearrange_objects(objects, 500, 500), std::invalid_argument);
     }
 
     SUBCASE("Too many objects") {
       // create excessive objects objects
       BRepPrimAPI_MakeBox box{1, 1, 1};
-      // MAXIMUM_OBJECTS is defined in Packer.cc
+      // MAXIMUM_OBJECTS is defined in Rearrange.cpp
       // #FIXME: consider placing this in a more visible place
       #define MAXIMUM_OBJECTS 1000
       for (auto i = 0; i <= MAXIMUM_OBJECTS; ++i) {
@@ -128,7 +128,6 @@ TEST_SUITE("Rearrange Objects") {
   }
 
   TEST_CASE("Valid Tests") {
-    // create list of objects to pack
     auto objects = Objects{};
     REQUIRE(objects.empty());
 
