@@ -105,7 +105,7 @@ public:
    * @brief gcode
    * @return GCode representation of moves
    */
-  [[nodiscard]] std::string gcode() const;
+  [[nodiscard]] std::string gcode(double extrusion_multiplier, double extrusion_width, double filament_diameter) const;
 
 private:
   //! Parent object, from which this slice was created

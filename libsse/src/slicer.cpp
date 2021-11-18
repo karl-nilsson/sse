@@ -356,10 +356,13 @@ std::string collate_gcode(std::vector<Slice> &slices) {
   }
 
   auto layer_count = layers_set.size();
-  double layer_height = 0.2;
+  double layer_height = 0.3;
   double hotend_temp = 225;
   double bed_temp = 65;
   int fan_speed = 255;
+  double extrusion_multiplier = 1.0;
+  double filament_diameter = 1.75;
+  double extrusion_width = 0.6;
 
 
   spdlog::trace("adding gcode header");
@@ -375,7 +378,7 @@ std::string collate_gcode(std::vector<Slice> &slices) {
 
 
   for(const auto& slice: slices) {
-    auto slice_gcode = slice.gcode();
+    auto slice_gcode = slice.gcode(filament_diameter, extrusion_width, extrusion_multiplier);
 
     if(result.size() + slice_gcode.size() > max_string_size) {
       spdlog::error("GCode string size {:d}MiB exceeded maximum size: {:d}MiB",

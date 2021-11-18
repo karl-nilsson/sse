@@ -70,6 +70,21 @@ TEST_SUITE("Slice") {
         REQUIRE(slice.z_position() == doctest::Approx(i));
       }
     }
+
+    SUBCASE("Shells") {
+      auto offsets = std::vector<double>{1, 2, 3};
+      // create a circle with radius 1
+      auto wire = BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(gp_Circ(gp_Ax2(gp::Origin(), gp::DZ()), 10)));
+      CHECK_EQ(wire.IsDone(), true);
+      auto face_maker = BRepBuilderAPI_MakeFace(wire.Wire(), true);
+      CHECK_EQ(face_maker.IsDone(), true);
+
+      TopoDS_Face f = face_maker.Face();
+      auto slice = sse::Slice(nullptr, f, layer_height);
+
+      CHECK_NOTHROW(slice.generate_shells(offsets));
+      CHECK_NOTHROW(static_cast<void>(slice.gcode(1, 1, 1)));
+    }
   }
 
 }
