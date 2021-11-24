@@ -261,12 +261,18 @@ static std::string polyline_gcode(const cavc::Polyline<double> &pline, double fi
 
   // TODO: profile preallocation length
   // TODO: refine
-  const int gcode_string_length = fmt::format("G2 X{:.6f} Y{:.6f} I{:.6f} J{:.6f} E{:.6f} F1500\n",
+  const int gcode_string_length = fmt::format("G2 X{:.6f} Y{:.6f} I{:.6f} J{:.6f} E{:.6f} F1000\n",
                                               1.0, 1.0, 1.0, 1.0, 1.0).size() + 100;
   result.reserve(pline.size() * gcode_string_length);
 
   // travel to start of polyline
-  result += fmt::format("G0 X{:.6f} Y{:.6f}\n", pline.lastVertex().x(), pline.lastVertex().y());
+  // n.b. for closed polylines, this travels to the *last* point in polyline, because the visit function doesn't close the loop
+  // there's probably a much better way to do this
+  if(pline.isClosed()) {
+    result += fmt::format("G0 X{:.6f} Y{:.6f}\n", pline.lastVertex().x(), pline.lastVertex().y());
+  } else {
+    result += fmt::format("G0 X{:.6f} Y{:.6f}\n", pline[0].x(), pline[0].y());
+  }
 
   // multiply this by segment length to determine extrusion value
   // https://3dprinting.stackexchange.com/questions/6289/how-is-the-e-argument-calculated-for-a-given-g1-command
@@ -280,7 +286,7 @@ static std::string polyline_gcode(const cavc::Polyline<double> &pline, double fi
 
     // short-circuit for straight segment
     if (source.bulgeIsZero()) {
-      result += fmt::format("G1 X{:.6f} Y{:.6f} E{:.6f} F1500\n", destination.x(),
+      result += fmt::format("G1 X{:.6f} Y{:.6f} E{:.6f} F1000\n", destination.x(),
                             destination.y(), extrusion_total);
       return true;
     }
@@ -290,7 +296,7 @@ static std::string polyline_gcode(const cavc::Polyline<double> &pline, double fi
     // negative bulge = clockwise
     // center is an absolute location (point), G(2|3) needs offsets relative to
     // starting point
-    result += fmt::format("G{:s} X{:.6f} Y{:.6f} I{:.6f} J{:.6f} E{:.6f} F1500\n",
+    result += fmt::format("G{:s} X{:.6f} Y{:.6f} I{:.6f} J{:.6f} E{:.6f} F1000\n",
                           source.bulgeIsNeg() ? "2" : "3",
                           destination.x(),
                           destination.y(), center.x() - source.x(),
@@ -305,8 +311,6 @@ static std::string polyline_gcode(const cavc::Polyline<double> &pline, double fi
 
   return result;
 }
-
-
 
 namespace sse {
 
@@ -331,14 +335,16 @@ Slice::Slice(const Object *parent, TopoDS_Face face, double thickness)
   z = props.Value().Z();
 }
 
-void Slice::generate_shells(std::vector<double> &offsets_list) {
-  if(offsets_list.empty()) {
+void Slice::generate_shells(const int num_shells, const double line_width, const double overlap) {
+  if(num_shells < 0) {
+    spdlog::error("Slice: cannot generate less that zero shells");
+    throw std::invalid_argument("Slice: cannot generate less than zero shells");
+  }
+
+  if(num_shells == 0) {
     spdlog::warn("Slice: generating zero offsets");
     return;
   }
-
-  // sort the list of offsets
-  std::sort(offsets_list.begin(), offsets_list.end());
 
   cavc::OffsetLoopSet<double> loopset;
   loopset.cwLoops.reserve(2);
@@ -362,33 +368,50 @@ void Slice::generate_shells(std::vector<double> &offsets_list) {
 
   cavc::ParallelOffsetIslands<double> alg;
 
-  for (auto o : offsets_list) {
-    auto result = alg.compute(loopset, o);
+  // n.b. first shell must be 1/2 * line_width offset, or else extrusion will inflate exterior dimensions
+  for (int i = 0; i < num_shells; ++i) {
+    auto result = alg.compute(loopset, (i + 0.5) * line_width);
     this->shells.emplace_back(result);
   }
 
-  innermost_shell = &shells.back();
+  // generate innermost offset, used for clipping infill
+  const auto innermost_offset = (num_shells + 1 + overlap) * line_width;
+
+  // TODO: this is very ugly. can't construct Shell for some reason
+  const auto tmp = alg.compute(loopset, innermost_offset);
+  auto &outer = innermost_shell.outer;
+  auto &z = tmp.ccwLoops.front().polyline;
+
+  innermost_shell.outer = z;
+
+  /*
+  std::swap(outer, z);
+  std::swap(outer, tmp.ccwLoops.front().polyline);
+  /*
+  for(auto &loopset: tmp.cwLoops) {
+    innermost_shell.islands.push_back(std::move(loopset.polyline));
+  }
+  */
+
 }
 
 void Slice::generate_infill(cavc::Polyline<double> infill_pattern) {
 
-  if (innermost_shell == nullptr) {
+  if (shells.empty()) {
     spdlog::error("Slice: cannot generate infill before offsetting");
     return;
   }
 
-  // FIXME: edit CavC to allow combine ops with open pline
-  return;
-
   // intersect with innermost polyline
-  auto infill =
-      cavc::combinePolylines(innermost_shell->outer,
-                             infill_pattern, cavc::PlineCombineMode::Intersect);
-  auto result = infill.remaining;
+  auto infill = cavc::intersect_open_polyline(innermost_shell.outer, infill_pattern);
+  
+  auto &result = infill.remaining;
 
   // cut islands (clockwise loops)
-  // TODO: optimize. this is extremely inefficien
-  for(const auto &pline: innermost_shell->islands) {
+  // TODO: optimize. this is extremely inefficient
+  // TODO: cavc hasn't implemented exclude operation on open polylines
+  /*
+  for(const auto &pline: innermost_shell.islands) {
 
     std::vector<cavc::Polyline<double>> tmp;
     tmp.reserve(result.size());
@@ -398,10 +421,9 @@ void Slice::generate_infill(cavc::Polyline<double> infill_pattern) {
                                       cavc::PlineCombineMode::Exclude);
       tmp.insert(tmp.end(), a.remaining.begin(), a.remaining.end());
     }
-
     result = tmp;
   }
-
+  */
 
   infill_polylines = result;
 }
@@ -415,16 +437,13 @@ std::string Slice::gcode(double filament_diameter, double extrusion_width, doubl
     return result;
   }
 
-
   // TODO: profile whether 1KB is a good choice for preallocation
   result.reserve(1000);
 
-
-
   // shells first
   for(auto shell = shells.cbegin(); shell != shells.cend(); ++shell) {
-    result += ";TYPE:WALL-";
-    result += (shell == shells.cbegin()) ? "OUTER\n" : "INNER\n";
+    result += ";TYPE:WALL-"s;
+    result += (shell == shells.cbegin()) ? "OUTER\n"s : "INNER\n"s;
 
     result += polyline_gcode(shell->outer, filament_diameter, extrusion_width, this->thickness, extrusion_multiplier);
 
@@ -434,8 +453,9 @@ std::string Slice::gcode(double filament_diameter, double extrusion_width, doubl
   }
 
   // infill second
+  // TODO: sort infill segments
   if(infill_polylines.size() > 0) {
-    result += ";TYPE:FILL\n";
+    result += ";TYPE:FILL\n"s;
   }
   for (const auto &pline : infill_polylines) {
     result += polyline_gcode(pline, filament_diameter, extrusion_width, this->thickness, extrusion_multiplier);

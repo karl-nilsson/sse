@@ -112,7 +112,8 @@ TopTools_ListOfShape Slicer::make_tools(const double layer_height,
   auto result = TopTools_ListOfShape{};
   // create an unbounded plane, parallel to the xy plane,
   // then convert it to a face
-  for (int i = 0; i < object_height / layer_height + 1; ++i) {
+  // n.b. position the plane in the top of the layer (e.g. 0.4x for 0.4mm layers)
+  for (int i = 1; i < object_height / layer_height + 1; ++i) {
     result.Append(BRepBuilderAPI_MakeFace(
         gp_Pln(gp_Pnt(0, 0, i * layer_height), gp::DZ())));
   }
@@ -154,12 +155,12 @@ TopoDS_Shape make_spiral_face(const double height, const double layer_height) {
   return result.FirstShape();
 }
 
-cavc::Polyline<double> generate_infill_pattern(const double infill_percent, const double line_width, const double bed_width, const double bed_length) {
+cavc::Polyline<double> generate_infill_pattern(const double infill_density, const double line_width, const double bed_width, const double bed_length) {
   cavc::Polyline<double> infill_pattern;
   infill_pattern.isClosed() = false;
-  auto xmin = 0.0, ymin = 0.0;
+  const auto xmin = 0.0, ymin = 0.0;
   // for rectilinear infill, infill% = num lines * line width / face width
-  int num_lines = infill_percent * bed_width / line_width;
+  int num_lines = infill_density * bed_width / line_width;
   // calculate offset between lines;
   double offset = bed_width / num_lines;
 
@@ -181,12 +182,12 @@ cavc::Polyline<double> generate_infill_pattern(const double infill_percent, cons
   return infill_pattern;
 }
 
-void Slicer::generate_infill(Slice &slice, const double infill_percent, const double line_width) {
+void Slicer::generate_infill(Slice &slice, const double infill_density, const double line_width) {
   // TODO: replace these values with bounds of printer bed
-  auto bed_width = settings.get_setting_fallback<double>("printer.build_plate.Width", 1000);
-  auto bed_length = settings.get_setting_fallback<double>("printer.build_plate.length", 1000);
+  auto bed_width = settings.get_setting_fallback<double>("printer.build_plate.Width", 500);
+  auto bed_length = settings.get_setting_fallback<double>("printer.build_plate.length", 500);
 
-  auto infill_pattern = generate_infill_pattern(infill_percent, line_width, bed_width, bed_length);
+  auto infill_pattern = generate_infill_pattern(infill_density, line_width, bed_width, bed_length);
 
   slice.generate_infill(infill_pattern);
 
@@ -203,34 +204,22 @@ void Slicer::generate_shells(Slice &slice) {
   generate_shells(slice, line_width, num_shells);
 }
 
-void Slicer::generate_shells(Slice& slice, const double line_width, const int count) {
+void Slicer::generate_shells(Slice& slice, const double line_width, const int count, const double overlap) {
   if(line_width <= 0) {
     throw std::invalid_argument("Line width, must be > 0");
   }
 
-  if(count < 0) {
-    throw std::invalid_argument("Shell count must be >= 0");
+  if(count <= 0) {
+    throw std::invalid_argument("Shell count must be > 0");
   }
 
   spdlog::debug("generating shells");
-  std::vector<double> offsets;
-  offsets.reserve((size_t)count);
-
-  // the first shell is always half an extrusion width inside
-  // n.b. cavc doesn't use the sign of offset values, offset direction is determined by pline orientation
-  auto first_offset = 0.5 * line_width;
-
-  for(int i = 0; i < count; ++i) {
-    auto offset = first_offset + (i  * line_width);
-    offsets.emplace_back(offset);
-  }
-
-  slice.generate_shells(offsets);
+  slice.generate_shells(count, line_width, overlap);
 
 }
 
 std::vector<Slice>
-Slicer::slice_object(const Object * const object) {
+Slicer::slice_object(const Object * const object, double layer_height) {
   // find the z max
   double z = object->get_bound_box().CornerMax().Z();
 
@@ -238,7 +227,7 @@ Slicer::slice_object(const Object * const object) {
   args.Append(object->get_shape());
 
   // FIXME more sane layer height fallback mechanism
-  auto layer_height = settings.get_setting_fallback<double>("layer_height", FALLBACK_LAYER_HEIGHT);
+  // auto layer_height = settings.get_setting_fallback<double>("layer_height", FALLBACK_LAYER_HEIGHT);
   spdlog::info("Layer Height: {}", layer_height);
   auto tools = make_tools(layer_height, z);
   BRepAlgoAPI_Common common;
@@ -356,7 +345,7 @@ std::string collate_gcode(std::vector<Slice> &slices) {
   }
 
   auto layer_count = layers_set.size();
-  double layer_height = 0.3;
+  double layer_height = slices.front().layer_thickness();
   double hotend_temp = 225;
   double bed_temp = 65;
   int fan_speed = 255;
