@@ -28,7 +28,13 @@ int main(int argc, char **argv) {
 
   // verbosity level
   int verbose = 0;
-  double layerheight, linewidth = 0.0;
+  int num_shells = 3;
+  double layer_height, line_width = 0.0;
+  double extrusion_multiplier = 1.0;
+  double infill_density = 0.1;
+  std::string infill_pattern;
+  double nozzle_diameter = 0.4;
+  double filament_diameter = 1.75;
   fs::path profile_filename;
   vector<string> files;
   bool autoplace = false;
@@ -53,17 +59,24 @@ int main(int argc, char **argv) {
       ("fan_speed", "part cooling fan speed", cxxopts::value<double>())
 
       // speeds/feed group
-      ("m,extrusion_multiplier", "Extrusion Multiplier", cxxopts::value<double>())
+      ("m,extrusion_multiplier", "Extrusion Multiplier. type: decimal, range: 0.0 - 1.0, default: 1.0", cxxopts::value<double>(extrusion_multiplier))
       ("speed", "Print speed, mm/s", cxxopts::value<double>())
       ("rapid", "Move speed, mm/s", cxxopts::value<double>())
+
+      // printer group
+      ("n,nozzle_diameter", "Nozzle Diameter (mm). type: decimal, default: 0.4")
+      ("f,filament_diameter", "Filament Diameter (mm). type: decimal, default: 1.75")
 
       // placement group
       ("a,autoplace", "Automatically center/touch buildplate")
 
       // extrusion group
-      ("l,layer_height", "Layer Height", cxxopts::value(layerheight))
-      ("w,line_width", "Extrusion Width", cxxopts::value(linewidth))
-      ("variable_layer", "Variable layer height", cxxopts::value<bool>())
+      ("l,layer_height", "Layer Height: type: decimal, default: 0.3", cxxopts::value(layer_height))
+      ("s,shells", "Number of shells: type: integer, default: 3", cxxopts::value(num_shells))
+      ("w,line_width", "Extrusion Width: type:decimal, default: 0.4", cxxopts::value(line_width))
+      ("variable_layer", "Variable layer height: type: boolean, default: false", cxxopts::value<bool>())
+      ("i,infill_density", "Infill density: type: decimal, range: 0.0 - 0.1, default: 0.1", cxxopts::value(infill_density))
+      ("infill_pattern", "Infill pattern. type: string, values: rectilinear", cxxopts::value(infill_pattern))
 
       // positional, i.e. files to slice
       ("positional", "Positional arguments", cxxopts::value<vector<string>>());
@@ -140,8 +153,9 @@ int main(int argc, char **argv) {
   }
 
   // auto arrange objects
+  // TODO: use config values
   if (autoplace) {
-    sse::rearrange_objects(objects, 300.0, 300.0);
+    sse::rearrange_objects(objects, 235.0, 235.0);
   }
 
   std::vector<sse::Slice> slices;
@@ -149,10 +163,10 @@ int main(int argc, char **argv) {
 
   // cut the objects into slices
   for(const auto &o: objects) {
-    auto result = s.slice_object(o.get());
+    auto result = s.slice_object(o.get(), layer_height);
     for(auto &slice: result) {
-      s.generate_shells(slice);
-      s.generate_infill(slice, 0, 0.6);
+      s.generate_shells(slice, line_width, num_shells);
+      s.generate_infill(slice, infill_density, line_width);
     }
     slices.insert(slices.end(), result.begin(), result.end());
   }
