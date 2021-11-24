@@ -47,7 +47,7 @@ set(CXXOPTS_ENABLE_INSTALL OFF CACHE STRING "Disable cxxopts install")
 FetchContent_Declare(
   CavalierContours
   GIT_REPOSITORY https://github.com/karl-nilsson/CavalierContours
-#  GIT_TAG fb7ad8d90fdb
+  GIT_TAG polyline_clip
 )
 
 # force header-only
