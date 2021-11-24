@@ -59,6 +59,8 @@ namespace sse {
       }
     };
 
+    Shell() = default;
+
     cavc::Polyline<double> outer;
     std::vector<cavc::Polyline<double>> islands;
   };
@@ -80,9 +82,11 @@ public:
 
   /**
    * @brief Generate shells for the slice
-   * @param offsets vector of offsets, positive = outward facing, negative = inward
+   * @param num_shells Number of shells (offsets) to generate
+   * @param line_width Extrusion width (mm)
+   * @param overlap Ratio of overlap between innermost shell and infill. 0 = no overlap, -1.0 = 1x line_width gap
    */
-  void generate_shells(std::vector<double>& offsets_list);
+  void generate_shells(const int num_shells, const double line_width, const double overlap = 0.0);
 
   /**
    * @brief Generate infill for the slice
@@ -102,10 +106,19 @@ public:
   }
 
   /**
-   * @brief gcode
+   * @brief layer_thickness Get the thickness of the slice
+   * @return slice thickness
+   */
+  [[nodiscard]] inline double layer_thickness() const noexcept {
+    return this->thickness;
+  }
+
+  /**
+   * @brief gcode Return gcode representation
    * @return GCode representation of moves
    */
   [[nodiscard]] std::string gcode(double extrusion_multiplier, double extrusion_width, double filament_diameter) const;
+
 
 private:
   //! Parent object, from which this slice was created
@@ -116,8 +129,8 @@ private:
   TopTools_ListOfShape wires;
   //! list of offsets
   std::vector<Shell> shells;
-  //! innermost polyline(s)
-  Shell *innermost_shell = nullptr;
+  //! innermost polyline(s), used for clipping infill
+  Shell innermost_shell;
   //! infill
   std::vector<cavc::Polyline<double>> infill_polylines;
   //! z height

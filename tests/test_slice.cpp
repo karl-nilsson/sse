@@ -82,7 +82,7 @@ TEST_SUITE("Slice") {
       TopoDS_Face f = face_maker.Face();
       auto slice = sse::Slice(nullptr, f, layer_height);
 
-      CHECK_NOTHROW(slice.generate_shells(offsets));
+      CHECK_NOTHROW(slice.generate_shells(1, 1));
       CHECK_NOTHROW(static_cast<void>(slice.gcode(1, 1, 1)));
     }
   }

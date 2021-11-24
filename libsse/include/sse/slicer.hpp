@@ -115,7 +115,7 @@ public:
   void generate_infill(Slice &slice, const double infill_percent, const double line_width = FALLBACK_EXTRUSION_WIDTH);
 
   /**
-   * @brief generate_shells Generate shells (offsets) for a slice's wiresa
+   * @brief generate_shells Generate shells (offsets) for a slice's wires
    * use the
    * @param slice
    */
@@ -124,10 +124,11 @@ public:
   /**
    * @brief generate_shells
    * @param slice
-   * @param line_width
-   * @param count
+   * @param line_width extrusion width of each shell
+   * @param count number of shells
+   * @param overlap overlap between innermost shell and infill
    */
-  void generate_shells(Slice &slice, const double line_width, const int count);
+  void generate_shells(Slice &slice, const double line_width, const int count, const double overlap = 0.0);
 
   /**
    * @brief Slice a list of solids using the splitter algorithm
@@ -143,7 +144,7 @@ public:
    * @return list of slices
    */
   [[nodiscard]] std::vector<Slice>
-  slice_object(const Object * const object);
+  slice_object(const Object * const object, double layer_height);
 
 
   /**

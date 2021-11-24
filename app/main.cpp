@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
   // verbosity level
   int verbose = 0;
   int num_shells = 3;
-  double layer_height, line_width = 0.0;
+  double layer_height = 0.4, line_width = 0.6;
   double extrusion_multiplier = 1.0;
   double infill_density = 0.1;
   std::string infill_pattern;
@@ -114,6 +114,7 @@ int main(int argc, char **argv) {
     } else {
       // no files to slice, error out
       cerr << "Error: no files provided\n";
+      return 0;
     }
 
     if (result.count("o")) {
