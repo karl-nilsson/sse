@@ -387,7 +387,6 @@ void Slice::generate_shells(const int num_shells, const double line_width, const
   /*
   std::swap(outer, z);
   std::swap(outer, tmp.ccwLoops.front().polyline);
-  /*
   for(auto &loopset: tmp.cwLoops) {
     innermost_shell.islands.push_back(std::move(loopset.polyline));
   }

@@ -24,12 +24,36 @@ An experimental 3D model slicer engine, built on top of a CAD kernel
 * [Graphviz](https://graphviz.org/)
 
 ## Supported CNC software:
+* [Marlin 2.0](https://marlinfw.org/)
+* [Klipper](https://www.klipper3d.org/)
 * [LinuxCNC](http://linuxcnc.org/)
 * [Machinekit](https://www.machinekit.io/)
 * [Redeem](http://wiki.thing-printer.com/index.php?title=Redeem)
 
 ## License
 [AGPL](LICENSE)
+
+## Install dependencies
+
+### Debian/Ubuntu
+```
+sudo apt-get install -y libocct-* occt-misc  libtbb-dev libxi-dev 
+# dependencies for building docs
+sudo apt-get install -y doxygen graphviz
+```
+
+### MacOS
+```
+brew install opencascade
+```
+
+### Windows (vcpkg)
+```
+vcpkg install opencascade[tbb]
+vcpkg integrate install
+echo "CMAKE_TOOLCHAIN_FILE=${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake" >> env
+```
+
 
 ## Build Instructions
 ```
