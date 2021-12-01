@@ -11,22 +11,18 @@ defaults:
     shell: bash
 
 jobs:
-
   build:
     name: Build & Cache OCCT
     runs-on: windows-latest
-
     steps:
-
-      # unfortunately, the vcpkg program doesn't provide an easy way to fetch the program version,
-      # so we have to parse the control file directly
+      # parse baseline.json to find the version and portversion
       - name: Fetch OCCT Version
         id: occt_version
         run: |
-          VCPKG_OCCT_METADATA=$VCPKG_INSTALLATION_ROOT/ports/opencascade/vcpkg.json
-          OCCT_VERSION=$(jq -r '."version-string"' $VCPKG_OCCT_METADATA)
-          OCCT_PORT_REVISION=$(jq -r '."port-version"' $VCPKG_OCCT_METADATA)
-          OCCT_NAME_VERSION=occt-${OCCT_VERSION}_${OCCT_PORT_REVISION}
+          VCPKG_OCCT_METADATA=$VCPKG_INSTALLATION_ROOT/versions/baseline.json
+          OCCT_VERSION=$(jq -r '.default["opencascade"]["baseline"]' $VCPKG_OCCT_METADATA)
+          OCCT_PORT_VERSION=$(jq -r '.default["opencascade"]["port-version"]' $VCPKG_OCCT_METADATA)
+          OCCT_NAME_VERSION=occt-${OCCT_VERSION}_${OCCT_PORT_VERSION}
           echo "::set-output name=occt_version_revision::$OCCT_NAME_VERSION"
           echo "OCCT VERSION: ${OCCT_NAME_VERSION}"
 
@@ -42,5 +38,6 @@ jobs:
         run: |
           vcpkg install opencascade[tbb]
         env:
-          VCPKG_DEFAULT_TRIPLET: x64-windows # force vcpkg to build x64
+          # force vcpkg to build x64
+          VCPKG_DEFAULT_TRIPLET: x64-windows
 
