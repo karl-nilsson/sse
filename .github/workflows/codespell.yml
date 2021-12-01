@@ -12,4 +12,5 @@ jobs:
           check_filenames: true
           check_hidden: true
           skip: ./.git,./external,*.FCStd
+          ignore_words_list: vertexes
           only_warn: 1
