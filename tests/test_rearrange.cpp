@@ -82,6 +82,29 @@ TEST_SUITE("Rearrange Objects") {
 
   }
 
+  TEST_CASE("Valid Tests") {
+    auto objects = Objects{};
+    REQUIRE(objects.empty());
+
+    // create a simple box
+    BRepPrimAPI_MakeBox box_maker{10, 10, 10};
+    auto a = box_maker.Shape();
+    REQUIRE(!a.IsNull());
+
+    SUBCASE("Empty argument list") {
+      CHECK_NOTHROW(sse::rearrange_objects(objects, 1, 1));
+    }
+
+    SUBCASE("One Cube") {
+      objects.push_back(std::make_unique<sse::Object>(a));
+      CHECK_NOTHROW(sse::rearrange_objects(objects, objects[0]->width(), objects[0]->length()));
+      // calculate the correct move location
+      gp_Pnt corner{0, 0, 0};
+      CHECK(corner.IsEqual(objects[0]->get_bound_box().CornerMin(), TEST_PRECISION));
+    }
+
+  }
+
   void check_cubes(int num) {
     // create a list of identical objects
     Objects o;
@@ -127,7 +150,7 @@ TEST_SUITE("Rearrange Objects") {
     }
   }
 
-  TEST_CASE("Valid Tests") {
+  TEST_CASE("Implementation Details") {
     auto objects = Objects{};
     REQUIRE(objects.empty());
 
@@ -135,18 +158,6 @@ TEST_SUITE("Rearrange Objects") {
     BRepPrimAPI_MakeBox box_maker{10, 10, 10};
     auto a = box_maker.Shape();
     REQUIRE(!a.IsNull());
-
-    SUBCASE("Empty argument list") {
-      CHECK_NOTHROW(sse::rearrange_objects(objects, 1, 1));
-    }
-
-    SUBCASE("One Cube") {
-      objects.push_back(std::make_unique<sse::Object>(a));
-      CHECK_NOTHROW(sse::rearrange_objects(objects, objects[0]->width(), objects[0]->length()));
-      // calculate the correct move location
-      gp_Pnt corner{0, 0, 0};
-      CHECK(corner.IsEqual(objects[0]->get_bound_box().CornerMin(), TEST_PRECISION));
-    }
 
     SUBCASE("Should Grow Right") {
       BRepPrimAPI_MakeBox rectangle{10, 20, 10};
@@ -196,4 +207,5 @@ TEST_SUITE("Rearrange Objects") {
       }
     }
   }
+
 }
