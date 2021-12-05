@@ -13,7 +13,12 @@ target_sources(
 
 target_compile_features(unit_test PRIVATE cxx_std_17)
 
-target_link_libraries(unit_test PRIVATE doctest::doctest libsse::libsse)
+target_link_libraries(unit_test
+    PRIVATE
+        doctest::doctest
+        libsse::libsse
+        nanobench
+)
 
 # copy the files necessary to run the tests
 add_custom_command(

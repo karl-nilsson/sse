@@ -16,6 +16,14 @@ FetchContent_Declare(
   GIT_TAG v41
 )
 
+# nanobench
+FetchContent_Declare(
+  nanobench
+  GIT_REPOSITORY https://github.com/martinus/nanobench.git
+  GIT_TAG v4.1.0
+  GIT_SHALLOW TRUE
+)
+
 # toml11
 FetchContent_Declare(
   toml11
@@ -58,6 +66,7 @@ set(CAVC_BUILD_SHARED_LIB OFF)
 FetchContent_MakeAvailable(
   doctest
   trompeloeil
+  nanobench
   toml11
   spdlog
   cxxopts
