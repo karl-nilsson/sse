@@ -11,13 +11,15 @@ target_sources(
         test_importer.cpp
 )
 
-target_compile_features(unit_test PRIVATE cxx_std_17)
+target_compile_features(
+    unit_test
+    PRIVATE cxx_std_17
+)
 
 target_link_libraries(unit_test
     PRIVATE
-        doctest::doctest
         libsse::libsse
-        nanobench
+        doctest::doctest
 )
 
 # copy the files necessary to run the tests
@@ -32,4 +34,34 @@ add_custom_command(
         ${PROJECT_BINARY_DIR}/tests/resources
 )
 
-add_test(NAME UnitTests COMMAND unit_test)
+add_test(
+    NAME UnitTests
+    COMMAND unit_test
+)
+
+add_executable(benchmark)
+
+target_sources(
+    benchmark
+    PRIVATE
+        benchmark_main.cpp
+        benchmark.cpp
+)
+
+target_compile_features(
+    benchmark
+    PRIVATE cxx_std_17
+)
+
+target_link_libraries(
+    benchmark
+    PRIVATE
+        libsse::libsse
+        doctest::doctest
+        nanobench
+)
+
+add_test(
+    NAME Benchmarks
+    COMMAND benchmark
+)
