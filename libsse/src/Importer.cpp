@@ -42,8 +42,6 @@ static TopoDS_Shape importSTEP(const std::string &filename) {
 
   auto reader = STEPControl_Reader();
   auto status = reader.ReadFile(filename.c_str());
-  // debug info
-  reader.PrintCheckLoad(false, IFSelect_ListByItem);
   // return error
   if (status != IFSelect_RetDone) {
     spdlog::error("Importer: failed to read file: {}", filename);
@@ -53,12 +51,8 @@ static TopoDS_Shape importSTEP(const std::string &filename) {
   // increase default trace level
   // reader.WS()->MapReader()->SetTraceLevel(2);
 
-  // check the file
-  reader.PrintCheckLoad(false, IFSelect_ItemsByEntity);
-
   // Root transfers
   auto nbr = reader.NbRootsForTransfer();
-  reader.PrintCheckTransfer(false, IFSelect_ItemsByEntity);
 
   reader.TransferRoots();
 
@@ -68,15 +62,12 @@ static TopoDS_Shape importSTEP(const std::string &filename) {
 static TopoDS_Shape importIGES(const std::string &filename) {
   auto reader = IGESControl_Reader();
   auto status = reader.ReadFile(filename.c_str());
-  // debug info
-  reader.PrintCheckLoad(false, IFSelect_ListByItem);
+
   if (status != IFSelect_RetDone) {
     spdlog::error("Importer: failed to read file: {}", filename);
     throw std::runtime_error("Iporter: failed to read file: " + filename);
   }
-  reader.PrintCheckLoad(false, IFSelect_ItemsByEntity);
   auto nbr = reader.NbRootsForTransfer();
-  reader.PrintCheckTransfer(false, IFSelect_ItemsByEntity);
   reader.TransferRoots();
   return reader.OneShape();
 }
