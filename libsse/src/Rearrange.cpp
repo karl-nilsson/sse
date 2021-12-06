@@ -50,10 +50,6 @@
 // project headers
 #include "sse/slicer.hpp"
 
-//! Maxmimum number of objects to rearrange.
-// TODO: figure out a better way to store/represent this value
-#define MAXIMUM_OBJECTS 1000
-
 
 struct Node;
 
@@ -231,9 +227,9 @@ void sse::rearrange_objects(std::vector<std::unique_ptr<sse::Object>> &objects,
   }
 
   // check for excessive input size
-  if (objects.size() > MAXIMUM_OBJECTS) {
+  if (objects.size() > SSE_MAXIMUM_NUM_OBJECTS) {
     spdlog::error("Rearrange: object count {} exceeds maximum {}",
-                  objects.size(), MAXIMUM_OBJECTS);
+                  objects.size(), SSE_MAXIMUM_NUM_OBJECTS);
     throw std::invalid_argument("Rearrange: Too many objects");
   }
 
@@ -352,5 +348,3 @@ void sse::rearrange_objects(std::vector<std::unique_ptr<sse::Object>> &objects,
 
   translate(*root, offset_x, offset_y);
 }
-
-#undef MAXIMUM_OBJECTS

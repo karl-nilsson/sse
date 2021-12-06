@@ -33,10 +33,10 @@
 #include "sse/Settings.hpp"
 #include "sse/libsse_export.hpp"
 
-
-#define FALLBACK_LAYER_HEIGHT 0.2
-#define FALLBACK_NUM_SHELLS 3
-#define FALLBACK_EXTRUSION_WIDTH 0.6
+#define SSE_MAXIMUM_NUM_OBJECTS 1000
+#define SSE_FALLBACK_LAYER_HEIGHT 0.2
+#define SSE_FALLBACK_NUM_SHELLS 3
+#define SSE_FALLBACK_EXTRUSION_WIDTH 0.6
 
 
 namespace fs = std::filesystem;
@@ -112,7 +112,7 @@ public:
    * @param infill_percent
    * @param line_width
    */
-  void generate_infill(Slice &slice, const double infill_percent, const double line_width = FALLBACK_EXTRUSION_WIDTH);
+  void generate_infill(Slice &slice, const double infill_percent, const double line_width = SSE_FALLBACK_EXTRUSION_WIDTH);
 
   /**
    * @brief generate_shells Generate shells (offsets) for a slice's wires
