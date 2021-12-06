@@ -197,9 +197,9 @@ void Slicer::generate_infill(Slice &slice, const double infill_density, const do
 void Slicer::generate_shells(Slice &slice) {
 
   // TODO: better shells/extrusion width selection
-  int num_shells = settings.get_setting_fallback<int>("shells", FALLBACK_NUM_SHELLS);
+  int num_shells = settings.get_setting_fallback<int>("shells", SSE_FALLBACK_NUM_SHELLS);
   auto line_width =
-      settings.get_setting_fallback<double>("extrusion_width", FALLBACK_EXTRUSION_WIDTH);
+      settings.get_setting_fallback<double>("extrusion_width", SSE_FALLBACK_EXTRUSION_WIDTH);
 
   generate_shells(slice, line_width, num_shells);
 }
@@ -227,7 +227,7 @@ Slicer::slice_object(const Object * const object, double layer_height) {
   args.Append(object->get_shape());
 
   // FIXME more sane layer height fallback mechanism
-  // auto layer_height = settings.get_setting_fallback<double>("layer_height", FALLBACK_LAYER_HEIGHT);
+  // auto layer_height = settings.get_setting_fallback<double>("layer_height", SSE_FALLBACK_LAYER_HEIGHT);
   spdlog::info("Layer Height: {}", layer_height);
   auto tools = make_tools(layer_height, z);
   BRepAlgoAPI_Common common;

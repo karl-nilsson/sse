@@ -15,7 +15,7 @@
 using Objects = std::vector<std::unique_ptr<sse::Object>>;
 
 // precision for comparing values within OCCT
-#define TEST_PRECISION 0.000001
+#define SSE_TEST_PRECISION 0.000001
 
 TEST_SUITE("Rearrange Objects") {
 
@@ -46,10 +46,7 @@ TEST_SUITE("Rearrange Objects") {
     SUBCASE("Too many objects") {
       // create excessive objects objects
       BRepPrimAPI_MakeBox box{1, 1, 1};
-      // MAXIMUM_OBJECTS is defined in Rearrange.cpp
-      // #FIXME: consider placing this in a more visible place
-      #define MAXIMUM_OBJECTS 1000
-      for (auto i = 0; i <= MAXIMUM_OBJECTS; ++i) {
+      for (auto i = 0; i <= SSE_MAXIMUM_NUM_OBJECTS; ++i) {
         auto a = box.Shape();
         objects.push_back(std::make_unique<sse::Object>(a));
       }
@@ -100,7 +97,7 @@ TEST_SUITE("Rearrange Objects") {
       CHECK_NOTHROW(sse::rearrange_objects(objects, objects[0]->width(), objects[0]->length()));
       // calculate the correct move location
       gp_Pnt corner{0, 0, 0};
-      CHECK(corner.IsEqual(objects[0]->get_bound_box().CornerMin(), TEST_PRECISION));
+      CHECK(corner.IsEqual(objects[0]->get_bound_box().CornerMin(), SSE_TEST_PRECISION));
     }
 
   }
@@ -146,7 +143,7 @@ TEST_SUITE("Rearrange Objects") {
 
       gp_Pnt correct_location{x * box_width, y * box_length, 0};
       // check location of each cube
-      CHECK(o[i]->get_bound_box().CornerMin().IsEqual(correct_location, TEST_PRECISION));
+      CHECK(o[i]->get_bound_box().CornerMin().IsEqual(correct_location, SSE_TEST_PRECISION));
     }
   }
 
@@ -173,10 +170,10 @@ TEST_SUITE("Rearrange Objects") {
       CHECK_NOTHROW(sse::rearrange_objects(objects, w, l));
 
       gp_Pnt corner1{0, 0, 0};
-      CHECK(corner1.IsEqual(objects[0]->get_bound_box().CornerMin(), TEST_PRECISION));
+      CHECK(corner1.IsEqual(objects[0]->get_bound_box().CornerMin(), SSE_TEST_PRECISION));
 
       gp_Pnt corner2{objects[0]->width(), 0, 0};
-      CHECK(corner2.IsEqual(objects[1]->get_bound_box().CornerMin(), TEST_PRECISION));
+      CHECK(corner2.IsEqual(objects[1]->get_bound_box().CornerMin(), SSE_TEST_PRECISION));
     }
 
     SUBCASE("Can Grow Up") {
@@ -194,10 +191,10 @@ TEST_SUITE("Rearrange Objects") {
       CHECK_NOTHROW(sse::rearrange_objects(objects, w, l));
 
       gp_Pnt corner1{0, 0, 0};
-      CHECK(corner1.IsEqual(objects[0]->get_bound_box().CornerMin(), TEST_PRECISION));
+      CHECK(corner1.IsEqual(objects[0]->get_bound_box().CornerMin(), SSE_TEST_PRECISION));
 
       gp_Pnt corner2{0, objects[0]->length(), 0};
-      CHECK(corner2.IsEqual(objects[1]->get_bound_box().CornerMin(), TEST_PRECISION));
+      CHECK(corner2.IsEqual(objects[1]->get_bound_box().CornerMin(), SSE_TEST_PRECISION));
     }
 
     SUBCASE("List of identical cubes:") {
@@ -209,3 +206,4 @@ TEST_SUITE("Rearrange Objects") {
   }
 
 }
+
