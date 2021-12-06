@@ -39,14 +39,14 @@ jobs:
                     cxx: "clang++",
                     generator: "Ninja"
                   }
-                - {
-                    name: "MacOS_Clang",
-                    os: macos-latest,
-                    build_type: "Release",
-                    cc: "clang",
-                    cxx: "clang++",
-                    generator: "Ninja"
-                  }
+#                - {
+#                    name: "MacOS_Clang",
+#                    os: macos-latest,
+#                    build_type: "Release",
+#                    cc: "clang",
+#                    cxx: "clang++",
+#                    generator: "Ninja"
+#                  }
                 - {
                     name: "Win10",
                     os: windows-latest,
@@ -133,3 +133,5 @@ jobs:
         --extra-verbose
         --parallel 2
         --output-on-failure
+      env:
+        NANOBENCH_SUPPRESS_WARNINGS: 1
