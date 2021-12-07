@@ -222,7 +222,7 @@ void sse::rearrange_objects(std::vector<std::unique_ptr<sse::Object>> &objects,
 
   // negative bed dimensions are invalid
   if (bed_width <= 0 || bed_length <= 0) {
-    spdlog::error("Rearrange: bed dimensions cannot be < 0");
+    spdlog::error("Rearrange: bed dimensions cannot be <= 0");
     throw std::invalid_argument("Rearrange: invalid bed dimensions");
   }
 
@@ -239,6 +239,12 @@ void sse::rearrange_objects(std::vector<std::unique_ptr<sse::Object>> &objects,
 
   // check for invalid objects
   for (const auto &o : objects) {
+
+    if(o == nullptr) {
+      spdlog::error("Rearrange: object list contains nullptr");
+      throw std::invalid_argument("Rearrange: object list contains nullptr");
+    }
+
 #if OCC_VERSION_HEX >= 0x070400
     if (o->get_bound_box().IsOpen()) {
 #else
@@ -248,17 +254,17 @@ void sse::rearrange_objects(std::vector<std::unique_ptr<sse::Object>> &objects,
         o->get_bound_box().IsOpenZmin() || o->get_bound_box().IsOpenZmax()) {
     // clang-format on
 #endif
-      spdlog::error("Rearrange: Error: object with infinite dimension");
+      spdlog::error("Rearrange: object with infinite dimension");
       throw std::invalid_argument("Rearrange: object has infinite volume");
     }
 
     if (o->get_bound_box().IsVoid()) {
-      spdlog::error("Rearrange: Error: empty object");
+      spdlog::error("Rearrange: empty object");
       throw std::invalid_argument("Rearrange: object is empty");
     }
 
     if (o->width() > bed_width || o->length() > bed_length) {
-      spdlog::error("Rearrange: Error: object ({:.3f}x{:.3f}) too large for "
+      spdlog::error("Rearrange: object ({:.3f}x{:.3f}) too large for "
                     "bed ({:.3f}x{:.3f})",
                     o->width(), o->length(), bed_width, bed_length);
       throw std::invalid_argument("Rearrange: object too large for bed");
@@ -314,7 +320,7 @@ void sse::rearrange_objects(std::vector<std::unique_ptr<sse::Object>> &objects,
       } else {
         // the only way to reach this codepath is if the object is changed underneath us
         spdlog::error(
-            "Rearrange Error: Can't determine correct growth direction of bin");
+            "Rearrange Can't determine correct growth direction of bin");
         throw std::runtime_error(
             "Rearrange: Can't determine correct growth direction of bin");
       }

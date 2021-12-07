@@ -83,14 +83,15 @@ LIBSSE_EXPORT void setup_logger(spdlog::level::level_enum loglevel = spdlog::lev
  *
  *
  * @throws std::invalid_argument
- * - bed dimensions <= 0
- * - too many objects
- * - object footprint is larger than bed dimensions
- * - object has zero footprint
+ * - objects contains a nullptr
+ * - bed_width or bed_length <= 0
+ * - objects.size() > SSE_MAXIMUM_NUM_OBJECTS
+ * - any object footprint is larger than bed dimensions
+ * - any object has zero footprint
  *
  * @throws std::runtime_error
  * - aggregate footprint of rearranged objects is larger than the bed
- * - can't determine correct growth direction of bin
+ * - cannot determine correct growth direction of bin
  */
 LIBSSE_EXPORT void rearrange_objects(std::vector<std::unique_ptr<Object> > &objects, const double bed_width, const double bed_length);
 
