@@ -6,6 +6,9 @@
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <gp.hxx>
 #include <gp_Pln.hxx>
+#include <Message.hxx>
+#include <Message_Messenger.hxx>
+#include <Message_PrinterOStream.hxx>
 
 #include <cmath>
 #include <iostream>
@@ -54,7 +57,7 @@ TEST_SUITE("Benchmarks") {
 
     SUBCASE("Tall prism") {
     // tall box
-      BRepPrimAPI_MakeBox box_maker{1, 1, 100};
+      BRepPrimAPI_MakeBox box_maker{1, 1, 500};
       auto b = box_maker.Shape();
       auto o = sse::Object{b};
       objects.push_back(std::make_unique<sse::Object>(o));
@@ -77,9 +80,12 @@ TEST_SUITE("Benchmarks") {
 
   TEST_CASE("Import objects") {
     sse::setup_logger(spdlog::level::off);
+    // suppress output of STEPControl_Reader
+    Message::DefaultMessenger()->RemovePrinters(STANDARD_TYPE(Message_PrinterOStream));
 
 
     SUBCASE("STEP") {
+
       bench::Bench().run("Import STEP", []{
         bench::doNotOptimizeAway(sse::import("resources/box.step"));
       });
