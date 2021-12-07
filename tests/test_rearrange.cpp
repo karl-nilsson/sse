@@ -77,6 +77,12 @@ TEST_SUITE("Rearrange Objects") {
       CHECK_THROWS_AS(sse::rearrange_objects(objects, 11, 11), std::runtime_error);
     }
 
+    SUBCASE("Objects vector contains nullptr") {
+      objects.push_back(nullptr);
+
+      CHECK_THROWS_AS(sse::rearrange_objects(objects, 100, 100), std::invalid_argument);
+    }
+
   }
 
   TEST_CASE("Valid Tests") {
