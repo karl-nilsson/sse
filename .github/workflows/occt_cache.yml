@@ -16,6 +16,7 @@ jobs:
     runs-on: windows-latest
     steps:
       # parse baseline.json to find the version and portversion
+      # this step is currently unused, but keep it for potential future use
       - name: Fetch OCCT Version
         id: occt_version
         run: |
@@ -26,12 +27,19 @@ jobs:
           echo "::set-output name=occt_version_revision::$OCCT_NAME_VERSION"
           echo "OCCT VERSION: ${OCCT_NAME_VERSION}"
 
+      - name: Hash VCPKG baseline
+        id: vcpkg_hash
+        run: |
+          VCPKG_SHA=$(sha1sum -z $VCPKG_INSTALLATION_ROOT/versions/baseline.json | cut -d " " -f1)
+          echo "vcpkg hash: ${VCPKG_SHA}"
+          echo "::set-output name=vcpkg_hash::$VCPKG_SHA"
+
       - name: Restore OCCT cached build
         id: cache
         uses: actions/cache@v2
         with:
           path: ~\AppData\Local\vcpkg\archives\
-          key: ${{steps.occt_version.outputs.occt_version_revision}}
+          key: occt-build-${{ steps.vcpkg_hash.outputs.vcpkg_hash }}
 
       - name: Build/Install OCCT
         if: steps.cache.outputs.cache-hit != 'true'
