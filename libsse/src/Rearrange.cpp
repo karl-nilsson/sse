@@ -32,9 +32,20 @@
 
 /**
  * TODO:
- * allow for configurable/dynamic OFFSET space between footprint rectangles
+ * Allow for configurable/dynamic OFFSET space between footprint rectangles
  * (i.e. expand all rectangles individually, based on brim, if applicable.
  * keep in mind, brim may not expand footprint, i.e. brim for a sphere)
+ *
+ * The current solution uses first-fit search, whereas best-fit would
+ * provide a more space-efficient result.
+ *
+ * Observation: storing the root node as overall bin is unnecessary, we can
+ * store the bin size separately, then update as needed. This way, we can
+ * avoid traversing a BST of occupied nodes.
+ *
+ * Use KD tree to index available nodes
+ * Alternatively, use a red-black tree, index on length + height
+ * 
  */
 
 // std headers
@@ -93,7 +104,7 @@ struct [[nodiscard]] Node {
           right{std::move(right)} {}
 
   /**
-   * @brief Add object to node, then make child nodes out of leftovers
+   * @brief Add object to node, then make child nodes out of leftover space
    * @param o Object to add
    */
   void add_object(sse::Object *o) {

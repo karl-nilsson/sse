@@ -54,7 +54,7 @@ TEST_SUITE("Benchmarks") {
 
     SUBCASE("Tall prism") {
     // tall box
-      BRepPrimAPI_MakeBox box_maker{1, 1, 100};
+      BRepPrimAPI_MakeBox box_maker{1, 1, 500};
       auto b = box_maker.Shape();
       auto o = sse::Object{b};
       objects.push_back(std::make_unique<sse::Object>(o));
